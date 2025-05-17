@@ -1,3 +1,3 @@
 # UnityRythmGame
-A highly simplified rhythm game framework made with Unity 2022.
+A highly simplified rhythm game made with Unity 2022.
 Developing.
