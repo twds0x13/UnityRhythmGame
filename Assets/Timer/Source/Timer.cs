@@ -1,14 +1,14 @@
-﻿using UnityEngine;
-using System;
-using System.Linq;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using JetBrains.Annotations;
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 /// <summary>
 /// Allows you to run events on a delay without the use of <see cref="Coroutine"/>s
 /// or <see cref="MonoBehaviour"/>s.
-/// 
+///
 /// To create and start a Timer, use the <see cref="Register"/> method.
 /// </summary>
 public class Timer
@@ -67,7 +67,7 @@ public class Timer
     /// <summary>
     /// Register a new timer that should fire an event after a certain amount of time
     /// has elapsed.
-    /// 
+    ///
     /// Registered timers are destroyed when the scene changes.
     /// </summary>
     /// <param name="duration">The time to wait before the timer should fire, in seconds.</param>
@@ -82,8 +82,14 @@ public class Timer
     /// by preventing the timer from running and accessessing its parents' components
     /// after the parent has been destroyed.</param>
     /// <returns>A timer object that allows you to examine stats and stop/resume progress.</returns>
-    public static Timer Register(float duration, Action onComplete, Action<float> onUpdate = null,
-        bool isLooped = false, bool useRealTime = false, MonoBehaviour autoDestroyOwner = null)
+    public static Timer Register(
+        float duration,
+        Action onComplete,
+        Action<float> onUpdate = null,
+        bool isLooped = false,
+        bool useRealTime = false,
+        MonoBehaviour autoDestroyOwner = null
+    )
     {
         // create a manager object to update all the timers if one does not already exist.
         if (Timer._manager == null)
@@ -100,7 +106,14 @@ public class Timer
             }
         }
 
-        Timer timer = new Timer(duration, onComplete, onUpdate, isLooped, useRealTime, autoDestroyOwner);
+        Timer timer = new Timer(
+            duration,
+            onComplete,
+            onUpdate,
+            isLooped,
+            useRealTime,
+            autoDestroyOwner
+        );
         Timer._manager.RegisterTimer(timer);
         return timer;
     }
@@ -204,9 +217,9 @@ public class Timer
     /// </summary>
     /// <returns>The number of seconds that have elapsed since the start of this timer's current cycle, i.e.
     /// the current loop if the timer is looped, or the start if it isn't.
-    /// 
+    ///
     /// If the timer has finished running, this is equal to the duration.
-    /// 
+    ///
     /// If the timer was cancelled/paused, this is equal to the number of seconds that passed between the timer
     /// starting and when it was cancelled/paused.</returns>
     public float GetTimeElapsed()
@@ -216,9 +229,9 @@ public class Timer
             return this.duration;
         }
 
-        return this._timeElapsedBeforeCancel ??
-               this._timeElapsedBeforePause ??
-               this.GetWorldTime() - this._startTime;
+        return this._timeElapsedBeforeCancel
+            ?? this._timeElapsedBeforePause
+            ?? this.GetWorldTime() - this._startTime;
     }
 
     /// <summary>
@@ -288,8 +301,14 @@ public class Timer
 
     #region Private Constructor (use static Register method to create new timer)
 
-    private Timer(float duration, Action onComplete, Action<float> onUpdate,
-        bool isLooped, bool usesRealTime, MonoBehaviour autoDestroyOwner)
+    private Timer(
+        float duration,
+        Action onComplete,
+        Action<float> onUpdate,
+        bool isLooped,
+        bool usesRealTime,
+        MonoBehaviour autoDestroyOwner
+    )
     {
         this.duration = duration;
         this._onComplete = onComplete;
@@ -347,7 +366,6 @@ public class Timer
 
         if (this.GetWorldTime() >= this.GetFireTime())
         {
-
             if (this._onComplete != null)
             {
                 this._onComplete();
@@ -421,5 +439,4 @@ public class Timer
     }
 
     #endregion
-
 }
