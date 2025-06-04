@@ -1,9 +1,12 @@
 using IUtils;
 using UnityEngine;
 
-namespace Vectors
+namespace Anime
 {
-    public struct VectorPair : IVector3, IDev
+    /// <summary>
+    /// 动画切片结构体，保存一段时间内一个Note的位移数据
+    /// </summary>
+    public struct AnimeClip : IAnime, IDev
     {
         public Vector3 StartV { get; set; }
 
@@ -13,14 +16,11 @@ namespace Vectors
 
         public float EndT { get; set; }
 
-        public bool IsFinished { get; set; }
-
-        public VectorPair(
+        public AnimeClip(
             Vector3 StartV = default,
             Vector3 EndV = default,
             float StartT = 0f,
-            float EndT = 0f,
-            bool IsFinished = false
+            float EndT = 0f
         )
         {
             this.StartV = StartV;
@@ -30,8 +30,6 @@ namespace Vectors
             this.StartT = StartT;
 
             this.EndT = EndT;
-
-            this.IsFinished = IsFinished;
         }
 
         public void DevLog()
@@ -43,6 +41,11 @@ namespace Vectors
                 StartT,
                 EndT
             );
+        }
+
+        public float TotalTimeElapse()
+        {
+            return this.EndT - this.StartT;
         }
     }
 }
