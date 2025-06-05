@@ -37,9 +37,9 @@ namespace IUtils
     /// </summary>
     public interface IGameBehaviour
     {
-        public abstract float GameTime(); // 经过用户设置后的判定时间戳
+        public abstract float GetGameTime(); // 经过用户设置后的判定时间戳
 
-        public abstract float AbsTime(); // 包含游戏加载时间的绝对时间戳
+        public abstract float GetAbsTime(); // 包含游戏加载时间的绝对时间戳
 
         public abstract void Pause(); // ...
 

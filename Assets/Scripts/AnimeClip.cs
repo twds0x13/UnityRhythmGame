@@ -17,10 +17,10 @@ namespace Anime
         public float EndT { get; set; }
 
         public AnimeClip(
-            Vector3 StartV = default,
-            Vector3 EndV = default,
             float StartT = 0f,
-            float EndT = 0f
+            float EndT = 0f,
+            Vector3 StartV = default,
+            Vector3 EndV = default
         )
         {
             this.StartV = StartV;

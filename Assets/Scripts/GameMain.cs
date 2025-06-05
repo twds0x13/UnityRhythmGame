@@ -20,8 +20,6 @@ public class GameMain : MonoBehaviour, IDev
 
     public GameObject NoteInst; // 不同颜色的Note已合并为同一个游戏物件，用不同的Sprite表示
 
-    AnimeClip CurAnime;
-
     public bool CurFlag;
 
     public bool TestFlag;
@@ -95,11 +93,8 @@ public class GameMain : MonoBehaviour, IDev
 
     void Update()
     {
-        if (TestFlag)
-        {
-            CreateAllNotes();
-        }
-        TestFlag = false;
+        var AnimeTmp = new AnimeClip(Game.Inst.GetGameTime(), Game.Inst.GetGameTime() + 2f);
+        OneNote(AnimeTmp);
     }
 
     public void InitUserInterface() { }
@@ -108,21 +103,18 @@ public class GameMain : MonoBehaviour, IDev
     /// 从对象池中获取一个·新的 <see cref="NoteBehaviour"/> 对象，并同时初始化动画队列
     /// </summary>
     /// <param name="CurFlag">在当前 Note 完成初始化前这个 Flag 应该为 false（按引用传递）</param>
-    public void OneNote()
+    public void OneNote(AnimeClip[] AnimeClipList)
     {
         float step = 0.5f;
 
         GameObject CurObj = NotePool.Get();
 
-        for (float i = 0f; i < 1000f; i += step)
+        for (int i = 0; i < 1; i++)
         {
             CurObj
                 .GetComponent<NoteBehaviour>()
-                .AnimeQueue.Enqueue(new AnimeClip(FlatRandVec(), FlatRandVec(), i, i + step));
+                .AnimeQueue.Enqueue(new AnimeClip(i, i + step, FlatRandVec(), FlatRandVec()));
         }
-
-        //CurObj.GetComponent<NoteBehaviour>().AnimeQueue.TryDequeue(out CurAnime);
-        //CurAnime.DevLog();
 
         CurNoteCount++;
     }
@@ -136,16 +128,16 @@ public class GameMain : MonoBehaviour, IDev
 
         float End;
 
-        First = Game.Inst.AbsTimeMs();
+        First = Game.Inst.GetAbsTimeMs();
 
         Debug.LogFormat("Start Note Creating Process. AbsTime: {0} ms", First);
 
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 300; i++)
         {
             OneNote();
         }
 
-        End = Game.Inst.AbsTimeMs();
+        End = Game.Inst.GetAbsTimeMs();
 
         Debug.LogFormat("End Note Creating Process. AbsTime: {0} ms", End);
 
