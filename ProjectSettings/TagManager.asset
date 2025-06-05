@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 2
   tags:
   - GameBehaviour
+  - DevInterface
+  - DevBehaviour
   layers:
   - Default
   - TransparentFX

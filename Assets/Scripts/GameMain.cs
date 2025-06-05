@@ -1,30 +1,24 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
-using BaseObject;
-using GBehaviour;
+using Anime;
+using Cysharp.Threading.Tasks;
 using IUtils;
 using NBehaviour;
-using Palmmedia.ReportGenerator.Core.Parser.Analysis;
 using UnityEngine;
 using UnityEngine.Pool;
-using Vectors;
-using Random = UnityEngine.Random;
+using UnityEngine.WSA;
+using Game = GameBehaviourManager.GameBehaviour;
+using Rand = UnityEngine.Random;
 
 public class GameMain : MonoBehaviour, IDev
 {
-    private ObjectPool<Queue<VectorPair>> VectorQueuePool;
+    private ObjectPool<ConcurrentQueue<AnimeClip>> VectorQueuePool;
 
     private ObjectPool<GameObject> NotePool;
 
     public GameObject NoteInst; // 不同颜色的Note已合并为同一个游戏物件，用不同的Sprite表示
-
-    GameObject CurObj;
-
-    NoteBehaviour CurNote;
-
-    Queue<VectorPair> CurQueue;
 
     public bool CurFlag;
 
@@ -34,10 +28,10 @@ public class GameMain : MonoBehaviour, IDev
 
     private void InitPools()
     {
-        VectorQueuePool = new ObjectPool<Queue<VectorPair>>(
+        VectorQueuePool = new ObjectPool<ConcurrentQueue<AnimeClip>>(
             () =>
             {
-                return new Queue<VectorPair>();
+                return new ConcurrentQueue<AnimeClip>();
             },
             null,
             (VQueue) =>
@@ -61,7 +55,7 @@ public class GameMain : MonoBehaviour, IDev
                 Note.GetComponent<NoteBehaviour>()
                     .DestroyEvent.AddListener(() =>
                     {
-                        Note.GetComponent<NoteBehaviour>().AnimeQueue = null;
+                        VectorQueuePool.Release(Note.GetComponent<NoteBehaviour>().AnimeQueue);
 
                         Destroy(Note);
                     });
@@ -84,7 +78,7 @@ public class GameMain : MonoBehaviour, IDev
 
                 Destroy(Note);
             },
-            maxSize: 256
+            maxSize: 512
         );
     }
 
@@ -99,79 +93,75 @@ public class GameMain : MonoBehaviour, IDev
 
     void Update()
     {
-        if (TestFlag)
-        {
-            CreateAllNotes();
-
-            TestFlag = !TestFlag;
-        }
+        var AnimeTmp = new AnimeClip(Game.Inst.GetGameTime(), Game.Inst.GetGameTime() + 2f);
+        OneNote(AnimeTmp);
     }
 
+    public void InitUserInterface() { }
+
     /// <summary>
-    /// 用来从对象池中获取新的 <see cref="NoteBehaviour"/> 对象，已初始化动画队列
-    ///
-    /// Todo:支持异步调用
+    /// 从对象池中获取一个·新的 <see cref="NoteBehaviour"/> 对象，并同时初始化动画队列
     /// </summary>
     /// <param name="CurFlag">在当前 Note 完成初始化前这个 Flag 应该为 false（按引用传递）</param>
-    public void OneNote()
+    public void OneNote(AnimeClip[] AnimeClipList)
     {
-        // Debug.LogFormat(
-        //     "Start Note {0} Formatting. Timestamp: {1} ",
-        //     CurNoteCount,
-        //     GameBehaviour.Inst.AbsTime()
-        // );
+        float step = 0.5f;
 
-        CurObj = NotePool.Get();
+        GameObject CurObj = NotePool.Get();
 
-        CurNote = CurObj.GetComponent<NoteBehaviour>();
-
-        CurQueue = CurNote.AnimeQueue;
-
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 1; i++)
         {
-            CurQueue.Enqueue(
-                new VectorPair(
-                    new Vector3(Random.value, Random.value, Random.value),
-                    new Vector3(Random.value, Random.value, Random.value),
-                    i,
-                    i + 1
-                )
-            );
-            CurObj.GetComponent<NoteBehaviour>().AnimeQueue.Dequeue().DevLog();
+            CurObj
+                .GetComponent<NoteBehaviour>()
+                .AnimeQueue.Enqueue(new AnimeClip(i, i + step, FlatRandVec(), FlatRandVec()));
         }
-
-        // Debug.LogFormat(
-        //     "Note {0} Finished Formatting. Timestamp: {1} ",
-        //     CurNoteCount,
-        //     GameBehaviour.Inst.AbsTime()
-        // );
 
         CurNoteCount++;
     }
 
     /// <summary>
-    /// Todo:添加异步处理
+    /// 一次性生成所有Note
     /// </summary>
     public void CreateAllNotes()
     {
-        Debug.LogFormat(
-            "Start Note Creating Process. AbsTime: {0} ms",
-            GameBehaviour.Inst.AbsTimeMs()
-        );
+        float First;
 
-        for (int i = 0; i < 1; i++)
+        float End;
+
+        First = Game.Inst.GetAbsTimeMs();
+
+        Debug.LogFormat("Start Note Creating Process. AbsTime: {0} ms", First);
+
+        for (int i = 0; i < 300; i++)
         {
             OneNote();
         }
 
-        Debug.LogFormat(
-            "End Note Creating Process. AbsTime: {0} ms",
-            GameBehaviour.Inst.AbsTimeMs()
+        End = Game.Inst.GetAbsTimeMs();
+
+        Debug.LogFormat("End Note Creating Process. AbsTime: {0} ms", End);
+
+        Debug.LogFormat("Creating Process Time Elapse : {0} ms", End - First);
+
+        Debug.Log(NotePool.CountAll);
+    }
+
+    public Vector3 RandVec()
+    {
+        return new Vector3(
+            (float)(3f * (Rand.value - 0.5)),
+            (float)(2f * (Rand.value - 0.5)),
+            (float)(2f * (Rand.value - 0.5))
         );
+    }
+
+    public Vector3 FlatRandVec()
+    {
+        return new Vector3((float)(3f * (Rand.value - 0.5)), (float)(2f * (Rand.value - 0.5)), 0f);
     }
 
     public void DevLog()
     {
-        GameBehaviour.Inst.DevLog();
+        Game.Inst.DevLog();
     }
 }

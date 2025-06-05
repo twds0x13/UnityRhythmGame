@@ -1,10 +1,12 @@
-using BaseObject;
+using Anime;
 using IUtils;
+using PooledObject;
 using UnityEngine;
+using Game = GameBehaviourManager.GameBehaviour;
 
 namespace NBehaviour
 {
-    public class NoteBehaviour : BaseObjectBehaviour, IDev
+    public class NoteBehaviour : PooledObjectBehaviour, IPooling, IDev
     {
         public float JudgeTime;
 
@@ -15,25 +17,29 @@ namespace NBehaviour
             SpriteRenderer.sprite = SpriteList[0];
         }
 
-        private void OnJudge()
+        private void Judge()
         {
-            if (!isDestroy)
+            if (Input.GetKeyDown(KeyCode.Q))
             {
-                isDestroy = true;
-
-                DestroyEvent?.Invoke();
+                OnDestroy();
             }
         }
 
-        void Update() { }
+        public void Update()
+        {
+            AnimeUpdate();
+            Judge();
+        }
 
         public new void DevLog()
         {
-            ((BaseObjectBehaviour)this).DevLog();
+            base.DevLog();
 
             Debug.Log("Note Object: ");
 
-            AnimeQueue.Peek().DevLog();
+            AnimeQueue.TryPeek(out CurAnime);
+
+            CurAnime.DevLog();
         }
     }
 }
