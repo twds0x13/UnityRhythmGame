@@ -18,6 +18,10 @@ namespace PooledObject
 
         public bool isDestroy;
 
+        public bool StartAnime = false; // 是否开始第一次动画
+
+        public bool EndAnime = false; // 是否结束最后一次动画
+
         public ConcurrentQueue<AnimeClip> AnimeQueue;
 
         public AnimeClip CurAnime;
@@ -64,22 +68,39 @@ namespace PooledObject
 
         public void AnimeUpdate()
         {
-            if (IsVisableInCamera)
+            AnimeQueue.TryPeek(out CurAnime);
+
+            if (Game.Inst.GetGameTime() < CurAnime.StartT && !StartAnime) // 在第一个动画节点之前移出屏幕
             {
-                AnimeQueue.TryPeek(out CurAnime);
-                if (Game.Inst.GameTime() < CurAnime.EndT)
+                transform.position = new Vector3(10f, 10f, 10f);
+            }
+            else if (!StartAnime && Game.Inst.GetGameTime() > CurAnime.StartT)
+            {
+                StartAnime = true;
+            }
+            else if (!EndAnime)
+            {
+                StartAnime = true;
+                if (Game.Inst.GetGameTime() < CurAnime.EndT)
                 {
                     CurT = CurTHandler(
-                        (Game.Inst.GameTime() - CurAnime.StartT) / CurAnime.TotalTimeElapse(),
-                        0.9f
+                        (Game.Inst.GetGameTime() - CurAnime.StartT) / CurAnime.TotalTimeElapse(),
+                        1f
                     );
 
                     transform.position = (1 - CurT) * CurAnime.StartV + CurT * CurAnime.EndV;
                 }
                 else
                 {
-                    AnimeQueue.TryDequeue(out CurAnime);
+                    if (!AnimeQueue.TryDequeue(out CurAnime))
+                    {
+                        EndAnime = true;
+                    }
                 }
+            }
+            else if (EndAnime) // 在最后一个动画节点之后移出屏幕
+            {
+                transform.position = new Vector3(10f, 10f, 10f);
             }
         }
 
@@ -90,7 +111,8 @@ namespace PooledObject
 
         public void DevLog()
         {
-            Debug.Log("Base Object : \n");
+            Debug.LogFormat("Pooled Object : {0}", );
+
         }
     }
 }

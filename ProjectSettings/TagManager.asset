@@ -6,6 +6,7 @@ TagManager:
   tags:
   - GameBehaviour
   - DevInterface
+  - DevBehaviour
   layers:
   - Default
   - TransparentFX
