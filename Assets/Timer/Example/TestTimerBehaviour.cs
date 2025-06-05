@@ -1,6 +1,6 @@
 ﻿using System;
-using UnityEngine;
 using System.Collections;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace UnityTimer.Examples
@@ -9,7 +9,8 @@ namespace UnityTimer.Examples
     {
         #region Unity Inspector Fields
 
-        [Header("Controls")] public InputField DurationField;
+        [Header("Controls")]
+        public InputField DurationField;
 
         public Button StartTimerButton;
         public Button CancelTimerButton;
@@ -23,7 +24,8 @@ namespace UnityTimer.Examples
 
         public Text NeedsRestartText;
 
-        [Header("Stats Texts")] public Text TimeElapsedText;
+        [Header("Stats Texts")]
+        public Text TimeElapsedText;
         public Text TimeRemainingText;
         public Text PercentageCompletedText;
         public Text PercentageRemainingText;
@@ -61,10 +63,14 @@ namespace UnityTimer.Examples
                 onComplete: () => _numLoops++,
                 onUpdate: secondsElapsed =>
                 {
-                    UpdateText.text = string.Format("Timer ran update callback: {0:F2} seconds", secondsElapsed);
+                    UpdateText.text = string.Format(
+                        "Timer ran update callback: {0:F2} seconds",
+                        secondsElapsed
+                    );
                 },
                 isLooped: IsLoopedToggle.isOn,
-                useRealTime: !UseGameTimeToggle.isOn);
+                useRealTime: !UseGameTimeToggle.isOn
+            );
 
             CancelTimerButton.interactable = true;
         }
@@ -96,12 +102,22 @@ namespace UnityTimer.Examples
             Time.timeScale = TimescaleSlider.value;
             _testTimer.isLooped = IsLoopedToggle.isOn;
 
-            TimeElapsedText.text = string.Format("Time elapsed: {0:F2} seconds", _testTimer.GetTimeElapsed());
-            TimeRemainingText.text = string.Format("Time remaining: {0:F2} seconds", _testTimer.GetTimeRemaining());
-            PercentageCompletedText.text = string.Format("Percentage completed: {0:F4}%",
-                _testTimer.GetRatioComplete()*100);
-            PercentageRemainingText.text = String.Format("Percentage remaining: {0:F4}%",
-                _testTimer.GetRatioRemaining()*100);
+            TimeElapsedText.text = string.Format(
+                "Time elapsed: {0:F2} seconds",
+                _testTimer.GetTimeElapsed()
+            );
+            TimeRemainingText.text = string.Format(
+                "Time remaining: {0:F2} seconds",
+                _testTimer.GetTimeRemaining()
+            );
+            PercentageCompletedText.text = string.Format(
+                "Percentage completed: {0:F4}%",
+                _testTimer.GetRatioComplete() * 100
+            );
+            PercentageRemainingText.text = String.Format(
+                "Percentage remaining: {0:F4}%",
+                _testTimer.GetRatioRemaining() * 100
+            );
             NumberOfLoopsText.text = string.Format("# Loops: {0}", _numLoops);
             IsCancelledText.text = string.Format("Is Cancelled: {0}", _testTimer.isCancelled);
             IsCompletedText.text = string.Format("Is Completed: {0}", _testTimer.isCompleted);
@@ -116,10 +132,15 @@ namespace UnityTimer.Examples
 
         private bool ShouldShowRestartText()
         {
-            return !_testTimer.isDone && // the timer is in progress and...
-                   ((UseGameTimeToggle.isOn && _testTimer.usesRealTime) || // we switched to real-time or
-                    (!UseGameTimeToggle.isOn && !_testTimer.usesRealTime) || // we switched to game-time or
-                    Mathf.Abs(GetDurationValue() - _testTimer.duration) >= Mathf.Epsilon); // our duration changed
+            return !_testTimer.isDone
+                && // the timer is in progress and...
+                (
+                    (UseGameTimeToggle.isOn && _testTimer.usesRealTime)
+                    || // we switched to real-time or
+                    (!UseGameTimeToggle.isOn && !_testTimer.usesRealTime)
+                    || // we switched to game-time or
+                    Mathf.Abs(GetDurationValue() - _testTimer.duration) >= Mathf.Epsilon
+                ); // our duration changed
         }
 
         private float GetDurationValue()
