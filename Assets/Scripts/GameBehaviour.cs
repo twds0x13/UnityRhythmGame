@@ -4,41 +4,54 @@ using System.Text;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using IUtils;
+using Palmmedia.ReportGenerator.Core.Common;
 using UnityEngine;
+using Rand = UnityEngine.Random;
 
 namespace GameBehaviourManager
 {
     /// <summary>
     /// 用来存储用户设置，默认参数是默认游戏设置
     /// </summary>
-    internal class GameSettings
+    public class GameSettings : IDev
     {
-        private GameSettings() { } // 两个数据类
+        internal GameSettings() { } // 两个数据类，默认只在GameMain里初始化
 
-        private static GameSettings GBinstance = null;
+        public float JudgementTimeOffset = 0f;
 
-        public static float JudgementTimeOffset = 0f;
+        public float DisplayTimeOffset = 0f;
 
-        public static float DisplayTimeOffset = 0f;
+        public KeyCode KeyGamePause = KeyCode.W;
 
-        public static KeyCode KeyGamePause = KeyCode.D;
+        public KeyCode KeyGameResume = KeyCode.W;
 
-        public static KeyCode KeyGameResume = KeyCode.A;
+        public KeyCode KeyGameTesting = KeyCode.F5;
 
-        public static float TimeScaleSpeed
+        public bool OneKey // 是不是用同一个按键来处理暂停和恢复
+        {
+            get { return KeyGamePause == KeyGameResume; }
+        }
+
+        public float TimeScaleSpeed
         {
             get { return GameTime.TimeScaleSpeed; }
             set { GameTime.TimeScaleSpeed = Mathf.Clamp(value, 0f, 100f); }
         }
 
-        public static void SetTimeScaleSpeed(float Speed)
+        public void SetTimeScaleSpeed(float Speed)
         {
             TimeScaleSpeed = Speed;
         }
 
-        public static GameSettings Inst()
+        public void DevLog()
         {
-            return GBinstance;
+            Debug.LogFormat(
+                "JTO:{0},DTO:{1},KGP:{2},KGR:{3}",
+                JudgementTimeOffset,
+                DisplayTimeOffset,
+                KeyGamePause.ToString(),
+                KeyGameResume.ToString()
+            );
         }
     }
 
@@ -47,7 +60,7 @@ namespace GameBehaviourManager
     /// </summary>
     internal class GameTime
     {
-        private GameTime() { }
+        public GameTime() { }
 
         public static Timer MainTimer;
 
@@ -56,6 +69,8 @@ namespace GameBehaviourManager
         public static bool TimePausing { get; set; }
 
         public static bool TimeResuming { get; set; }
+
+        public static bool TimeStatFlip { get; set; } // 标记 暂停 / 恢复状态的翻转 [!] 不要尝试合并Pausing和Resuming这两个bool变量！情愿多加一个，能跑起来就行
 
         public static bool TimeChanging { get; set; }
 
@@ -73,10 +88,61 @@ namespace GameBehaviourManager
 
         public static bool GamePaused { get; set; }
 
-        public static void TimeUpdateManager()
+        /// <summary>
+        /// 处理全局时间流速变化（包括加减速，赞停等）相关的逻辑和按键检测
+        /// </summary>
+        public static void GlobalTimeUpdateHandler()
         {
+            if (!GameMain.GameSettings.OneKey)
+            {
+                if (Input.GetKeyDown(GameMain.GameSettings.KeyGameResume))
+                {
+                    TimeChanging = true;
+                    TimeResuming = true;
+                    TimePausing = false;
+
+                    TimeScaleCache = TimeScale;
+                    TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+                }
+                if (Input.GetKeyDown(GameMain.GameSettings.KeyGamePause))
+                {
+                    TimeChanging = true;
+                    TimePausing = true;
+                    TimeResuming = false;
+
+                    TimeScaleCache = TimeScale;
+                    TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+                }
+            }
+            else
+            {
+                if (Input.GetKeyDown(GameMain.GameSettings.KeyGamePause))
+                {
+                    if (TimeStatFlip)
+                    {
+                        TimeStatFlip = false; // 处于恢复中状态时为 false
+                        TimeChanging = true;
+                        TimePausing = false;
+                        TimeResuming = true;
+                    }
+                    else
+                    {
+                        TimeStatFlip = true; // 处于暂停中状态为 true
+                        TimeChanging = true;
+                        TimePausing = true;
+                        TimeResuming = false;
+                    }
+
+                    TimeScaleCache = TimeScale;
+                    TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+                }
+            }
+
+            // START 玄学
+
             if (TimePausing)
             {
+                TimeChanging = true;
                 TimeScale =
                     TimeScaleSpeed
                     * (
@@ -86,12 +152,16 @@ namespace GameBehaviourManager
                     );
                 if (TimeScale == 0)
                 {
+                    GamePaused = true;
                     TimePausing = false;
+                    TimeChanging = false;
                 }
             }
 
             if (TimeResuming)
             {
+                TimeChanging = true;
+                GamePaused = false;
                 TimeScale =
                     TimeScaleSpeed
                     * (RealTimer.GetTimeElapsed() + TimeScaleCache - TimeScaleStartingPoint);
@@ -99,39 +169,22 @@ namespace GameBehaviourManager
                 {
                     TimeScale = 1f;
                     TimeResuming = false;
+                    TimeChanging = false;
                 }
             }
+            // END 玄学
         }
 
-        public static void CoolerGameResumeHandler()
+        public static void TimeUpdate()
         {
-            if (Input.GetKeyDown(GameSettings.KeyGameResume))
-            {
-                TimeChanging = true;
-                TimeResuming = true;
-                TimePausing = false;
-                TimeScaleCache = TimeScale;
-                TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
-            }
-        }
-
-        public static void CoolerGamePauseHandler()
-        {
-            if (Input.GetKeyDown(GameSettings.KeyGamePause))
-            {
-                TimeChanging = true;
-                TimePausing = true;
-                TimeResuming = false;
-                TimeScaleCache = TimeScale;
-                TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
-            }
+            GlobalTimeUpdateHandler();
         }
     }
 
     /// <summary>
     /// 用来管理游戏相关的行为，包括暂停，修改用户设置等等
     /// </summary>
-    public class GameBehaviour : MonoBehaviour, IDev, IGameBehaviour
+    public class GameBehaviour : MonoBehaviour, IDev
     {
         private GameBehaviour() { } // 单例模式
 
@@ -142,7 +195,7 @@ namespace GameBehaviourManager
             get { return GBinstance; }
         }
 
-        private string UserSettingsZipPath = Application.streamingAssetsPath; // Zip 文件默认存放在 StreamingAssets 文件夹内
+        private string UserSettingsZipPath = Application.streamingAssetsPath; // Zip 文件默认存放在 StreamingAssets 文件夹
 
         public void Awake()
         {
@@ -153,7 +206,7 @@ namespace GameBehaviourManager
 
         private void InitInstance()
         {
-            DontDestroyOnLoad(this.gameObject);
+            DontDestroyOnLoad(gameObject);
 
             if (GBinstance != null && GBinstance != this)
             {
@@ -165,7 +218,7 @@ namespace GameBehaviourManager
             }
         }
 
-        private void InitGameTime()
+        public void InitGameTime() // 最好把其他数据类的初始化扔到GameBehaviour里面，要不然容易出现初始化问题......
         {
             GameTime.MainTimer = Timer.Register(
                 duration: 1145141919810f,
@@ -182,11 +235,7 @@ namespace GameBehaviourManager
 
         public void Update()
         {
-            //GamePauseHandler();
-            //GameResumeHandler();
-            GameTime.CoolerGamePauseHandler();
-            GameTime.CoolerGameResumeHandler();
-            GameTime.TimeUpdateManager();
+            GameTime.TimeUpdate();
         }
 
         public void DevLog()
@@ -199,17 +248,18 @@ namespace GameBehaviourManager
 
         public float GetGameTime()
         {
-            return GameTime.MainTimer.GetTimeElapsed() + GameSettings.JudgementTimeOffset;
+            return GameTime.MainTimer.GetTimeElapsed() + GameMain.GameSettings.JudgementTimeOffset;
         }
 
         public float GetGameTimeMs()
         {
-            return (GameTime.MainTimer.GetTimeElapsed() + GameSettings.JudgementTimeOffset) * 1000;
+            return (GameTime.MainTimer.GetTimeElapsed() + GameMain.GameSettings.JudgementTimeOffset)
+                * 1000;
         }
 
         public float GetAbsTimeMs()
         {
-            return GameTime.RealTimer.GetTimeElapsed() * 1000; // 输出毫秒
+            return GameTime.RealTimer.GetTimeElapsed() * 1000;
         }
 
         public float GetAbsTime()
@@ -222,14 +272,14 @@ namespace GameBehaviourManager
             return GameTime.TimeScale;
         }
 
-        public float GetTimeScaleCache() // 只供测试使用
+        public float GetTimeScaleCache()
         {
             return GameTime.TimeScaleCache;
         }
 
         public void SetTimeScaleSpeed(float Speed)
         {
-            GameSettings.SetTimeScaleSpeed(Speed);
+            GameMain.GameSettings.SetTimeScaleSpeed(Speed);
         }
 
         public bool IsGamePaused()
@@ -237,28 +287,16 @@ namespace GameBehaviourManager
             return GameTime.GamePaused;
         }
 
-        public void Pause()
-        {
-            GameTime.GamePaused = true;
-            Time.timeScale = 1f;
-            GameTime.MainTimer.Pause();
-        }
-
-        public void Resume()
-        {
-            GameTime.GamePaused = false;
-            Time.timeScale = 1f;
-            GameTime.MainTimer.Resume();
-        }
-
         public void SaveGameSettings()
         {
-            string UserSettingsJson = JsonUtility.ToJson(GameSettings.Inst());
-            CompressToZip(Encoding.Unicode.GetBytes(UserSettingsJson), "UserSettings.zip");
+            CompressToZipJson<GameSettings>(GameMain.GameSettings, "UserSettings.zip");
         }
 
-        public void CompressToZip(byte[] Bytes, string ZipFileName)
+        public void CompressToZipJson<T>(GameSettings Object, string ZipFileName)
         {
+            string Json = JsonUtility.ToJson(Object);
+            Debug.Log(Json);
+            byte[] Byte = Encoding.Unicode.GetBytes(Json);
             byte[] Buffer = new byte[2048];
             using (
                 ZipOutputStream ZS = new ZipOutputStream(
@@ -273,7 +311,7 @@ namespace GameBehaviourManager
                     DateTime = DateTime.Now,
                 };
                 ZS.PutNextEntry(Path);
-                using (MemoryStream MS = new MemoryStream(Bytes))
+                using (MemoryStream MS = new MemoryStream(Byte))
                 {
                     StreamUtils.Copy(MS, ZS, Buffer);
                 }
@@ -282,6 +320,9 @@ namespace GameBehaviourManager
                 ZS.Finish();
                 ZS.Close();
             }
+            Debug.Log("Completed!");
         }
+
+        public void LoadFromZip() { }
     }
 }

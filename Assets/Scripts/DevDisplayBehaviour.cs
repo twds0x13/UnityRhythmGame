@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using Game = GameBehaviourManager.GameBehaviour;
+using Main = GameMain;
 
 public class DevDisplayBehaviour : MonoBehaviour
 {
@@ -17,7 +18,7 @@ public class DevDisplayBehaviour : MonoBehaviour
 
     void Update()
     {
-        switch (this.name)
+        switch (name)
         {
             case "DevGameTimeDisplay":
                 Text.text = "Gametime :" + (Game.Inst.GetGameTime()).ToString("F2") + " S";
@@ -30,6 +31,12 @@ public class DevDisplayBehaviour : MonoBehaviour
                 break;
             case "DevTimeScaleCacheDisplay":
                 Text.text = "TimeScaleCache x" + (Game.Inst.GetTimeScaleCache()).ToString("F2");
+                break;
+            case "DevNoteCountInactiveDisplay":
+                Text.text = "NoteInactive x" + (Main.GetNotePoolCountInactive()).ToString();
+                break;
+            case "DevCurNoteCountDisplay":
+                Text.text = "AllNoteCount x" + (Main.GetCurNoteCount()).ToString();
                 break;
         }
     }
