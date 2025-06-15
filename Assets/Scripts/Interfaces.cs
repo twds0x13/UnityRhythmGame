@@ -29,7 +29,7 @@ namespace IUtils
     /// </summary>
     public interface IPooling
     {
-        public abstract void AnimeUpdate();
+        public abstract void HandlerManager();
     }
 
     /// <summary>
@@ -40,9 +40,5 @@ namespace IUtils
         public abstract float GetGameTime(); // 经过用户设置后的判定时间戳
 
         public abstract float GetAbsTime(); // 包含游戏加载时间的绝对时间戳
-
-        public abstract void Pause(); // ...
-
-        public abstract void Resume(); // ...
     }
 }

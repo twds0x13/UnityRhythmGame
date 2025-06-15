@@ -45,7 +45,7 @@ namespace Anime
 
         public float TotalTimeElapse()
         {
-            return this.EndT - this.StartT;
+            return EndT - StartT;
         }
     }
 }
