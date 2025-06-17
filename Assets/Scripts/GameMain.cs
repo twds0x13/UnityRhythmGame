@@ -3,188 +3,287 @@ using Anime;
 using GameBehaviourManager;
 using IUtils;
 using NBehaviour;
+using TBehaviour;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.SceneManagement;
 using Game = GameBehaviourManager.GameBehaviour;
 using Rand = UnityEngine.Random;
 
-public class GameMain : MonoBehaviour, IDev
+/// <summary>
+/// 负责管理游戏核心逻辑的类
+/// </summary>
+namespace GameMain
 {
-    private static ObjectPool<GameObject> NotePool;
-
-    public delegate void UpdateHandler();
-
-    public UpdateHandler UpdateWhenKeyPressed;
-
-    public static GameSettings GameSettings = new GameSettings();
-
-    public System.Random RandInt = new System.Random();
-
-    public GameObject NoteInst; // 不同颜色的Note已合并为同一个游戏物件，用不同的Sprite表示
-
-    public bool CurFlag;
-
-    public bool isDev;
-
-    public bool TestFlag;
-
-    public static int CurNoteCount;
-
-    private void InitPools()
+    public class GameMain : MonoBehaviour, IDev
     {
-        NotePool = new ObjectPool<GameObject>(
-            () =>
-            {
-                GameObject Note = Instantiate(NoteInst, transform);
+        private static ObjectPool<GameObject> NotePool;
 
-                Note.GetComponent<NoteBehaviour>()
-                    .DestroyEvent.AddListener(() =>
-                    {
-                        // Egg Egg ......
+        private static ObjectPool<GameObject> TrackPool;
 
-                        NotePool.Release(Note);
+        public delegate void UpdateHandler();
 
-                        CurNoteCount--;
-                    });
+        public UpdateHandler UpdateWhenKeyPressed;
 
-                Note.GetComponent<NoteBehaviour>().ResetNote();
+        public float LastSaveLoadTimeCache; // 暂时只用来记录上一次 保存 | 读取 配置的时间，可以删除
 
-                return Note;
-            },
-            (Note) =>
-            {
-                Note.SetActive(true);
+        internal static GameSettings GameSettings;
 
-                Note.GetComponent<NoteBehaviour>().ResetNote();
-            },
-            (Note) =>
-            {
-                Note.SetActive(false);
-            },
-            (Note) =>
-            {
-                Destroy(Note);
-            },
-            true,
-            512,
-            2048
-        );
-    }
+        public System.Random Rand = new();
 
-    void Start()
-    {
-        InitPools();
+        public GameObject NoteInst; // 不同颜色的Note已合并为同一个游戏物件，用不同的Sprite表示
 
-        UpdateWhenKeyPressed += TestLoadGameSettings;
+        public GameObject TrackInst;
 
-        UpdateWhenKeyPressed += Test;
+        public bool CurFlag;
 
-        DevLog();
+        public bool isDev;
 
-        TestFlag = true;
-    }
+        public bool TestFlag;
 
-    void Update()
-    {
-        UpdateWhenKeyPressed();
-    }
+        public static int CurNoteCount;
 
-    private void Test()
-    {
-        if (Input.GetKey(KeyCode.D))
+        public static int TrackIdIterator;
+
+        private void InitPools()
         {
-            GetNotesDynamic();
-        }
-    }
-
-    private void TestLoadGameSettings()
-    {
-        if (Input.GetKeyDown(GameSettings.KeyGameTesting))
-        {
-            GameBehaviour.Inst.SaveGameSettings();
-        }
-    }
-
-    /// <summary>
-    /// 在游戏过程中动态生成所需的Note，需要读取谱面文件作为需求列表。
-    /// TODO : 实现读取文件和结构化存储Note信息
-    /// TODO ?: 适配.osz
-    /// </summary>
-    private void GetNotesDynamic()
-    {
-        if (!Game.Inst.IsGamePaused())
-        {
-            var Tmp = new Queue<AnimeClip>();
-            var VecTmp = new Vector3(-1f, 1f, 0f);
-            Tmp.Enqueue(
-                new AnimeClip(
-                    Game.Inst.GetGameTime(),
-                    Game.Inst.GetGameTime() + 0.35f,
-                    VecTmp,
-                    VecTmp - new Vector3(0f, 1.5f, 0f)
-                )
+            NotePool = new ObjectPool<GameObject>(
+                InstantiateNote,
+                (Note) =>
+                {
+                    Note.SetActive(true);
+                },
+                (Note) =>
+                {
+                    Note.SetActive(false);
+                },
+                (Note) =>
+                {
+                    Destroy(Note);
+                },
+                true,
+                64,
+                128
             );
 
-            GetOneNote(Tmp);
-            Tmp = new Queue<AnimeClip>();
-            VecTmp = new Vector3(1f, 1f, 0f);
-            Tmp.Enqueue(
-                new AnimeClip(
-                    Game.Inst.GetGameTime(),
-                    Game.Inst.GetGameTime() + 0.35f,
-                    VecTmp,
-                    VecTmp - new Vector3(0f, 1.5f, 0f)
-                )
+            TrackPool = new ObjectPool<GameObject>(
+                InstantiateTrack,
+                (Track) =>
+                {
+                    Track.SetActive(true);
+                },
+                (Track) =>
+                {
+                    Track.SetActive(false);
+                },
+                (Track) =>
+                {
+                    Destroy(Track);
+                },
+                true,
+                8,
+                32 - 4 // 这里的 maxSize 竟然只限制池内未启用物体数量....
             );
-            GetOneNote(Tmp);
         }
-    }
 
-    /// <summary>
-    /// 从对象池中获取一个·新的 <see cref="NoteBehaviour"/> 对象，并同时初始化动画队列
-    /// </summary>
-    /// <param name="CurFlag">在当前 Note 完成初始化前这个 Flag 应该为 false（按引用传递）</param>
-    private void GetOneNote(Queue<AnimeClip> AnimeQueue)
-    {
-        GameObject CurObj = NotePool.Get();
+        private GameObject InstantiateTrack()
+        {
+            GameObject Track = Instantiate(TrackInst, transform);
 
-        CurObj.GetComponent<NoteBehaviour>().AnimeQueue = AnimeQueue;
+            Track
+                .GetComponent<TrackBehaviour>()
+                .DestroyEvent.AddListener(() =>
+                {
+                    TrackPool.Release(Track);
 
-        CurNoteCount++;
-    }
+                    TrackIdIterator--;
+                });
 
-    public Vector3 RandVec()
-    {
-        return new Vector3(
-            (float)(3f * (Rand.value - 0.5)),
-            (float)(2f * (Rand.value - 0.5)),
-            (float)(2f * (Rand.value - 0.5))
-        );
-    }
+            // Another Stupid Line Of Code Once Lived Here.
 
-    public Vector3 FlatRandVec()
-    {
-        return new Vector3((float)(4f * (Rand.value - 0.5)), (float)(2f * (Rand.value - 0.5)), 0f);
-    }
+            return Track;
+        }
 
-    public Vector3 StraightRandVec(float Y)
-    {
-        return new Vector3((float)(3f * (Rand.value - 0.5)), Y, (float)(Rand.value + 1f));
-    }
+        private GameObject InstantiateNote()
+        {
+            GameObject Note = Instantiate(NoteInst, transform);
 
-    public void DevLog()
-    {
-        Game.Inst.DevLog();
-    }
+            Note.GetComponent<NoteBehaviour>()
+                .DestroyEvent.AddListener(() =>
+                {
+                    // A Stupid Line Of Code Once Lived Here, but Not Forever.
 
-    public static int GetNotePoolCountInactive()
-    {
-        return NotePool.CountInactive;
-    }
+                    NotePool.Release(Note);
 
-    public static int GetCurNoteCount()
-    {
-        return CurNoteCount;
+                    CurNoteCount--;
+                });
+
+            return Note;
+        }
+
+        private void InitGameSettings()
+        {
+            GameSettings = new(); // 用一个对象存储游戏设置，方便读取，存储和修改
+        }
+
+        private void Start()
+        {
+            InitPools();
+
+            InitGameSettings();
+
+            UpdateWhenKeyPressed += LoadGameSettings;
+
+            UpdateWhenKeyPressed += SaveGameSettings;
+
+            UpdateWhenKeyPressed += TestNote;
+
+            UpdateWhenKeyPressed += TestTrack;
+        }
+
+        void Update()
+        {
+            UpdateWhenKeyPressed();
+        }
+
+        private void TestNote()
+        {
+            if (Input.GetKeyDown(GameSettings.KeyGameTestNote))
+            {
+                GetNotesDynamic();
+            }
+        }
+
+        private void TestTrack()
+        {
+            if (Input.GetKey(GameSettings.KeyGameTestTrack))
+            {
+                GetTracksDynamic();
+            }
+        }
+
+        private void SaveGameSettings()
+        {
+            if (Input.GetKeyDown(GameSettings.KeyGameSave))
+            {
+                LastSaveLoadTimeCache = Game.Inst.GetAbsTime();
+                Game.Inst.SaveGameSettings();
+            }
+        }
+
+        private void LoadGameSettings()
+        {
+            if (Input.GetKeyDown(GameSettings.KeyGameLoad))
+            {
+                LastSaveLoadTimeCache = Game.Inst.GetAbsTime();
+                Game.Inst.LoadGameSettings(ref GameSettings);
+            }
+        }
+
+        /// <summary>
+        /// 在游戏过程中动态生成所需的 <see cref="NoteBehaviour"/> 对象，需要读取谱面文件作为需求列表。
+        /// TODO : 实现读取文件和结构化存储Note信息
+        /// TODO ?: 适配.mcz
+        /// </summary>
+        private void GetNotesDynamic()
+        {
+            if (!Game.Inst.IsGamePaused())
+            {
+                var Tmp = new Queue<AnimeClip>();
+                var VecTmp = new Vector3(-1f, 1.5f, 0f);
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        Game.Inst.GetGameTime(),
+                        Game.Inst.GetGameTime() + 0.65f,
+                        VecTmp,
+                        VecTmp - new Vector3(0f, 2.5f, 0f)
+                    )
+                );
+
+                GetOneNote(Tmp);
+            }
+        }
+
+        private void GetTracksDynamic()
+        {
+            if (!Game.Inst.IsGamePaused())
+            {
+                var Tmp = new Queue<AnimeClip>();
+                var VecTmp = new Vector3(1f, 1.5f, 0f);
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        Game.Inst.GetGameTime(),
+                        Game.Inst.GetGameTime() + 0.65f,
+                        VecTmp,
+                        VecTmp - new Vector3(0f, 2.5f, 0f)
+                    )
+                );
+
+                GetOneTrack(Tmp);
+            }
+        }
+
+        /// <summary>
+        /// 从对象池中获取一个新的 <see cref="NoteBehaviour"/> 对象，并同时初始化它的动画队列
+        /// </summary>
+        private void GetOneNote(Queue<AnimeClip> AnimeQueue)
+        {
+            GameObject CurObj = NotePool.Get();
+
+            CurObj.GetComponent<NoteBehaviour>().AnimeQueue = AnimeQueue;
+
+            CurNoteCount++;
+        }
+
+        private void GetOneTrack(Queue<AnimeClip> AnimeQueue)
+        {
+            GameObject CurObj = TrackPool.Get();
+
+            CurObj.GetComponent<TrackBehaviour>().AnimeQueue = AnimeQueue; // 有一个人复制粘贴代码忘了改名字，是谁呢好难猜呀
+
+            CurObj.GetComponent<TrackBehaviour>().TrackId = TrackIdIterator;
+
+            CurObj.GetComponent<TrackBehaviour>().PostResetLock = true;
+
+            TrackIdIterator++;
+        }
+
+        public Vector3 RandVec()
+        {
+            return new Vector3(
+                (float)(3f * (Random.value - 0.5)),
+                (float)(2f * (Random.value - 0.5)),
+                (float)(2f * (Random.value - 0.5))
+            );
+        }
+
+        public Vector3 FlatRandVec()
+        {
+            return new Vector3(
+                (float)(4f * (Random.value - 0.5)),
+                (float)(2f * (Random.value - 0.5)),
+                0f
+            );
+        }
+
+        public Vector3 StraightRandVec(float Y)
+        {
+            return new Vector3((float)(3f * (Random.value - 0.5)), Y, (float)(Random.value + 1f));
+        }
+
+        public void DevLog()
+        {
+            Game.Inst.DevLog();
+        }
+
+        public static int GetNotePoolCountInactive()
+        {
+            return NotePool.CountInactive;
+        }
+
+        public static int GetCurNoteCount()
+        {
+            return CurNoteCount;
+        }
     }
 }
