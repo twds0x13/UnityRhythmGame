@@ -15,16 +15,17 @@ namespace NBehaviour
 
         public bool isFake;
 
-        void Start()
+        private void Awake() // 在Awake时间段就处理好委托，方便OnEnable重置状态（ResetSelfHandler）
         {
-            RegisteredUpdates += Judge;
-            UpdateSelfDisappear += Disappear;
-            UpdateSelfPosition += Position;
+            LogicUpdator += Judge;
+            AnimeDisappearUpdator += Disappear;
+            AnimeQueueUpdator += Position;
+            OnEnableHandler += ResetNote; // 委托,极为先进的,,,,,,
         }
 
         public void Judge()
         {
-            if (Input.GetKeyDown(KeyCode.Q))
+            if (Input.GetKeyDown(KeyCode.T)) // 串接到轨道Object对应的属性
             {
                 RegisterDestroy();
             }
@@ -32,7 +33,7 @@ namespace NBehaviour
 
         public void ResetNote()
         {
-            RegisteredUpdates -= InvokeDestroy; // 记得清空已经用过的删除事件，不然刚生成顺手NotePool就给删了......
+            LogicUpdator -= InvokeDestroy; // 记得清空已经用过的删除事件，不然刚生成顺手NotePool就给删了......
 
             isDestroying = false;
             isJudged = false;
@@ -51,7 +52,7 @@ namespace NBehaviour
         {
             CurT = Mathf.Pow(
                 (Game.Inst.GetGameTime() - CurAnime.StartT) / CurAnime.TotalTimeElapse(),
-                3f
+                2f
             );
 
             transform.position = (1 - CurT) * CurAnime.StartV + CurT * CurAnime.EndV;
@@ -62,18 +63,11 @@ namespace NBehaviour
             CurT = DisappearingTimeCache + DisappearingTimeSpan - Game.Inst.GetGameTime(); // 0.2f -> 0f
 
             transform.position =
-                DisappearingPosCache - new Vector3(0f, 5 * (DisappearingTimeSpan - CurT), 0f);
+                DisappearingPosCache - new Vector3(0f, 3 * (DisappearingTimeSpan - CurT), 0f);
 
             SpriteRenderer.color = new Color(1f, 1f, 1f, CurT);
 
-            if (CurT == 0f)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return CurT != 0f;
         }
 
         public new void DevLog()

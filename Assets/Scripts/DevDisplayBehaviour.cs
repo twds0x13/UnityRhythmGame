@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using Game = GameBehaviourManager.GameBehaviour;
-using Main = GameMain;
+using Main = GameMain.GameMain;
 
 public class DevDisplayBehaviour : MonoBehaviour
 {
