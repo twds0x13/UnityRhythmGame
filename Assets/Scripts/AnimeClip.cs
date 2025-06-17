@@ -1,10 +1,11 @@
 using IUtils;
+using NBehaviour;
 using UnityEngine;
 
 namespace Anime
 {
     /// <summary>
-    /// 动画切片结构体，保存一段时间内一个Note的位移数据
+    /// 动画切片结构体，保存一段时间内<see cref="NoteBehaviour"/>的位移数据
     /// </summary>
     public struct AnimeClip : IAnime, IDev
     {
