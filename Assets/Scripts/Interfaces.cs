@@ -29,7 +29,7 @@ namespace IUtils
     /// </summary>
     public interface IPooling
     {
-        public abstract void HandlerManager();
+        public abstract void AnimeUpdatorManager();
     }
 
     /// <summary>

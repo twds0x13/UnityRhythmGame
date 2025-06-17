@@ -151,8 +151,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7df15fa26ebe7e54284157447510226b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  LastSaveLoadTimeCache: 0
   NoteInst: {fileID: 5571962577675778044, guid: 1b77a018f57a09c48826c2f78f9413ca, type: 3}
+  TrackInst: {fileID: 614768867850833973, guid: 6ec400908efd3d4489aee935686d5ff0, type: 3}
   CurFlag: 0
+  isDev: 0
   TestFlag: 0
 --- !u!4 &509751597
 Transform:

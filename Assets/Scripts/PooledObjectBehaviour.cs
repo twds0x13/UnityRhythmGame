@@ -1,14 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Threading;
-using System.Threading.Tasks;
 using Anime;
 using IUtils;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.EventSystems;
+using static PooledObject.PooledObjectBehaviour;
 using Game = GameBehaviourManager.GameBehaviour;
 
 namespace PooledObject
@@ -19,17 +15,17 @@ namespace PooledObject
 
         public UnityEvent InactivateEvent = new UnityEvent();
 
-        public delegate void UpdateHandler();
+        public Action OnEnableHandler; // 每次被启用时，调用这个函数接口
 
-        public delegate bool AnimeUpdateHandler();
+        public Action AwakeHandler; // 第一次被生成时，调用这个函数接口
 
-        public AnimeUpdateHandler UpdateSelfDisappear; // 在处于消失过程中时，调用这个函数接口用作动画更新
+        public Func<bool> AnimeDisappearUpdator; // 在处于消失过程中时，调用这个函数接口用作动画更新
 
-        public UpdateHandler UpdateSelfPosition; // 在还未消失（正常动画）时，调用这个接口用作动画更新
+        public Action AnimeQueueUpdator; // 在还未消失（正常动画）时，调用这个接口用作动画更新
 
-        // 保证在一次更新之内会且仅会调用这两个动画接口之一
+        // 保证在一次更新之内会且仅会调用 ↑上面这两个动画接口之一
 
-        public UpdateHandler RegisteredUpdates; // 在所有状态下都调用接口，用于处理判定等物理更新
+        public Action LogicUpdator; // 在所有状态下都调用接口，用于处理判定等物理更新
 
         public SpriteRenderer SpriteRenderer;
 
@@ -41,11 +37,15 @@ namespace PooledObject
 
         public bool isDestroying = false;
 
-        public bool isInactivate = false;
+        public bool isDestroyAble = true;
 
-        public bool StartAnime = false; // 是否开始第一次动画
+        public bool isInactive = false;
 
-        public bool EndAnime = false; // 是否结束最后一次动画
+        public bool isStartAnime = false; // 是否开始第一次动画
+
+        public bool isEndAnime = false; // 是否结束最后一次动画
+
+        public bool PostResetLock = false; // 是否能进行后初始化（ 等待全部 GetComponent<> 修改结束后再进行后初始化 ）
 
         public System.Random Rand = new System.Random();
 
@@ -79,6 +79,8 @@ namespace PooledObject
 
         public bool IsVisableInCamera { get; private set; }
 
+        public void Null() { } // It's Empty!
+
         private void OnBecameVisible()
         {
             IsVisableInCamera = true;
@@ -89,30 +91,37 @@ namespace PooledObject
             IsVisableInCamera = false;
         }
 
-        public void OnEnable()
+        private void Awake()
+        {
+            AwakeHandler();
+        }
+
+        private void OnEnable()
         {
             isDestroying = false;
 
-            isInactivate = false;
+            isInactive = false;
 
             isDisappearing = false;
+
+            OnEnableHandler();
         }
 
         public void Update()
         {
-            HandlerManager();
-            RegisteredUpdates();
+            AnimeUpdatorManager();
+            LogicUpdator();
         }
 
         public void RegisterDestroy()
         {
-            if (!isDestroying)
+            if (!isDestroying && isDestroyAble)
             {
                 isDestroying = true;
 
                 SpriteRenderer.color = new Color(1f, 1f, 1f, 0f); // 只隐藏屏幕内显示，判定循环依旧工作
 
-                RegisteredUpdates += InvokeDestroy;
+                LogicUpdator += InvokeDestroy;
             }
         }
 
@@ -146,24 +155,24 @@ namespace PooledObject
 
         public void Inactivate()
         {
-            if (!isInactivate)
+            if (!isInactive)
             {
-                isInactivate = true;
+                isInactive = true;
 
                 InactivateEvent?.Invoke();
             }
         }
 
         /// <summary>
-        /// 管理需要调用哪个函数接口的状态机
+        /// 管理需要调用哪个动画函数接口的状态机
         /// </summary>
-        public void HandlerManager()
+        public void AnimeUpdatorManager()
         {
-            AnimeQueue.TryPeek(out CurAnime);
+            AnimeQueue.TryPeek(out CurAnime); // 至少要有一个垫底动画
 
             if (hasDisappearingAnime && isDisappearing)
             {
-                if (!UpdateSelfDisappear())
+                if (!AnimeDisappearUpdator())
                 {
                     RegisterDestroy(); // 在处理完消失动画后准备删除
                 }
@@ -172,7 +181,7 @@ namespace PooledObject
             {
                 if (Game.Inst.GetGameTime() < CurAnime.EndT)
                 {
-                    UpdateSelfPosition();
+                    AnimeQueueUpdator();
                 }
                 else
                 {

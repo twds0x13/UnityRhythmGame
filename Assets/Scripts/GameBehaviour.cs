@@ -5,7 +5,10 @@ using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using IUtils;
 using Palmmedia.ReportGenerator.Core.Common;
+using SFB;
 using UnityEngine;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
+using Main = GameMain.GameMain;
 using Rand = UnityEngine.Random;
 
 namespace GameBehaviourManager
@@ -25,7 +28,13 @@ namespace GameBehaviourManager
 
         public KeyCode KeyGameResume = KeyCode.W;
 
-        public KeyCode KeyGameTesting = KeyCode.F5;
+        public KeyCode KeyGameSave = KeyCode.Alpha1;
+
+        public KeyCode KeyGameLoad = KeyCode.Alpha2;
+
+        public KeyCode KeyGameTestNote = KeyCode.Alpha3;
+
+        public KeyCode KeyGameTestTrack = KeyCode.Alpha4;
 
         public bool OneKey // 是不是用同一个按键来处理暂停和恢复
         {
@@ -46,17 +55,18 @@ namespace GameBehaviourManager
         public void DevLog()
         {
             Debug.LogFormat(
-                "JTO:{0},DTO:{1},KGP:{2},KGR:{3}",
+                "JTO:{0},DTO:{1},KGP:{2},KGR:{3},KGS:{4},KGL:{5},KGT:{6}",
                 JudgementTimeOffset,
                 DisplayTimeOffset,
                 KeyGamePause.ToString(),
-                KeyGameResume.ToString()
+                KeyGameResume.ToString(),
+                KeyGameSave
             );
         }
     }
 
     /// <summary>
-    /// 用于处理游戏时间流速的全局更改
+    /// 用于处理 <see cref="Time.timeScale"/> 的全局更改
     /// </summary>
     internal class GameTime
     {
@@ -81,7 +91,7 @@ namespace GameBehaviourManager
         public static float TimeScale
         {
             get { return Time.timeScale; }
-            set { Time.timeScale = Mathf.Clamp(value, 0f, 100f); }
+            private set { Time.timeScale = Mathf.Clamp(value, 0f, 100f); }
         }
 
         public static float TimeScaleCache = 0f;
@@ -89,13 +99,14 @@ namespace GameBehaviourManager
         public static bool GamePaused { get; set; }
 
         /// <summary>
-        /// 处理全局时间流速变化（包括加减速，赞停等）相关的逻辑和按键检测
+        /// <para>处理全局 <see cref="Time.timeScale"/> 变化（包括加减速，暂停等）相关的逻辑和按键检测。</para>
+        /// 使用 <see cref="TimeScale"/> 作为索引器，保证不会越界修改 <see cref="Time.timeScale"/> 数值。
         /// </summary>
         public static void GlobalTimeUpdateHandler()
         {
-            if (!GameMain.GameSettings.OneKey)
+            if (!Main.GameSettings.OneKey)
             {
-                if (Input.GetKeyDown(GameMain.GameSettings.KeyGameResume))
+                if (Input.GetKeyDown(Main.GameSettings.KeyGameResume))
                 {
                     TimeChanging = true;
                     TimeResuming = true;
@@ -104,7 +115,7 @@ namespace GameBehaviourManager
                     TimeScaleCache = TimeScale;
                     TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
                 }
-                if (Input.GetKeyDown(GameMain.GameSettings.KeyGamePause))
+                if (Input.GetKeyDown(Main.GameSettings.KeyGamePause))
                 {
                     TimeChanging = true;
                     TimePausing = true;
@@ -116,7 +127,7 @@ namespace GameBehaviourManager
             }
             else
             {
-                if (Input.GetKeyDown(GameMain.GameSettings.KeyGamePause))
+                if (Input.GetKeyDown(Main.GameSettings.KeyGamePause))
                 {
                     if (TimeStatFlip)
                     {
@@ -182,7 +193,7 @@ namespace GameBehaviourManager
     }
 
     /// <summary>
-    /// 用来管理游戏相关的行为，包括暂停，修改用户设置等等
+    /// 用来管理游戏相关的行为，包括暂停，修改用户设置等。
     /// </summary>
     public class GameBehaviour : MonoBehaviour, IDev
     {
@@ -210,7 +221,7 @@ namespace GameBehaviourManager
 
             if (GBinstance != null && GBinstance != this)
             {
-                Destroy(this.gameObject);
+                Destroy(gameObject);
             }
             else
             {
@@ -248,12 +259,12 @@ namespace GameBehaviourManager
 
         public float GetGameTime()
         {
-            return GameTime.MainTimer.GetTimeElapsed() + GameMain.GameSettings.JudgementTimeOffset;
+            return GameTime.MainTimer.GetTimeElapsed() + Main.GameSettings.JudgementTimeOffset;
         }
 
         public float GetGameTimeMs()
         {
-            return (GameTime.MainTimer.GetTimeElapsed() + GameMain.GameSettings.JudgementTimeOffset)
+            return (GameTime.MainTimer.GetTimeElapsed() + Main.GameSettings.JudgementTimeOffset)
                 * 1000;
         }
 
@@ -279,7 +290,7 @@ namespace GameBehaviourManager
 
         public void SetTimeScaleSpeed(float Speed)
         {
-            GameMain.GameSettings.SetTimeScaleSpeed(Speed);
+            Main.GameSettings.SetTimeScaleSpeed(Speed);
         }
 
         public bool IsGamePaused()
@@ -289,40 +300,78 @@ namespace GameBehaviourManager
 
         public void SaveGameSettings()
         {
-            CompressToZipJson<GameSettings>(GameMain.GameSettings, "UserSettings.zip");
+            CompressToZipJson(Main.GameSettings, "UserSettings.zip");
         }
 
-        public void CompressToZipJson<T>(GameSettings Object, string ZipFileName)
+        public bool LoadGameSettings(ref GameSettings Object)
         {
-            string Json = JsonUtility.ToJson(Object);
-            Debug.Log(Json);
+            return LoadJsonFromZip<GameSettings>("Usersettings.zip", ref Object);
+        }
+
+        public bool CompressToZipJson<T>(T Object, string ZipFileName)
+        {
+            string Json = JsonUtility.ToJson(Object, true);
             byte[] Byte = Encoding.Unicode.GetBytes(Json);
             byte[] Buffer = new byte[2048];
-            using (
-                ZipOutputStream ZS = new ZipOutputStream(
-                    File.Create(Path.Join(UserSettingsZipPath, ZipFileName))
-                )
-            )
+            try
             {
-                ZS.SetLevel(5);
-                ZipEntry Path = new ZipEntry("UserSettings.json")
+                var FS = File.Create(Path.Join(UserSettingsZipPath, ZipFileName));
+                using (ZipOutputStream ZS = new ZipOutputStream(FS))
                 {
-                    IsUnicodeText = true,
-                    DateTime = DateTime.Now,
-                };
-                ZS.PutNextEntry(Path);
-                using (MemoryStream MS = new MemoryStream(Byte))
-                {
-                    StreamUtils.Copy(MS, ZS, Buffer);
+                    ZS.SetLevel(5);
+                    ZipEntry Path = new ZipEntry("UserSettings.json")
+                    {
+                        IsUnicodeText = true,
+                        DateTime = DateTime.Now,
+                    };
+                    ZS.PutNextEntry(Path);
+                    using (MemoryStream MS = new MemoryStream(Byte))
+                    {
+                        StreamUtils.Copy(MS, ZS, Buffer);
+                    }
+                    ZS.CloseEntry();
+                    ZS.IsStreamOwner = false;
+                    ZS.Finish();
+                    ZS.Close();
                 }
-                ZS.CloseEntry();
-                ZS.IsStreamOwner = false;
-                ZS.Finish();
-                ZS.Close();
+                FS.Close();
+                Debug.Log("Succesfully Saved!");
+                return true;
             }
-            Debug.Log("Completed!");
+            catch
+            {
+                Debug.Log("Failed to Save.");
+                return false;
+            }
         }
 
-        public void LoadFromZip() { }
+        public bool LoadJsonFromZip<T>(string ZipFileName, ref T RefObject)
+        {
+            try
+            {
+                using (
+                    ZipInputStream ZS = new ZipInputStream(
+                        File.OpenRead(Path.Join(UserSettingsZipPath, ZipFileName))
+                    )
+                )
+                {
+                    ZS.GetNextEntry();
+                    byte[] ZipBuffer = new byte[ZS.Length];
+                    ZS.Read(ZipBuffer, 0, ZipBuffer.Length);
+                    string Json = Encoding.Unicode.GetString(ZipBuffer);
+                    RefObject = JsonUtility.FromJson<T>(Json);
+                    ZS.CloseEntry();
+                    ZS.IsStreamOwner = false;
+                    ZS.Close();
+                    Debug.Log("Succesfully Loaded!");
+                    return true;
+                }
+            }
+            catch
+            {
+                Debug.Log("Failed to Load.");
+                return false;
+            }
+        }
     }
 }
