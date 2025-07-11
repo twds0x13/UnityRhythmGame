@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: -6710086331929297271}
   - component: {fileID: -5438484560457107927}
   m_Layer: 0
-  m_Name: track
+  m_Name: Track
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,7 +28,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2.5, y: 2.5, z: 2.5}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -48,23 +48,12 @@ MonoBehaviour:
   DestroyEvent:
     m_PersistentCalls:
       m_Calls: []
-  InactivateEvent:
-    m_PersistentCalls:
-      m_Calls: []
   SpriteRenderer: {fileID: -5438484560457107927}
   SpriteList:
   - {fileID: 21300000, guid: d90dead9f9d54644da63f8256171f851, type: 3}
-  hasDisappearingAnime: 1
-  isDisappearing: 0
-  isDestroying: 0
-  isDestroyAble: 1
-  isInactivate: 0
-  StartAnime: 0
-  EndAnime: 0
-  DisappearingTimeSpan: 0
-  DisappearingTimeCache: 0
-  DisappearingCurTCache: 0
-  DisappearingPosCache: {x: 0, y: 0, z: 0}
+  - {fileID: 21300000, guid: af829a3704e709d47a22e415a2402ea8, type: 3}
+  JudgeTime: 0
+  isJudged: 0
   isFake: 0
 --- !u!212 &-5438484560457107927
 SpriteRenderer:
