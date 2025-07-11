@@ -1,13 +1,13 @@
-using IUtils;
-using NBehaviour;
+using System.Collections.Generic;
+using NoteManager;
 using UnityEngine;
 
 namespace Anime
 {
     /// <summary>
-    /// 动画切片结构体，保存一段时间内<see cref="NoteBehaviour"/>的位移数据
+    /// 动画切片结构体，保存一段时间内<see cref="PooledObjectBehaviour"/>的位移数据
     /// </summary>
-    public struct AnimeClip : IAnime, IDev
+    public struct AnimeClip
     {
         public Vector3 StartV { get; set; }
 
@@ -33,20 +33,42 @@ namespace Anime
             this.EndT = EndT;
         }
 
-        public void DevLog()
-        {
-            Debug.LogFormat(
-                "Current Anime : StartV: {0} EndV: {1} StartT: {2} EndT: {3}",
-                StartV.ToString(),
-                EndV.ToString(),
-                StartT,
-                EndT
-            );
-        }
-
         public float TotalTimeElapse()
         {
             return EndT - StartT;
+        }
+    }
+
+    public class AnimeMachine
+    {
+        public bool HasDisappearAnime = true;
+
+        public float DisappearTimeSpan = 0.2f;
+
+        public float DisappearTimeCache;
+
+        public float DisappearCurTCache;
+
+        public Vector3 DisappearingPosCache;
+
+        public float CurT // 用来处理 Lerp 函数，需要值的范围在 0 ~ 1 间往复循环。在到达 1 时跳转回 0
+        {
+            get { return _t; }
+            set { _t = Mathf.Clamp01(value); }
+        }
+
+        private float _t;
+
+        public Queue<AnimeClip> AnimeQueue = new();
+
+        public AnimeClip CurAnime;
+
+        public AnimeMachine(Queue<AnimeClip> Queue)
+        {
+            foreach (var Item in Queue)
+            {
+                this.AnimeQueue.Enqueue(Item);
+            }
         }
     }
 }
