@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 7692404246049629888}
   - component: {fileID: 1745780204485166271}
   m_Layer: 0
-  m_Name: note
+  m_Name: Note
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -48,9 +48,6 @@ MonoBehaviour:
   DestroyEvent:
     m_PersistentCalls:
       m_Calls: []
-  InactivateEvent:
-    m_PersistentCalls:
-      m_Calls: []
   SpriteRenderer: {fileID: 1745780204485166271}
   SpriteList:
   - {fileID: 21300000, guid: c38bb2627fd4a3b4abe917a62a82ffdd, type: 3}
@@ -59,9 +56,6 @@ MonoBehaviour:
   isDisappearing: 0
   isDestroying: 0
   isDestroyAble: 1
-  isInactivate: 0
-  StartAnime: 0
-  EndAnime: 0
   DisappearingTimeSpan: 0
   DisappearingTimeCache: 0
   DisappearingCurTCache: 0

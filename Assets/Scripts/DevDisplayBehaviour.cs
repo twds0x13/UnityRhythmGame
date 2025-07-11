@@ -1,9 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using Game = GameBehaviourManager.GameBehaviour;
-using Main = GameMain.GameMain;
+using Game = GameManager.GameManager;
+using Main = GameCore.GameController;
+using Pool = PooledObject.PooledObjectManager;
 
 public class DevDisplayBehaviour : MonoBehaviour
 {
@@ -33,10 +32,13 @@ public class DevDisplayBehaviour : MonoBehaviour
                 Text.text = "TimeScaleCache x" + (Game.Inst.GetTimeScaleCache()).ToString("F2");
                 break;
             case "DevNoteCountInactiveDisplay":
-                Text.text = "NoteInactive x" + (Main.GetNotePoolCountInactive()).ToString();
+                Text.text = "NoteInactive x" + (Pool.Inst.GetNotePoolCountInactive()).ToString();
                 break;
-            case "DevCurNoteCountDisplay":
-                Text.text = "AllNoteCount x" + (Main.GetCurNoteCount()).ToString();
+            case "DevNoteUIDIterator":
+                Text.text = "NoteUIDIterator x" + (Pool.Inst.GetNoteUIDIterator()).ToString();
+                break;
+            case "DevTrackUIDIterator":
+                Text.text = "TrackUIDIterator x" + (Pool.Inst.GetTrackUIDIterator()).ToString();
                 break;
         }
     }
