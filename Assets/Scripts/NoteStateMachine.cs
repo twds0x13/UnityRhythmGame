@@ -1,5 +1,5 @@
 using Anime;
-using NoteManager;
+using NoteNamespace;
 using PooledObject;
 using StateMachine;
 using UnityEngine;
@@ -9,20 +9,19 @@ namespace NoteStateMachine
 {
     public class NoteState : IState<NoteBehaviour>
     {
-        protected StateMachine<NoteBehaviour> StateMachine;
-
         protected NoteBehaviour Note;
 
-        protected PooledObjectBehaviour Base;
-
         protected AnimeMachine AnimeMachine;
+
+        protected StateMachine<NoteBehaviour> StateMachine;
 
         public NoteState(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
         {
             this.Note = Note;
-            this.Base = Note.GetBase();
-            this.AnimeMachine = Base.Anime;
+
             this.StateMachine = StateMachine;
+
+            this.AnimeMachine = Note.Instance.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -61,7 +60,6 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            Debug.Log("Enter Init");
             InitNote(Note);
             StateMachine.SwitchState(Note.AnimeNote);
         }
@@ -78,9 +76,11 @@ namespace NoteStateMachine
 
         public void InitNote(NoteBehaviour Note)
         {
-            Note.isJudged = false;
-            Base.SpriteRenderer.sprite = Note.SpriteList[Base.Rand.Next(0, 2)];
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Note.transform.SetParent(Note.ParentTrack.transform, true);
+            Note.Instance.SpriteRenderer.sprite = Note.SpriteList[
+                Note.Instance.RandInst.Next(0, 2)
+            ];
+            Note.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -92,8 +92,7 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
-            Debug.Log("Enter Anime");
+            Note.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
 
         public override void Update()
@@ -109,30 +108,31 @@ namespace NoteStateMachine
 
         public void UpdatePosition()
         {
-            Base.Anime.CurT = Mathf.Pow(
-                (Game.Inst.GetGameTime() - Base.Anime.CurAnime.StartT)
-                    / Base.Anime.CurAnime.TotalTimeElapse(),
-                0.6f
+            AnimeMachine.CurT = Mathf.Pow(
+                (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
+                    / AnimeMachine.CurAnime.TotalTimeElapse(),
+                0.45f
             );
 
             Note.transform.position =
-                (1 - Base.Anime.CurT) * Base.Anime.CurAnime.StartV
-                + Base.Anime.CurT * Base.Anime.CurAnime.EndV;
+                (1 - AnimeMachine.CurT) * AnimeMachine.CurAnime.StartV
+                + AnimeMachine.CurT * AnimeMachine.CurAnime.EndV
+                + Note.ParentTrack.CurPos();
         }
 
         public void AnimeManager()
         {
-            Base.Anime.AnimeQueue.TryPeek(out Base.Anime.CurAnime); // 至少 "应该" 有一个垫底动画
+            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // 至少 "应该" 有一个垫底动画
 
-            if (Game.Inst.GetGameTime() < Base.Anime.CurAnime.EndT)
+            if (Game.Inst.GetGameTime() < AnimeMachine.CurAnime.EndT)
             {
                 UpdatePosition();
             }
             else
             {
-                if (!Base.Anime.AnimeQueue.TryDequeue(out Base.Anime.CurAnime))
+                if (!AnimeMachine.AnimeQueue.TryDequeue(out AnimeMachine.CurAnime))
                 {
-                    if (Base.Anime.HasDisappearAnime)
+                    if (AnimeMachine.HasDisappearAnime)
                     {
                         StateMachine.SwitchState(Note.DisappearNote);
                     }
@@ -153,9 +153,8 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            Debug.Log("Enter Disappear");
-            Base.Anime.DisappearTimeCache = Game.Inst.GetGameTime();
-            Base.Anime.DisappearingPosCache = Base.transform.position;
+            AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
+            AnimeMachine.DisappearingPosCache = Note.Instance.transform.position;
         }
 
         public override void Update()
@@ -175,16 +174,16 @@ namespace NoteStateMachine
 
         public bool Disappear()
         {
-            Base.Anime.CurT =
-                (Game.Inst.GetGameTime() - Base.Anime.DisappearTimeCache)
-                / Base.Anime.DisappearTimeSpan;
+            AnimeMachine.CurT =
+                (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
+                / AnimeMachine.DisappearTimeSpan;
 
-            Base.transform.position =
-                new Vector3(0f, -Base.Anime.CurT, 0f) + Base.Anime.DisappearingPosCache;
+            Note.Instance.transform.position =
+                new Vector3(0f, -AnimeMachine.CurT, 0f) + AnimeMachine.DisappearingPosCache;
 
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - Base.Anime.CurT);
+            Note.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - AnimeMachine.CurT);
 
-            return Base.Anime.CurT - 1f >= 0;
+            return AnimeMachine.CurT - 1f >= 0;
         }
     }
 
@@ -196,9 +195,8 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            Debug.Log("Enter Destroy");
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f); // being a dirty hacker，but very trustful
-            Base.transform.position = new Vector3(0f, 20f, 0f);
+            Note.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Note.Instance.transform.position = new Vector3(0f, 20f, 0f);
             Note.DestroyEvent?.Invoke();
         }
 
