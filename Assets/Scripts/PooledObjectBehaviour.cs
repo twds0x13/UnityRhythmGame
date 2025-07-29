@@ -1,32 +1,27 @@
-using System;
-using System.Collections.Generic;
 using Anime;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Pool;
 
 namespace PooledObject
 {
-    public class PooledObjectBehaviour : MonoBehaviour
+    public class PooledObjectBehaviour : MonoBehaviour // 子类用
     {
-        public UnityEvent DestroyEvent = new();
+        public PooledObjectBehaviour Instance { get; private set; }
 
-        public System.Random Rand = new();
+        public System.Random RandInst = new(); // 随时能用的随机
 
-        public SpriteRenderer SpriteRenderer; // 记得把所有需要 Object Pooling 的预制体挂上 SpriteRenderer
+        public UnityEvent DestroyEvent = new(); // 外部调用
 
-        public Sprite[] SpriteList; // 需要非空
+        public SpriteRenderer SpriteRenderer; // 记得把所有需要 Object Pool 的预制体挂上 SpriteRenderer
 
-        public AnimeMachine Anime;
+        public AnimeMachine AnimeMachine; // 在子类中初始化
 
-        public virtual void Init(AnimeMachine Machine)
+        public Sprite[] SpriteList; // 需要是非空的
+
+        private void Awake() // 因为对象被对象池复用，所以在全局中只需执行一次，不需要 Init() 函数调用了
         {
-            Anime = Machine;
-        }
-
-        public virtual PooledObjectBehaviour GetBase()
-        {
-            return this;
+            if (Instance != this)
+                Instance = this;
         }
     }
 }

@@ -1,7 +1,7 @@
 using Anime;
 using PooledObject;
 using StateMachine;
-using TrackManager;
+using TrackNamespace;
 using UnityEngine;
 using Game = GameManager.GameManager;
 
@@ -9,21 +9,19 @@ namespace TrackStateMachine
 {
     public class TrackState : IState<TrackBehaviour>
     {
-        protected StateMachine<TrackBehaviour> StateMachine;
-
         protected TrackBehaviour Track;
 
-        protected PooledObjectBehaviour Base;
-
         protected AnimeMachine AnimeMachine;
+
+        protected StateMachine<TrackBehaviour> StateMachine;
 
         public TrackState(TrackBehaviour Track, StateMachine<TrackBehaviour> StateMachine)
         {
             this.Track = Track;
+
             this.StateMachine = StateMachine;
 
-            Base = Track.GetBase();
-            AnimeMachine = Base.Anime;
+            this.AnimeMachine = Track.Instance.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -59,8 +57,10 @@ namespace TrackStateMachine
 
         public void InitTrack(TrackBehaviour Track)
         {
-            Base.SpriteRenderer.sprite = Track.SpriteList[Base.Rand.Next(0, 2)];
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Track.Instance.SpriteRenderer.sprite = Track.SpriteList[
+                Track.Instance.RandInst.Next(0, 2)
+            ];
+            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -72,7 +72,7 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
             Debug.Log("Enter Anime");
         }
 
@@ -90,30 +90,34 @@ namespace TrackStateMachine
 
         public void UpdatePosition()
         {
-            Base.Anime.CurT = Mathf.Pow(
-                (Game.Inst.GetGameTime() - Base.Anime.CurAnime.StartT)
-                    / Base.Anime.CurAnime.TotalTimeElapse(),
-                0.6f
+            AnimeMachine.CurT = Mathf.Pow(
+                (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
+                    / AnimeMachine.CurAnime.TotalTimeElapse(),
+                0.8f
             );
 
             Track.transform.position =
-                (1 - Base.Anime.CurT) * Base.Anime.CurAnime.StartV
-                + Base.Anime.CurT * Base.Anime.CurAnime.EndV;
+                (1 - AnimeMachine.CurT) * AnimeMachine.CurAnime.StartV
+                + AnimeMachine.CurT * AnimeMachine.CurAnime.EndV;
         }
 
         public void AnimeManager()
         {
-            Base.Anime.AnimeQueue.TryPeek(out Base.Anime.CurAnime); // 至少 "应该" 有一个垫底动画
+            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // 至少 "应该" 有一个垫底动画
 
-            if (Game.Inst.GetGameTime() < Base.Anime.CurAnime.EndT)
+            if (Game.Inst.GetGameTime() < AnimeMachine.CurAnime.EndT)
             {
                 UpdatePosition();
             }
             else
             {
-                if (!Base.Anime.AnimeQueue.TryDequeue(out Base.Anime.CurAnime))
+                if (!AnimeMachine.AnimeQueue.TryDequeue(out AnimeMachine.CurAnime))
                 {
-                    if (Base.Anime.HasDisappearAnime)
+                    if (!AnimeMachine.IsDestroyable) // 不可摧毁的track
+                    {
+                        return; // TODO : 注册全局广播接收器，在游戏退出时切换到 Disappear 状态（测试用 return 没问题）
+                    }
+                    if (AnimeMachine.HasDisappearAnime)
                     {
                         StateMachine.SwitchState(Track.DisappearTrack);
                     }
@@ -135,8 +139,8 @@ namespace TrackStateMachine
         {
             base.Enter();
             Debug.Log("Enter Disappear");
-            Base.Anime.DisappearTimeCache = Game.Inst.GetGameTime();
-            Base.Anime.DisappearingPosCache = Base.transform.position;
+            AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
+            AnimeMachine.DisappearingPosCache = Track.Instance.transform.position;
         }
 
         public override void Update()
@@ -157,16 +161,16 @@ namespace TrackStateMachine
 
         public bool Disappear()
         {
-            Base.Anime.CurT =
-                (Game.Inst.GetGameTime() - Base.Anime.DisappearTimeCache)
-                / Base.Anime.DisappearTimeSpan;
+            AnimeMachine.CurT =
+                (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
+                / AnimeMachine.DisappearTimeSpan;
 
-            Base.transform.position =
-                new Vector3(0f, -Base.Anime.CurT, 0f) + Base.Anime.DisappearingPosCache;
+            Track.Instance.transform.position =
+                new Vector3(0f, -AnimeMachine.CurT, 0f) + AnimeMachine.DisappearingPosCache;
 
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
 
-            return Base.Anime.CurT - 1f >= 0;
+            return AnimeMachine.CurT - 1f >= 0;
         }
     }
 
@@ -179,8 +183,8 @@ namespace TrackStateMachine
         {
             base.Enter();
             Debug.Log("Enter Destroy");
-            Base.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f); // being a dirty hacker，but very trustful
-            Base.transform.position = new Vector3(0f, 20f, 0f);
+            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f); // being a dirty hacker，but very trustful
+            Track.Instance.transform.position = new Vector3(0f, 20f, 0f);
             Track.DestroyEvent?.Invoke();
         }
 
