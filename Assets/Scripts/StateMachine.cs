@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Anime;
+using NoteNamespace;
+using PooledObject;
 using UnityEngine.Windows.Speech;
 
 namespace StateMachine
@@ -31,5 +34,32 @@ namespace StateMachine
             CurState = State;
             CurState?.Enter();
         }
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class BaseState<T> : IState<T>
+        where T : PooledObjectBehaviour
+    {
+        protected StateMachine<T> StateMachine;
+
+        protected AnimeMachine AnimeMachine;
+
+        protected T Self;
+
+        public BaseState(T Self, StateMachine<T> StateMachine)
+        {
+            this.Self = Self;
+            this.StateMachine = StateMachine;
+            this.AnimeMachine = Self.Instance.AnimeMachine;
+        }
+
+        public virtual void Enter() { }
+
+        public virtual void Update() { }
+
+        public virtual void Exit() { }
     }
 }

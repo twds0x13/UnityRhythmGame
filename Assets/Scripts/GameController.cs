@@ -1,54 +1,22 @@
-using System.Collections.Generic;
-using Anime;
-using GameManager;
-using NoteManager;
-using PooledObject;
-using TrackManager;
+using System;
+using Singleton;
 using UnityEngine;
 using Game = GameManager.GameManager;
 using Pool = PooledObject.PooledObjectManager;
 
 /// <summary>
 /// 负责管理游戏核心逻辑的类
-/// 包括场景切换，单例类管理，
+/// 包括场景切换，单例类管理等，用游戏全局状态机驱动
 /// </summary>
 namespace GameCore
 {
-    public class GameController : MonoBehaviour
+    #region GameController
+    public class GameController : Singleton<GameController>
     {
-        public static GameController Inst { get; private set; }
+        public Action OnUpdate;
 
-        public System.Action OnUpdate;
-
-        private GameSettings _Settings;
-
-        public bool isDeveloperMode;
-
-        public bool isGameTesting;
-
-        private void InitInstance()
+        protected override void SingletonAwake()
         {
-            if (Inst != null && Inst != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            Inst = this;
-
-            DontDestroyOnLoad(gameObject);
-        }
-
-        private void InitGameSettings()
-        {
-            _Settings = Game.Inst.GameSettings;
-        }
-
-        private void Awake()
-        {
-            InitInstance();
-
-            InitGameSettings();
-
             OnUpdate += LoadGameSettings;
 
             OnUpdate += SaveGameSettings;
@@ -65,9 +33,11 @@ namespace GameCore
             OnUpdate();
         }
 
+        #region GameTests
+
         private void TestNote()
         {
-            if (Input.GetKey(_Settings.KeyGameTestNote))
+            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameTestNote))
             {
                 Pool.Inst.GetNotesDynamic();
             }
@@ -75,7 +45,7 @@ namespace GameCore
 
         private void TestTrack()
         {
-            if (Input.GetKeyDown(_Settings.KeyGameTestTrack))
+            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameTestTrack))
             {
                 Pool.Inst.GetTracksDynamic();
             }
@@ -83,7 +53,7 @@ namespace GameCore
 
         private void SaveGameSettings()
         {
-            if (Input.GetKeyDown(_Settings.KeyGameSave))
+            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameSave))
             {
                 Game.Inst.SaveGameSettings();
             }
@@ -91,9 +61,9 @@ namespace GameCore
 
         private void LoadGameSettings()
         {
-            if (Input.GetKeyDown(_Settings.KeyGameLoad))
+            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameLoad))
             {
-                Game.Inst.LoadGameSettings(ref _Settings);
+                Game.Inst.LoadGameSettings(ref Game.Inst.Settings);
             }
         }
 
@@ -104,5 +74,8 @@ namespace GameCore
                 Game.Inst.LockTimeScale(2f);
             }
         }
+
+        #endregion
     }
+    #endregion
 }

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using NoteManager;
+using PooledObject;
 using UnityEngine;
 
 namespace Anime
 {
     /// <summary>
-    /// 动画切片结构体，保存一段时间内<see cref="PooledObjectBehaviour"/>的位移数据
+    /// 动画切片结构体，保存一段时间内 <see cref="PooledObjectBehaviour"/> 对象的位移数据
     /// </summary>
     public struct AnimeClip
     {
@@ -39,9 +39,15 @@ namespace Anime
         }
     }
 
+    /// <summary>
+    /// 把动画所需的所有控制器打包成的一个类
+    /// TODO : 尝试用 <see cref="ScriptableObject"/> 重构
+    /// </summary>
     public class AnimeMachine
     {
         public bool HasDisappearAnime = true;
+
+        public bool IsDestroyable = true;
 
         public float DisappearTimeSpan = 0.2f;
 

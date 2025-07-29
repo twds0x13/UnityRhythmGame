@@ -2,15 +2,16 @@ using Anime;
 using NoteStateMachine;
 using PooledObject;
 using StateMachine;
-using TrackManager;
+using TrackNamespace;
+using UnityEngine;
 
-namespace NoteManager
+namespace NoteNamespace
 {
     public class NoteBehaviour : PooledObjectBehaviour
     {
-        public StateMachine<NoteBehaviour> StateMachine; // 状态机
+        // 事实证明，定义几个变量比在状态机里加 Dictionary 然后用 SwitchTo(Enum State) 方便。
 
-        // 事实证明，定义几个变量比在状态机里加 Dictionary 然后用 SwitchTo(Enum State) 切换状态方便。
+        public StateMachine<NoteBehaviour> StateMachine; // 状态机
 
         public StateInitNote InitNote; // 从动画状态开始更新
 
@@ -23,14 +24,6 @@ namespace NoteManager
         public StateDestroyNote DestroyNote; // 击中或消失之后要删除note
 
         public TrackBehaviour ParentTrack; // 归属的那一个轨道，获取 transform.position 作为动画偏移量（默认情况落到轨道上）
-
-        public int UID;
-
-        public float JudgeTime;
-
-        public bool isJudged = false;
-
-        public bool isFake = false;
 
         public void InitStateMachine(NoteBehaviour Note)
         {
@@ -49,15 +42,11 @@ namespace NoteManager
             StateMachine.CurState?.Update();
         }
 
-        public override void Init(AnimeMachine Machine) // 在 Objectpool 中调用这个函数作为通用起手，保证每次调用都从这里开始
+        public void Init(AnimeMachine Machine, TrackBehaviour Track) // 在 Objectpool 中调用这个函数作为通用起手，保证每次调用都从这里开始
         {
-            base.Init(Machine);
+            ParentTrack = Track;
+            AnimeMachine = Machine;
             InitStateMachine(this);
-        }
-
-        public override PooledObjectBehaviour GetBase() // 这里没找到相关资料，只好先这么凑合了
-        {
-            return base.GetBase();
         }
     }
 }

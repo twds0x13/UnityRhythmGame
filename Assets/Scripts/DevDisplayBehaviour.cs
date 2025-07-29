@@ -1,12 +1,12 @@
 using TMPro;
 using UnityEngine;
 using Game = GameManager.GameManager;
-using Main = GameCore.GameController;
 using Pool = PooledObject.PooledObjectManager;
 
 public class DevDisplayBehaviour : MonoBehaviour
 {
-    public bool IsDev;
+    [SerializeField]
+    bool IsDev;
 
     private TextMeshPro Text;
 

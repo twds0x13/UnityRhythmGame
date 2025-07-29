@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
+using Singleton;
 using UnityEngine;
 
 namespace GameManager
@@ -10,6 +11,7 @@ namespace GameManager
     /// <summary>
     /// 用来存储用户设置，默认参数是默认游戏设置
     /// </summary>
+    #region GameSettings
     public class GameSettings
     {
         internal GameSettings() { } // 两个数据类，默认只在GameMain里初始化
@@ -18,9 +20,9 @@ namespace GameManager
 
         public float DisplayTimeOffset = 0f;
 
-        public KeyCode KeyGamePause = KeyCode.W;
+        public KeyCode KeyGamePause = KeyCode.Escape;
 
-        public KeyCode KeyGameResume = KeyCode.W;
+        public KeyCode KeyGameResume = KeyCode.Escape;
 
         public KeyCode KeyGameSave = KeyCode.Alpha1;
 
@@ -29,6 +31,14 @@ namespace GameManager
         public KeyCode KeyGameTestNote = KeyCode.Alpha3;
 
         public KeyCode KeyGameTestTrack = KeyCode.Alpha4;
+
+        public KeyCode[] KeyGameplay =
+        {
+            KeyCode.Q,
+            KeyCode.W,
+            KeyCode.LeftBracket,
+            KeyCode.RightBracket,
+        };
 
         public bool OneKey // 是不是用同一个按键来处理暂停和恢复
         {
@@ -52,9 +62,12 @@ namespace GameManager
         }
     }
 
+    #endregion
+
     /// <summary>
-    /// 用于处理 <see cref="Time.timeScale"/> 的全局更改
+    /// 内嵌类，用于处理 <see cref="Time.timeScale"/> 的全局更改
     /// </summary>
+    #region GameTime
     internal class GameTime
     {
         public GameTime() { }
@@ -88,19 +101,19 @@ namespace GameManager
         public static bool GamePaused { get; set; }
 
         /// <summary>
-        /// <para>处理全局 <see cref="Time.timeScale"/> 变化（包括加减速，暂停等）相关的逻辑和按键检测。</para>
-        /// 使用 <see cref="TimeScale"/> 作为索引器，保证不会越界修改 <see cref="Time.timeScale"/> 数值。
+        /// <para>处理全局 <see cref="Time.timeScale"/> 变化（包括加减速，暂停等）相关的逻辑和按键检测</para>
+        /// 使用 <see cref="TimeScale"/> 作为索引器，保证不会越界修改 <see cref="Time.timeScale"/> 数值
         /// </summary>
-        public static void GlobalTimeUpdateHandler()
+        public static void OnTimeUpdate()
         {
             if (IgnorePause)
             {
                 return;
             }
 
-            if (!GameManager.Inst.GameSettings.OneKey)
+            if (!GameManager.Inst.Settings.OneKey)
             {
-                if (Input.GetKeyDown(GameManager.Inst.GameSettings.KeyGameResume))
+                if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGameResume))
                 {
                     TimeChanging = true;
                     TimeResuming = true;
@@ -109,7 +122,7 @@ namespace GameManager
                     TimeScaleCache = TimeScale;
                     TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
                 }
-                if (Input.GetKeyDown(GameManager.Inst.GameSettings.KeyGamePause))
+                if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGamePause))
                 {
                     TimeChanging = true;
                     TimePausing = true;
@@ -121,7 +134,7 @@ namespace GameManager
             }
             else
             {
-                if (Input.GetKeyDown(GameManager.Inst.GameSettings.KeyGamePause))
+                if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGamePause))
                 {
                     if (TimeStatFlip)
                     {
@@ -199,27 +212,24 @@ namespace GameManager
 
         public static void TimeUpdate()
         {
-            GlobalTimeUpdateHandler();
+            OnTimeUpdate();
         }
     }
 
+    #endregion
+
     /// <summary>
     /// 用来管理游戏相关的行为，包括暂停，修改用户设置等。
+    /// 继承自全局单例基类 <see cref="Singleton{T}"/>
     /// </summary>
-    public class GameManager : MonoBehaviour
+    public class GameManager : Singleton<GameManager>
     {
-        private GameManager() { } // 单例模式
-
-        public GameSettings GameSettings { get; private set; }
-
-        public static GameManager Inst { get; private set; }
+        public GameSettings Settings = new(); // TODO : 改成 protected 或 private
 
         private string UserSettingsZipPath;
 
-        public void Awake()
+        protected override void SingletonAwake()
         {
-            InitInstance();
-
             InitGameTime();
 
             InitPath();
@@ -228,21 +238,6 @@ namespace GameManager
         private void InitPath()
         {
             UserSettingsZipPath = Application.persistentDataPath;
-        }
-
-        private void InitInstance()
-        {
-            if (Inst != null && Inst != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Inst = this;
-
-            DontDestroyOnLoad(gameObject);
-
-            GameSettings = new GameSettings();
         }
 
         public void InitGameTime() // 记得把其他数据类的初始化扔到GameBehaviour里面
@@ -274,7 +269,7 @@ namespace GameManager
         }
 
         public float GetGameTime() =>
-            GameTime.MainTimer.GetTimeElapsed() + Inst.GameSettings.JudgementTimeOffset;
+            GameTime.MainTimer.GetTimeElapsed() + Inst.Settings.JudgementTimeOffset;
 
         public float GetAbsTime() => GameTime.RealTimer.GetTimeElapsed();
 
@@ -286,14 +281,14 @@ namespace GameManager
         {
             GameTime.IgnorePause = true;
 
-            Inst.GameSettings.SetTimeScale(Speed);
+            Inst.Settings.SetTimeScale(Speed);
         }
 
-        public void UnlockTimeScale() => GameTime.IgnorePause = false;
+        public void UnlockTimeScale() => GameTime.IgnorePause = false; // 解锁强制时间流速设置，恢复到正常状态
 
         public bool IsGamePaused() => GameTime.GamePaused;
 
-        public void SaveGameSettings() => CompressToZipJson(Inst.GameSettings, "UserSettings.zip");
+        public void SaveGameSettings() => CompressToZipJson(Inst.Settings, "UserSettings.zip");
 
         public bool LoadGameSettings(ref GameSettings Object) =>
             LoadJsonFromZip("Usersettings.zip", ref Object);
