@@ -10,6 +10,7 @@ namespace GameManager
 {
     /// <summary>
     /// 用来存储用户设置，默认参数是默认游戏设置
+    /// 正在被新版输入替换
     /// </summary>
     #region GameSettings
     public class GameSettings
@@ -32,14 +33,6 @@ namespace GameManager
 
         public KeyCode KeyGameTestTrack = KeyCode.Alpha4;
 
-        public KeyCode[] KeyGameplay =
-        {
-            KeyCode.Q,
-            KeyCode.W,
-            KeyCode.LeftBracket,
-            KeyCode.RightBracket,
-        };
-
         public bool OneKey // 是不是用同一个按键来处理暂停和恢复
         {
             get { return KeyGamePause == KeyGameResume; }
@@ -49,11 +42,6 @@ namespace GameManager
         {
             get { return GameTime.TimeScaleSpeed; }
             set { GameTime.TimeScaleSpeed = Mathf.Clamp(value, 0f, 100f); }
-        }
-
-        public void SetTimeScaleSpeed(float Speed)
-        {
-            TimeScaleSpeed = Speed;
         }
 
         public void SetTimeScale(float Speed)
@@ -70,7 +58,7 @@ namespace GameManager
     #region GameTime
     internal class GameTime
     {
-        public GameTime() { }
+        private GameTime() { }
 
         public static Timer MainTimer;
 
@@ -78,17 +66,17 @@ namespace GameManager
 
         public static bool IgnorePause;
 
-        public static bool TimePausing { get; set; }
+        public static bool TimePausing { get; private set; }
 
-        public static bool TimeResuming { get; set; }
+        public static bool TimeResuming { get; private set; }
 
-        public static bool TimeStatFlip { get; set; } // 标记 暂停 / 恢复状态的翻转  [!] 不要尝试合并Pausing和Resuming这两个bool变量！情愿多加一个，能跑起来就行
+        public static bool TimeStatFlip { get; private set; } // 标记 暂停 / 恢复状态的翻转  [!] 不要尝试合并Pausing和Resuming这两个bool变量！情愿多加一个，能跑起来就行
 
-        public static bool TimeChanging { get; set; }
+        public static bool TimeChanging { get; private set; }
 
-        public static float TimeScaleStartingPoint { get; set; }
+        public static float TimeScaleStartingPoint { get; private set; }
 
-        public static float TimeScaleSpeed = 1f; // 暂停和继续游戏动画的速度倍数
+        public static float TimeScaleSpeed = 1.75f; // 暂停和继续游戏动画的速度倍数
 
         public static float TimeScale
         {
@@ -98,94 +86,27 @@ namespace GameManager
 
         public static float TimeScaleCache = 1f;
 
-        public static bool GamePaused { get; set; }
+        public static bool GamePaused { get; private set; }
 
         /// <summary>
         /// <para>处理全局 <see cref="Time.timeScale"/> 变化（包括加减速，暂停等）相关的逻辑和按键检测</para>
         /// 使用 <see cref="TimeScale"/> 作为索引器，保证不会越界修改 <see cref="Time.timeScale"/> 数值
         /// </summary>
-        public static void OnTimeUpdate()
+        private static void OnTimeUpdate()
         {
             if (IgnorePause)
             {
                 return;
             }
 
-            if (!GameManager.Inst.Settings.OneKey)
-            {
-                if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGameResume))
-                {
-                    TimeChanging = true;
-                    TimeResuming = true;
-                    TimePausing = false;
-
-                    TimeScaleCache = TimeScale;
-                    TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
-                }
-                if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGamePause))
-                {
-                    TimeChanging = true;
-                    TimePausing = true;
-                    TimeResuming = false;
-
-                    TimeScaleCache = TimeScale;
-                    TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
-                }
-            }
-            else
-            {
-                if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGamePause))
-                {
-                    if (TimeStatFlip)
-                    {
-                        TimeStatFlip = false; // 处于恢复中状态时为 false
-                        TimeChanging = true;
-                        TimePausing = false;
-                        TimeResuming = true;
-                    }
-                    else
-                    {
-                        TimeStatFlip = true; // 处于暂停中状态为 true
-                        TimeChanging = true;
-                        TimePausing = true;
-                        TimeResuming = false;
-                    }
-
-                    TimeScaleCache = TimeScale;
-                    TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
-                }
-            }
-
             if (TimePausing)
             {
                 TimeChanging = true;
                 TimeScale =
-                    (TimeScaleStartingPoint + TimeScaleCache - RealTimer.GetTimeElapsed())
-                    / TimeScaleSpeed;
-                TimeScale = Mathf.Clamp01(TimeScale);
+                    (TimeScaleStartingPoint - RealTimer.GetTimeElapsed()) * TimeScaleSpeed
+                    + TimeScaleCache;
 
-                /* 时间流速解析算法：
-                 *
-                 * 在上面记录一次当前时间点 存到 TimeScaleStartingPoint
-                 *
-                 * 先把 TimeScaleSpeed 记为 1f
-                 *
-                 * 我们得到了这个公式 : TimeScale = 起点时间 + 上一次状态翻转的时间流速 - 现在真实时间
-                 *
-                 * 第一次按下暂停时记录上一次状态翻转的时间流速为1f
-                 *
-                 * 继续简化公式 : TimeScale = 起点时间 + 1f - 现在真实时间
-                 *
-                 * 所以TimeScale 随现在时间增大而降低，在1秒后到达0。
-                 *
-                 * 如果 TimeScaleSpeed = 2f (更快)，那么 TimeScale 将以两倍的速度衰减到 0，所以持续时间是 TimeScaleCache / 2。
-                 *
-                 * 如果 TimeScaleSpeed = 0.5f (更慢)，那么 TimeScale 将以一半的速度衰减到 0，所以持续时间是 TimeScaleCache / 0.5 (即 TimeScaleCache * 2)。
-                 *
-                 * TimeScaleSpeed 越大，衰减过程越快，持续时间越短；TimeScaleSpeed 越小，衰减过程越慢，持续时间越长。
-                 */
-
-                if (TimeScale == 0)
+                if (TimeScale <= 0)
                 {
                     GamePaused = true;
                     TimePausing = false;
@@ -198,15 +119,70 @@ namespace GameManager
                 TimeChanging = true;
                 GamePaused = false;
                 TimeScale =
-                    (RealTimer.GetTimeElapsed() + TimeScaleCache - TimeScaleStartingPoint)
-                    / TimeScaleSpeed;
-                TimeScale = Mathf.Clamp01(TimeScale);
+                    (RealTimer.GetTimeElapsed() - TimeScaleStartingPoint) * TimeScaleSpeed
+                    + TimeScaleCache;
+
                 if (TimeScale >= 1)
                 {
                     TimeScale = 1f;
                     TimeResuming = false;
                     TimeChanging = false;
                 }
+            }
+        }
+
+        private static void OnTwoKeyPause() // 暂时废弃
+        {
+            if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGameResume))
+            {
+                TimeChanging = true;
+                TimeResuming = true;
+                TimePausing = false;
+
+                TimeScaleCache = TimeScale;
+                TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+            }
+            if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGamePause))
+            {
+                TimeChanging = true;
+                TimePausing = true;
+                TimeResuming = false;
+
+                TimeScaleCache = TimeScale;
+                TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+            }
+        }
+
+        private static void OnOneKeyPause()
+        {
+            if (TimeStatFlip)
+            {
+                TimeStatFlip = false; // 处于恢复中状态时为 false
+                TimeChanging = true;
+                TimePausing = false;
+                TimeResuming = true;
+            }
+            else
+            {
+                TimeStatFlip = true; // 处于暂停中状态为 true
+                TimeChanging = true;
+                TimePausing = true;
+                TimeResuming = false;
+            }
+
+            TimeScaleCache = TimeScale;
+            TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+        }
+
+        public static void OnPauseResume()
+        {
+            if (!GameManager.Inst.Settings.OneKey)
+            {
+                OnTwoKeyPause();
+            }
+            else
+            {
+                OnOneKeyPause();
             }
         }
 
@@ -287,6 +263,8 @@ namespace GameManager
         public void UnlockTimeScale() => GameTime.IgnorePause = false; // 解锁强制时间流速设置，恢复到正常状态
 
         public bool IsGamePaused() => GameTime.GamePaused;
+
+        public void PauseResumeGame() => GameTime.OnPauseResume();
 
         public void SaveGameSettings() => CompressToZipJson(Inst.Settings, "UserSettings.zip");
 

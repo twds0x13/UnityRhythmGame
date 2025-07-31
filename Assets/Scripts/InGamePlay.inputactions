@@ -1,0 +1,161 @@
+{
+    "version": 1,
+    "name": "InGamePlay",
+    "maps": [
+        {
+            "name": "UserNormal",
+            "id": "32c6d53c-5c92-43b7-b55d-ce81596f2155",
+            "actions": [
+                {
+                    "name": "Track Zero",
+                    "type": "Button",
+                    "id": "d12e79cb-e02e-4995-b681-b64b97404ae6",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Track One",
+                    "type": "Button",
+                    "id": "5da1d430-75a9-4963-bdef-dd80abfee2a7",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Track Two",
+                    "type": "Button",
+                    "id": "7a8e411e-2dba-41d0-ad9c-4a633041c331",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Track Three",
+                    "type": "Button",
+                    "id": "6aa1aba3-d4df-4492-95ac-b9fac0a1eaae",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Add Track",
+                    "type": "Button",
+                    "id": "c351bcd4-60e4-4dfc-a60d-a4ae533ecfa3",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Add Note",
+                    "type": "Button",
+                    "id": "0e0d20b0-8169-40e7-95dc-515b8e16d40d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Pause & Resume Game",
+                    "type": "Button",
+                    "id": "acfc3438-3cb5-4df8-8084-95a8673688cd",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "c03e30f8-b75e-4b19-8c71-385616d04417",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Track Zero",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cdea50d9-e074-4eab-845c-088fec94d0ce",
+                    "path": "<Keyboard>/w",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Track One",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "78335eec-3310-423f-a73f-54713eabf886",
+                    "path": "<Keyboard>/leftBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Track Two",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "181d5ed2-8452-44c5-81c5-3b69bfb9119a",
+                    "path": "<Keyboard>/rightBracket",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Track Three",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f815aca4-aad9-47b4-8201-038a10ddba25",
+                    "path": "<Keyboard>/a",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Add Track",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d777b8f7-fcd2-430e-9613-0dc27fee44b6",
+                    "path": "<Keyboard>/d",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Add Note",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c730005e-88fc-4076-baee-0287c891a784",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "Press",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Pause & Resume Game",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "UserRebinding",
+            "id": "edc6ecd5-39fa-4d65-97ff-0d6511aa6909",
+            "actions": [],
+            "bindings": []
+        }
+    ],
+    "controlSchemes": []
+}

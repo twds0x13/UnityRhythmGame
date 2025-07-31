@@ -41,7 +41,6 @@ namespace Anime
 
     /// <summary>
     /// 把动画所需的所有控制器打包成的一个类
-    /// TODO : 尝试用 <see cref="ScriptableObject"/> 重构
     /// </summary>
     public class AnimeMachine
     {
@@ -51,11 +50,15 @@ namespace Anime
 
         public float DisappearTimeSpan = 0.2f;
 
+        public float JudgeAnimeTimeSpan = 0.5f;
+
         public float DisappearTimeCache;
 
-        public float DisappearCurTCache;
-
         public Vector3 DisappearingPosCache;
+
+        public float JudgeTimeCache;
+
+        public Vector3 JudgePosCache;
 
         public float CurT // 用来处理 Lerp 函数，需要值的范围在 0 ~ 1 间往复循环。在到达 1 时跳转回 0
         {

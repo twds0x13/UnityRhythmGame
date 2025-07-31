@@ -38,7 +38,7 @@ public class DevDisplayBehaviour : MonoBehaviour
                 Text.text = "NoteUIDIterator x" + (Pool.Inst.GetNoteUIDIterator()).ToString();
                 break;
             case "DevTrackUIDIterator":
-                Text.text = "TrackUIDIterator x" + (Pool.Inst.GetTrackUIDIterator()).ToString();
+                Text.text = "TrackUIDIterator x" + (Pool.Inst.TrackUIDIterator).ToString();
                 break;
         }
     }

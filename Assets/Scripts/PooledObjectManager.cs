@@ -3,8 +3,10 @@ using Anime;
 using NoteNamespace;
 using Singleton;
 using TrackNamespace;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.Pool;
+using Ctrl = GameCore.GameController;
 using Game = GameManager.GameManager;
 
 namespace PooledObject
@@ -23,7 +25,7 @@ namespace PooledObject
         ObjectPool<GameObject> TrackPool;
 
         [SerializeField]
-        List<TrackBehaviour> BaseTracks;
+        Dictionary<int, TrackBehaviour> BaseTracks = new();
 
         [SerializeField]
         GameObject NoteInst;
@@ -32,10 +34,10 @@ namespace PooledObject
         GameObject TrackInst;
 
         [SerializeField]
-        int NoteUIDIterator; // 你应该没同时用到21亿个 Note, 对吧？
+        public int NoteUIDIterator { get; private set; } = 0; // 你应该没同时用到21亿个 Note, 对吧？
 
         [SerializeField]
-        int TrackUIDIterator; // 这两个计数器不会降低，只会递增
+        public int TrackUIDIterator { get; private set; } = 0; // 这两个计数器不会降低，只会递增
 
         protected override void SingletonAwake()
         {
@@ -59,8 +61,8 @@ namespace PooledObject
                     Destroy(Note);
                 },
                 true,
-                64,
-                128
+                128,
+                1024
             );
 
             TrackPool = new ObjectPool<GameObject>(
@@ -122,28 +124,33 @@ namespace PooledObject
             return Note;
         }
 
-        public void GetNotesDynamic()
+        public void GetNotesDynamic(int Num, float Duration)
         {
             if (!Game.Inst.IsGamePaused())
             {
                 Queue<AnimeClip> Tmp = new();
 
-                for (int i = 0; i < 1; i++)
-                {
-                    Tmp.Enqueue(
-                        new AnimeClip(
-                            Game.Inst.GetGameTime() + i / 5f,
-                            Game.Inst.GetGameTime() + 1.25f + i / 5f,
-                            new Vector3(0f, 3.5f, 0f),
-                            new Vector3(0f, 0f, 0f)
-                        )
-                    );
-                }
+                float Time = Game.Inst.GetGameTime();
+
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        Time,
+                        Time + Duration,
+                        new Vector3(0f, 3.5f, 0f),
+                        new Vector3(0f, 0f, 0f)
+                    )
+                );
 
                 AnimeMachine Machine = new(Tmp);
 
-                if (TrackUIDIterator > 0)
-                    GetOneNote(Machine, BaseTracks.Find(T => T.TrackNumber == 0));
+                Machine.DisappearTimeSpan = 0.5f; // 超过 500ms 自动销毁
+
+                TrackBehaviour Object;
+
+                if (BaseTracks.TryGetValue(Num, out Object))
+                {
+                    GetOneNote(Machine, Object, Time + Duration);
+                }
             }
         }
 
@@ -154,7 +161,7 @@ namespace PooledObject
                 Queue<AnimeClip> Tmp = new();
                 Vector3 VecTmp;
 
-                VecTmp = new Vector3(-0.75f + 0.2f * TrackUIDIterator, -1f, 0f);
+                VecTmp = new Vector3(-0.75f + 0.5f * TrackUIDIterator, -1f, 0f);
 
                 for (int i = 0; i < 50; i++)
                 {
@@ -163,7 +170,7 @@ namespace PooledObject
                             Game.Inst.GetGameTime() + 10 * i,
                             Game.Inst.GetGameTime() + 5f + 10 * i,
                             VecTmp,
-                            VecTmp - new Vector3(0f, -1.5f, 0f)
+                            VecTmp - new Vector3(0f, -0.2f, 0f)
                         )
                     );
 
@@ -171,7 +178,7 @@ namespace PooledObject
                         new AnimeClip(
                             Game.Inst.GetGameTime() + 5f + 10 * i,
                             Game.Inst.GetGameTime() + 10f + 10 * i,
-                            VecTmp - new Vector3(0f, -1.5f, 0f),
+                            VecTmp - new Vector3(0f, -0.2f, 0f),
                             VecTmp
                         )
                     );
@@ -179,34 +186,39 @@ namespace PooledObject
 
                 AnimeMachine Machine = new(Tmp);
 
-                if (TrackUIDIterator < 4)
-                    Machine.IsDestroyable = true;
-
                 GetOneTrack(Machine);
             }
         }
 
         /// <summary>
-        /// 从对象池中获取一个新的 <see cref="NoteBehaviour"/> 对象，并同时初始化它的动画队列
+        /// 从对象池中获取一个新的 <see cref="NoteBehaviour"/> 对象，并同时初始化它的动画机和母轨
         /// </summary>
-        private void GetOneNote(AnimeMachine Machine, TrackBehaviour Track)
+        private void GetOneNote(AnimeMachine Machine, TrackBehaviour Track, float JudgeTime)
         {
-            NotePool.Get().GetComponent<NoteBehaviour>().Init(Machine, Track); // 这里以前有薏苡行代码
+            // 新建一个 Note 对象，然后把 Init 返回的 Note 对象加入到那个 Track 的判定队列里面。
+
+            //Track.JudgeQueue.Enqueue(
+            NotePool.Get().GetComponent<NoteBehaviour>().Init(Machine, Track, JudgeTime);
+            //);
 
             NoteUIDIterator++;
         }
 
         /// <summary>
-        /// 从对象池中获取一个新的 <see cref="TrackBehaviour"/> 对象，并同时初始化它的动画队列
+        /// 从对象池中获取一个新的 <see cref="TrackBehaviour"/> 对象，并同时初始化它的动画机
         /// </summary>
         private void GetOneTrack(AnimeMachine Machine)
         {
-            var Track = TrackPool.Get();
-
-            Track.GetComponent<TrackBehaviour>().Init(Machine, TrackUIDIterator);
+            var Track = TrackPool
+                .Get()
+                .GetComponent<TrackBehaviour>()
+                .Init(Machine, TrackUIDIterator);
 
             if (TrackUIDIterator < 4)
-                BaseTracks.Add(Track.GetComponent<TrackBehaviour>());
+            {
+                Machine.IsDestroyable = false;
+                BaseTracks.Add(TrackUIDIterator, Track);
+            }
 
             TrackUIDIterator++;
         }
@@ -228,11 +240,6 @@ namespace PooledObject
         public int GetNoteUIDIterator()
         {
             return NoteUIDIterator;
-        }
-
-        public int GetTrackUIDIterator()
-        {
-            return TrackUIDIterator;
         }
 
         public int GetNotePoolCountInactive()
