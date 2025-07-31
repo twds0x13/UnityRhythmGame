@@ -1,6 +1,7 @@
 using System;
 using Singleton;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using Game = GameManager.GameManager;
 using Pool = PooledObject.PooledObjectManager;
 
@@ -13,69 +14,107 @@ namespace GameCore
     #region GameController
     public class GameController : Singleton<GameController>
     {
-        public Action OnUpdate;
+        [SerializeField]
+        public PlayerInput NewInput;
+
+        [SerializeField]
+        InputActionReference[] InputReferences;
+
+        float test;
+
+        bool flag;
+
+        float _score;
+        public float Score
+        {
+            get { return _score; }
+            set
+            {
+                _score = value;
+
+                Debug.Log("Score : " + value.ToString());
+            }
+        }
+
+        System.Random Rand = new();
 
         protected override void SingletonAwake()
         {
-            OnUpdate += LoadGameSettings;
-
-            OnUpdate += SaveGameSettings;
-
-            OnUpdate += TestNote;
-
-            OnUpdate += TestTrack;
-
-            OnUpdate += TestIgnorePause;
+            NewInput = GetComponent<PlayerInput>();
         }
 
         void Update()
         {
-            OnUpdate();
+            test = Game.Inst.GetGameTime();
+
+            if (Math.Ceiling(test * 16f) % 2 == 0 && flag)
+            {
+                Pool.Inst.GetNotesDynamic(Rand.Next(0, 4), 0.75f);
+                flag = false;
+            }
+
+            if (Math.Ceiling(test * 16f) % 2 == 1)
+            {
+                flag = true;
+            }
+        }
+
+        public void RebindInput(InputActionReference Ref)
+        {
+            Debug.Log("Jvav?");
+            NewInput.SwitchCurrentActionMap("UserRebinding");
+            Ref.action.PerformInteractiveRebinding()
+                .WithControlsExcluding("Mouse")
+                .WithCancelingThrough("<keyboard>/escape")
+                .OnMatchWaitForAnother(0.05f)
+                .OnComplete(Operation => SwitchToNormal(Operation))
+                .OnCancel(Operation => SwitchToNormal(Operation))
+                .Start();
+        }
+
+        private void SwitchToNormal(InputActionRebindingExtensions.RebindingOperation Operation)
+        {
+            Operation.Dispose();
+            NewInput.SwitchCurrentActionMap("UserNormal");
         }
 
         #region GameTests
 
-        private void TestNote()
+        public void GetNote(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameTestNote))
-            {
-                Pool.Inst.GetNotesDynamic();
-            }
+            if (Ctx.performed)
+                Pool.Inst.GetNotesDynamic(Rand.Next(0, 4), 0.75f);
         }
 
-        private void TestTrack()
+        public void GetTrack(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameTestTrack))
-            {
+            if (Ctx.performed && Pool.Inst.TrackUIDIterator < 4)
                 Pool.Inst.GetTracksDynamic();
-            }
         }
 
-        private void SaveGameSettings()
+        public void SaveGameSettings(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameSave))
-            {
-                Game.Inst.SaveGameSettings();
-            }
+            Game.Inst.SaveGameSettings();
         }
 
-        private void LoadGameSettings()
+        public void LoadGameSettings(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameLoad))
-            {
-                Game.Inst.LoadGameSettings(ref Game.Inst.Settings);
-            }
+            Game.Inst.LoadGameSettings(ref Game.Inst.Settings);
         }
 
-        private void TestIgnorePause()
+        public void TestIgnorePause(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKey(KeyCode.C))
-            {
-                Game.Inst.LockTimeScale(2f);
-            }
+            Game.Inst.LockTimeScale(2f);
+        }
+
+        public void PauseResumeGame(InputAction.CallbackContext Ctx)
+        {
+            if (Ctx.performed)
+                Game.Inst.PauseResumeGame();
         }
 
         #endregion
     }
+
     #endregion
 }

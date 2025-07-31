@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 509751596}
   - component: {fileID: 509751598}
   - component: {fileID: 509751599}
+  - component: {fileID: 509751600}
   m_Layer: 0
   m_Name: GameMain
   m_TagString: Untagged
@@ -153,8 +154,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7df15fa26ebe7e54284157447510226b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isDeveloperMode: 0
-  isGameTesting: 0
+  NewInput: {fileID: 0}
+  InputReferences: []
 --- !u!4 &509751597
 Transform:
   m_ObjectHideFlags: 0
@@ -184,8 +185,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NoteInst: {fileID: 5571962577675778044, guid: 1b77a018f57a09c48826c2f78f9413ca, type: 3}
   TrackInst: {fileID: 614768867850833973, guid: 6ec400908efd3d4489aee935686d5ff0, type: 3}
-  NoteUIDIterator: 0
-  TrackUIDIterator: 0
 --- !u!114 &509751599
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,6 +197,100 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: facf14c7bd1159c4d810539eb366e878, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &509751600
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 509751595}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 62899f850307741f2a39c98a8b639597, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Actions: {fileID: -944628639613478452, guid: 0f2b6b3753138c04e81f9a06ba5322cb, type: 3}
+  m_NotificationBehavior: 2
+  m_UIInputModule: {fileID: 0}
+  m_DeviceLostEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_DeviceRegainedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ControlsChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  m_ActionEvents:
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: d12e79cb-e02e-4995-b681-b64b97404ae6
+    m_ActionName: UserNormal/0 Track[/Keyboard/q]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 5da1d430-75a9-4963-bdef-dd80abfee2a7
+    m_ActionName: UserNormal/1 Track[/Keyboard/w]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 7a8e411e-2dba-41d0-ad9c-4a633041c331
+    m_ActionName: UserNormal/2 Track[/Keyboard/leftBracket]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 6aa1aba3-d4df-4492-95ac-b9fac0a1eaae
+    m_ActionName: UserNormal/3 Track[/Keyboard/rightBracket]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 509751596}
+        m_TargetAssemblyTypeName: GameCore.GameController, Assembly-CSharp
+        m_MethodName: GetTrack
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: c351bcd4-60e4-4dfc-a60d-a4ae533ecfa3
+    m_ActionName: UserNormal/Add Track[/Keyboard/a]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 509751596}
+        m_TargetAssemblyTypeName: GameCore.GameController, Assembly-CSharp
+        m_MethodName: GetNote
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: 0e0d20b0-8169-40e7-95dc-515b8e16d40d
+    m_ActionName: UserNormal/Add Note[/Keyboard/d]
+  - m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 509751596}
+        m_TargetAssemblyTypeName: GameCore.GameController, Assembly-CSharp
+        m_MethodName: PauseResumeGame
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+    m_ActionId: acfc3438-3cb5-4df8-8084-95a8673688cd
+    m_ActionName: UserNormal/Pause & Resume Game[/Keyboard/escape]
+  m_NeverAutoSwitchControlSchemes: 0
+  m_DefaultControlScheme: 
+  m_DefaultActionMap: UserNormal
+  m_SplitScreenIndex: -1
+  m_Camera: {fileID: 963194227}
 --- !u!1 &621942939
 GameObject:
   m_ObjectHideFlags: 0

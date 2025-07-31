@@ -20,7 +20,7 @@ namespace StateMachine
     /// <typeparam name="T"></typeparam>
     public class StateMachine<T>
     {
-        public IState<T> CurState;
+        public IState<T> CurState { get; private set; }
 
         public void InitState(IState<T> State)
         {
@@ -30,14 +30,17 @@ namespace StateMachine
 
         public void SwitchState(IState<T> State)
         {
-            CurState?.Exit();
-            CurState = State;
-            CurState?.Enter();
+            if (CurState != State)
+            {
+                CurState?.Exit();
+                CurState = State;
+                CurState?.Enter();
+            }
         }
     }
 
     /// <summary>
-    ///
+    /// 统一 Note 和 Track 基本状态的尝试，暂时用不到
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class BaseState<T> : IState<T>
@@ -53,7 +56,7 @@ namespace StateMachine
         {
             this.Self = Self;
             this.StateMachine = StateMachine;
-            this.AnimeMachine = Self.Instance.AnimeMachine;
+            this.AnimeMachine = Self.Inst.AnimeMachine;
         }
 
         public virtual void Enter() { }

@@ -3,6 +3,7 @@ using PooledObject;
 using StateMachine;
 using TrackNamespace;
 using UnityEngine;
+using Ctrl = GameCore.GameController;
 using Game = GameManager.GameManager;
 
 namespace TrackStateMachine
@@ -21,7 +22,7 @@ namespace TrackStateMachine
 
             this.StateMachine = StateMachine;
 
-            this.AnimeMachine = Track.Instance.AnimeMachine;
+            this.AnimeMachine = Track.Inst.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -29,6 +30,136 @@ namespace TrackStateMachine
         public virtual void Update() { }
 
         public virtual void Exit() { }
+    }
+
+    public class StateInitJudgeTrack : TrackState
+    {
+        public StateInitJudgeTrack(TrackBehaviour Track, StateMachine<TrackBehaviour> StateMachine)
+            : base(Track, StateMachine) { }
+
+        public override void Enter()
+        {
+            base.Enter();
+            RegisterJudgeKey();
+            StateMachine.SwitchState(Track.ProcessJudge);
+        }
+
+        public override void Update()
+        {
+            base.Update();
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+        }
+
+        private void RegisterJudgeKey() // 唉，硬编码
+        {
+            switch (Track.TrackNumber)
+            {
+                case 0:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Zero").performed +=
+                        Track.JudgeNote;
+                    break;
+                case 1:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track One").performed +=
+                        Track.JudgeNote;
+                    break;
+                case 2:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Two").performed +=
+                        Track.JudgeNote;
+                    break;
+                case 3:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Three").performed +=
+                        Track.JudgeNote;
+                    break;
+            }
+
+            Debug.Log("Track Succesfully Registered!");
+        }
+    }
+
+    public class StateProcessJudgeTrack : TrackState
+    {
+        public StateProcessJudgeTrack(
+            TrackBehaviour Track,
+            StateMachine<TrackBehaviour> StateMachine
+        )
+            : base(Track, StateMachine) { }
+
+        public override void Enter()
+        {
+            base.Enter();
+        }
+
+        public override void Update()
+        {
+            base.Update();
+
+            if (FinishJudge())
+            {
+                StateMachine.SwitchState(Track.FinishJudge);
+            }
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+        }
+
+        private bool FinishJudge()
+        {
+            return false;
+        }
+    }
+
+    public class StateFinishJudgeTrack : TrackState
+    {
+        public StateFinishJudgeTrack(
+            TrackBehaviour Track,
+            StateMachine<TrackBehaviour> StateMachine
+        )
+            : base(Track, StateMachine) { }
+
+        public override void Enter()
+        {
+            base.Enter();
+            UnregisterJudgeKey();
+        }
+
+        public override void Update()
+        {
+            base.Update();
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+        }
+
+        private void UnregisterJudgeKey()
+        {
+            switch (Track.TrackNumber)
+            {
+                case 0:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Zero").performed -=
+                        Track.JudgeNote;
+                    break;
+                case 1:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track One").performed -=
+                        Track.JudgeNote;
+                    break;
+                case 2:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Two").performed -=
+                        Track.JudgeNote;
+                    break;
+                case 3:
+                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Three").performed -=
+                        Track.JudgeNote;
+                    break;
+            }
+        }
     }
 
     public class StateInitTrack : TrackState
@@ -39,7 +170,6 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            Debug.Log("Enter Init");
             InitTrack(Track);
             StateMachine.SwitchState(Track.AnimeTrack);
         }
@@ -52,15 +182,13 @@ namespace TrackStateMachine
         public override void Exit()
         {
             base.Exit();
-            Debug.Log("Exit Init");
         }
 
-        public void InitTrack(TrackBehaviour Track)
+        private void InitTrack(TrackBehaviour Track)
         {
-            Track.Instance.SpriteRenderer.sprite = Track.SpriteList[
-                Track.Instance.RandInst.Next(0, 2)
-            ];
-            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Track.Inst.SpriteRenderer.sprite = Track.SpriteList[1];
+
+            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -72,8 +200,6 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
-            Debug.Log("Enter Anime");
         }
 
         public override void Update()
@@ -85,15 +211,14 @@ namespace TrackStateMachine
         public override void Exit()
         {
             base.Exit();
-            Debug.Log("Exit Anime");
         }
 
-        public void UpdatePosition()
+        private void UpdatePosition()
         {
             AnimeMachine.CurT = Mathf.Pow(
                 (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
                     / AnimeMachine.CurAnime.TotalTimeElapse(),
-                0.8f
+                1f
             );
 
             Track.transform.position =
@@ -101,7 +226,7 @@ namespace TrackStateMachine
                 + AnimeMachine.CurT * AnimeMachine.CurAnime.EndV;
         }
 
-        public void AnimeManager()
+        private void AnimeManager()
         {
             AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // 至少 "应该" 有一个垫底动画
 
@@ -115,7 +240,7 @@ namespace TrackStateMachine
                 {
                     if (!AnimeMachine.IsDestroyable) // 不可摧毁的track
                     {
-                        return; // TODO : 注册全局广播接收器，在游戏退出时切换到 Disappear 状态（测试用 return 没问题）
+                        return; // TODO : 注册全局广播接收器，在本局游戏退出时切换到 Disappear 状态（测试用 return 没问题）
                     }
                     if (AnimeMachine.HasDisappearAnime)
                     {
@@ -138,9 +263,8 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            Debug.Log("Enter Disappear");
             AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.DisappearingPosCache = Track.Instance.transform.position;
+            AnimeMachine.DisappearingPosCache = Track.Inst.transform.position;
         }
 
         public override void Update()
@@ -156,19 +280,18 @@ namespace TrackStateMachine
         public override void Exit()
         {
             base.Exit();
-            Debug.Log("Exit Disappear");
         }
 
-        public bool Disappear()
+        private bool Disappear()
         {
             AnimeMachine.CurT =
                 (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
                 / AnimeMachine.DisappearTimeSpan;
 
-            Track.Instance.transform.position =
+            Track.Inst.transform.position =
                 new Vector3(0f, -AnimeMachine.CurT, 0f) + AnimeMachine.DisappearingPosCache;
 
-            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
 
             return AnimeMachine.CurT - 1f >= 0;
         }
@@ -182,9 +305,8 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            Debug.Log("Enter Destroy");
-            Track.Instance.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f); // being a dirty hacker，but very trustful
-            Track.Instance.transform.position = new Vector3(0f, 20f, 0f);
+            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Track.Inst.transform.position = new Vector3(0f, 20f, 0f);
             Track.DestroyEvent?.Invoke();
         }
 
@@ -196,7 +318,6 @@ namespace TrackStateMachine
         public override void Exit()
         {
             base.Exit();
-            Debug.Log("Exit Disappear");
         }
     }
 }
