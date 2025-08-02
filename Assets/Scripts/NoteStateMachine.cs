@@ -1,10 +1,12 @@
+using System.Linq;
 using Anime;
-using Cysharp.Threading.Tasks;
-using NoteNamespace;
+using InterpNS;
+using NoteJudgeNS;
+using NoteNS;
 using StateMachine;
 using UnityEngine;
-using Game = GameManager.GameManager;
-using Judge = NoteJudge.NoteJudge;
+using Game = GameManagerNS.GameManager;
+using Judge = NoteJudgeNS.NoteJudge;
 
 namespace NoteStateMachine
 {
@@ -48,7 +50,7 @@ namespace NoteStateMachine
 
             if (StartJudge)
             {
-                StateMachine.SwitchState(Note.OnJudge);
+                StateMachine.SwitchState(Note.ProcessJudge);
             }
         }
 
@@ -78,12 +80,6 @@ namespace NoteStateMachine
         {
             base.Update();
 
-            if (Note.IsJudged)
-            {
-                Note.AnimeSwitchToJudge();
-                StateMachine.SwitchState(Note.AfterJudge);
-            }
-
             if (ExitJudge)
             {
                 StateMachine.SwitchState(Note.AfterJudge);
@@ -94,22 +90,22 @@ namespace NoteStateMachine
         {
             base.Exit();
 
-            UnregisterJudge(); // 同上
+            UnregisterJudge();
         }
 
         // 在超过判定时间之后自动移除
         private bool ExitJudge =>
             Game.Inst.GetGameTime() > Note.JudgeTime
-            && Judge.GetJudgeEnum(Note) == Judge.NoteJudgeEnum.NotEntered;
+            && Judge.GetJudgeEnum(Note) == Judge.NoteJudgeEnum.Miss;
 
         private void RegisterJudge()
         {
-            Note.ParentTrack.JudgeList.Add(Note);
+            Note.ParentTrack.RegisterJudge(Note);
         }
 
         private void UnregisterJudge()
         {
-            Note.ParentTrack.JudgeList.Remove(Note);
+            Note.ParentTrack.UnregisterJudge(Note);
         }
     }
 
@@ -121,6 +117,8 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
+
+            Game.Inst.Score.MaxScore += NoteJudgeScore.Max;
         }
 
         public override void Update()
@@ -142,7 +140,11 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            InitNote(Note);
+
+            CombineParent(Note);
+
+            AnimeInit(Note);
+
             StateMachine.SwitchState(Note.AnimeNote);
         }
 
@@ -156,13 +158,18 @@ namespace NoteStateMachine
             base.Exit();
         }
 
-        public void InitNote(NoteBehaviour Note)
+        private void CombineParent(NoteBehaviour Note)
         {
-            Note.IsJudged = false;
             Note.transform.SetParent(Note.ParentTrack.transform, true);
+            Note.ParentTrack.Register(Note);
+        }
+
+        private void AnimeInit(NoteBehaviour Note)
+        {
             Note.Inst.SpriteRenderer.sprite = Note.SpriteList[
                 Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2 ? 0 : 1
             ];
+
             Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -190,16 +197,22 @@ namespace NoteStateMachine
 
         public void UpdatePosition()
         {
-            AnimeMachine.CurT = Mathf.Pow(
+            // Nostalgia 这一块
+
+            AnimeMachine.CurT =
                 (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
-                    / AnimeMachine.CurAnime.TotalTimeElapse(),
-                1f
-            );
+                / AnimeMachine.CurAnime.TotalTimeElapse();
 
             Note.transform.position =
-                (1 - AnimeMachine.CurT) * AnimeMachine.CurAnime.StartV
-                + AnimeMachine.CurT * AnimeMachine.CurAnime.EndV
-                + Note.ParentTrack.transform.position;
+                InterpFunc.VectorHandler(
+                    AnimeMachine.CurAnime.StartV,
+                    AnimeMachine.CurAnime.EndV,
+                    AnimeMachine.CurT,
+                    AxisFunc.Cosine,
+                    AxisFunc.Cosine,
+                    AxisFunc.Sine
+                ) + Note.ParentTrack.transform.position;
+            ;
         }
 
         public void AnimeManager()
@@ -263,12 +276,19 @@ namespace NoteStateMachine
             Note.Inst.transform.position =
                 new Vector3(0f, 0f * AnimeMachine.CurT, 0f) + AnimeMachine.JudgePosCache;
 
-            Note.Inst.SpriteRenderer.color = new Color(
-                1f,
-                1f,
-                1f - 5f * AnimeMachine.CurT,
-                1f - 5f * AnimeMachine.CurT
-            );
+            if (AnimeMachine.HasJudgeAnime)
+            {
+                Note.Inst.SpriteRenderer.color = new Color(
+                    1f,
+                    1f,
+                    1f - 2f * AnimeMachine.CurT,
+                    1f - 2f * AnimeMachine.CurT
+                );
+            }
+            else
+            {
+                StateMachine.SwitchState(Note.DestroyNoteAnime);
+            }
 
             return AnimeMachine.CurT - 1f >= 0;
         }
@@ -308,9 +328,9 @@ namespace NoteStateMachine
                 / AnimeMachine.DisappearTimeSpan;
 
             Note.Inst.transform.position =
-                new Vector3(0f, -2f * AnimeMachine.CurT, 0f) + AnimeMachine.DisappearingPosCache;
+                new Vector3(0f, -0.8f * AnimeMachine.CurT, 0f) + AnimeMachine.DisappearingPosCache;
 
-            Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - 4f * AnimeMachine.CurT);
+            Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - 2f * AnimeMachine.CurT);
 
             return AnimeMachine.CurT - 1f >= 0;
         }
@@ -324,8 +344,11 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
-            Note.Inst.transform.position = new Vector3(0f, 20f, 0f);
+
+            AnimeExit();
+
+            ParentExit();
+
             Note.DestroyEvent?.Invoke();
         }
 
@@ -337,6 +360,17 @@ namespace NoteStateMachine
         public override void Exit()
         {
             base.Exit();
+        }
+
+        private void ParentExit()
+        {
+            Note.ParentTrack.Unregister(Note);
+        }
+
+        private void AnimeExit()
+        {
+            Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Note.Inst.transform.position = new Vector3(0f, 20f, 0f);
         }
     }
 }

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using PooledObject;
+using PooledObjectNS;
 using UnityEngine;
 
 namespace Anime
@@ -40,17 +40,20 @@ namespace Anime
     }
 
     /// <summary>
-    /// 把动画所需的所有控制器打包成的一个类
+    /// 把动画所需的各种控制器打包成的一个类
+    /// 包含一大堆不常用数值和默认值
     /// </summary>
     public class AnimeMachine
     {
         public bool HasDisappearAnime = true;
 
-        public bool IsDestroyable = true;
+        public bool HasJudgeAnime = true; // 这个只对 Note 生效
+
+        public bool IsDestroyable = true; // 只代表处于当前界面时无法摧毁，依旧会被退出页面自动销毁
 
         public float DisappearTimeSpan = 0.2f;
 
-        public float JudgeAnimeTimeSpan = 0.5f;
+        public float JudgeAnimeTimeSpan = 0.2f;
 
         public float DisappearTimeCache;
 
@@ -60,7 +63,7 @@ namespace Anime
 
         public Vector3 JudgePosCache;
 
-        public float CurT // 用来处理 Lerp 函数，需要值的范围在 0 ~ 1 间往复循环。在到达 1 时跳转回 0
+        public float CurT // 用来处理 Interpolation 函数，需要值的范围在 0 ~ 1
         {
             get { return _t; }
             set { _t = Mathf.Clamp01(value); }
@@ -76,7 +79,7 @@ namespace Anime
         {
             foreach (var Item in Queue)
             {
-                this.AnimeQueue.Enqueue(Item);
+                AnimeQueue.Enqueue(Item);
             }
         }
     }

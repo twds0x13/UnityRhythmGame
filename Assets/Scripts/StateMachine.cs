@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Anime;
-using NoteNamespace;
-using PooledObject;
+using NoteNS;
+using PooledObjectNS;
 using UnityEngine.Windows.Speech;
 
 namespace StateMachine

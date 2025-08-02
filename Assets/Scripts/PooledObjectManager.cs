@@ -1,15 +1,14 @@
 using System.Collections.Generic;
 using Anime;
-using NoteNamespace;
+using NoteNS;
 using Singleton;
-using TrackNamespace;
-using UnityEditor.Experimental.GraphView;
+using TrackNS;
 using UnityEngine;
 using UnityEngine.Pool;
-using Ctrl = GameCore.GameController;
-using Game = GameManager.GameManager;
+using Game = GameManagerNS.GameManager;
+using Page = UserInterfaceNS.UserInterfaceManager;
 
-namespace PooledObject
+namespace PooledObjectNS
 {
     /// <summary>
     /// 在游戏过程中动态生成所需的 <see cref="PooledObjectBehaviour"/> 对象，需要读取谱面文件作为需求列表。
@@ -25,7 +24,7 @@ namespace PooledObject
         ObjectPool<GameObject> TrackPool;
 
         [SerializeField]
-        Dictionary<int, TrackBehaviour> BaseTracks = new();
+        Dictionary<int, TrackBehaviour> BaseTracks;
 
         [SerializeField]
         GameObject NoteInst;
@@ -41,7 +40,13 @@ namespace PooledObject
 
         protected override void SingletonAwake()
         {
+            InitTrackDict();
             InitPools();
+        }
+
+        public void InitTrackDict()
+        {
+            BaseTracks = new();
         }
 
         public void InitPools()
@@ -124,32 +129,30 @@ namespace PooledObject
             return Note;
         }
 
-        public void GetNotesDynamic(int Num, float Duration)
+        public void GetNotesDynamic(float StartTime, float Vertical, int TrackNum, float Duration)
         {
             if (!Game.Inst.IsGamePaused())
             {
                 Queue<AnimeClip> Tmp = new();
 
-                float Time = Game.Inst.GetGameTime();
-
                 Tmp.Enqueue(
                     new AnimeClip(
-                        Time,
-                        Time + Duration,
-                        new Vector3(0f, 3.5f, 0f),
+                        StartTime,
+                        StartTime + Duration,
+                        new Vector3(0.3f - 0.2f * TrackNum, 2.2f * Vertical, 2f),
                         new Vector3(0f, 0f, 0f)
                     )
                 );
 
                 AnimeMachine Machine = new(Tmp);
 
-                Machine.DisappearTimeSpan = 0.5f; // 超过 500ms 自动销毁
+                Machine.HasJudgeAnime = true; // 切换判定动画开关
 
                 TrackBehaviour Object;
 
-                if (BaseTracks.TryGetValue(Num, out Object))
+                if (BaseTracks.TryGetValue(TrackNum, out Object))
                 {
-                    GetOneNote(Machine, Object, Time + Duration);
+                    GetOneNote(Machine, Object, StartTime + Duration);
                 }
             }
         }
@@ -158,35 +161,40 @@ namespace PooledObject
         {
             if (!Game.Inst.IsGamePaused())
             {
-                Queue<AnimeClip> Tmp = new();
+                Queue<AnimeClip> Tmp;
                 Vector3 VecTmp;
 
-                VecTmp = new Vector3(-0.75f + 0.5f * TrackUIDIterator, -1f, 0f);
-
-                for (int i = 0; i < 50; i++)
+                for (int j = 0; j < 4; j++)
                 {
-                    Tmp.Enqueue(
-                        new AnimeClip(
-                            Game.Inst.GetGameTime() + 10 * i,
-                            Game.Inst.GetGameTime() + 5f + 10 * i,
-                            VecTmp,
-                            VecTmp - new Vector3(0f, -0.2f, 0f)
-                        )
-                    );
+                    Tmp = new();
 
-                    Tmp.Enqueue(
-                        new AnimeClip(
-                            Game.Inst.GetGameTime() + 5f + 10 * i,
-                            Game.Inst.GetGameTime() + 10f + 10 * i,
-                            VecTmp - new Vector3(0f, -0.2f, 0f),
-                            VecTmp
-                        )
-                    );
+                    VecTmp = new Vector3(-0.75f + 0.5f * TrackUIDIterator, -1.2f, 0f);
+
+                    for (int i = 0; i < 50; i++)
+                    {
+                        Tmp.Enqueue(
+                            new AnimeClip(
+                                Game.Inst.GetGameTime() + 10 * i,
+                                Game.Inst.GetGameTime() + 5f + 10 * i,
+                                VecTmp,
+                                VecTmp - new Vector3(0f, -0.2f, 0f)
+                            )
+                        );
+
+                        Tmp.Enqueue(
+                            new AnimeClip(
+                                Game.Inst.GetGameTime() + 5f + 10 * i,
+                                Game.Inst.GetGameTime() + 10f + 10 * i,
+                                VecTmp - new Vector3(0f, -0.2f, 0f),
+                                VecTmp
+                            )
+                        );
+                    }
+
+                    AnimeMachine Machine = new(Tmp);
+
+                    GetOneTrack(Page.Inst.CurPage.Peek(), Machine);
                 }
-
-                AnimeMachine Machine = new(Tmp);
-
-                GetOneTrack(Machine);
             }
         }
 
@@ -207,12 +215,12 @@ namespace PooledObject
         /// <summary>
         /// 从对象池中获取一个新的 <see cref="TrackBehaviour"/> 对象，并同时初始化它的动画机
         /// </summary>
-        private void GetOneTrack(AnimeMachine Machine)
+        private void GetOneTrack(BaseUIPage Page, AnimeMachine Machine)
         {
             var Track = TrackPool
                 .Get()
                 .GetComponent<TrackBehaviour>()
-                .Init(Machine, TrackUIDIterator);
+                .Init(Page, Machine, TrackUIDIterator);
 
             if (TrackUIDIterator < 4)
             {
@@ -221,6 +229,13 @@ namespace PooledObject
             }
 
             TrackUIDIterator++;
+        }
+
+        public void ResetGame()
+        {
+            BaseTracks.Clear();
+            NoteUIDIterator = 0;
+            TrackUIDIterator = 0;
         }
 
         public Vector3 FlatRandVec()
