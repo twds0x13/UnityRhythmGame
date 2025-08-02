@@ -1,8 +1,9 @@
 using System;
 using Singleton;
 using UnityEngine;
-using Game = GameManager.GameManager;
-using Pool = PooledObject.PooledObjectManager;
+using UnityEngine.InputSystem;
+using Game = GameManagerNS.GameManager;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 /// <summary>
 /// 负责管理游戏核心逻辑的类
@@ -10,72 +11,116 @@ using Pool = PooledObject.PooledObjectManager;
 /// </summary>
 namespace GameCore
 {
+    [RequireComponent(typeof(PlayerInput))]
     #region GameController
     public class GameController : Singleton<GameController>
     {
-        public Action OnUpdate;
+        public PlayerInput UserInput;
 
-        protected override void SingletonAwake()
-        {
-            OnUpdate += LoadGameSettings;
+        // 测试用临时变量
 
-            OnUpdate += SaveGameSettings;
+        bool _flag;
 
-            OnUpdate += TestNote;
+        System.Random Rand = new();
 
-            OnUpdate += TestTrack;
+        protected override void SingletonAwake() { }
 
-            OnUpdate += TestIgnorePause;
-        }
-
+        // 仅供测试使用
         void Update()
         {
-            OnUpdate();
+            var Time = Game.Inst.GetGameTime();
+
+            var Speed = 1.00f;
+
+            //var Speed = RandFloat(0.9f, 1.10f);
+
+            if (Math.Ceiling(Time * 10f) % 2 == 0 && _flag)
+            {
+                var FirstNum = Rand.Next(0, 4);
+
+                Pool.Inst.GetNotesDynamic(Time, Speed, FirstNum, 0.75f);
+
+                if (Pool.Inst.TrackUIDIterator > 1) // 假装在打大叠
+                {
+                    var SecondNum = Rand.Next(0, 4);
+                    while (SecondNum == FirstNum)
+                    {
+                        SecondNum = Rand.Next(0, 4);
+                    }
+                    //Speed = RandFloat(0.8f, 1.20f);
+                    Pool.Inst.GetNotesDynamic(Time, Speed, SecondNum, 0.75f);
+                }
+
+                _flag = false;
+            }
+
+            if (Math.Ceiling(Time * 10f) % 2 == 1)
+            {
+                _flag = true;
+            }
+        }
+
+        public void RebindInput(InputActionReference Ref)
+        {
+            Debug.Log("Iz Thiz Jvav?");
+            UserInput.SwitchCurrentActionMap("UserRebinding");
+            Ref.action.PerformInteractiveRebinding()
+                .WithControlsExcluding("Mouse")
+                .WithCancelingThrough("<keyboard>/escape")
+                .OnMatchWaitForAnother(0.05f)
+                .OnComplete(Operation => SwitchToNormal(Operation))
+                .OnCancel(Operation => SwitchToNormal(Operation))
+                .Start();
+        }
+
+        private void SwitchToNormal(InputActionRebindingExtensions.RebindingOperation Operation)
+        {
+            Operation.Dispose();
+            UserInput.SwitchCurrentActionMap("UserNormal");
         }
 
         #region GameTests
 
-        private void TestNote()
+        public void GetNote(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameTestNote))
-            {
-                Pool.Inst.GetNotesDynamic();
-            }
+            if (Ctx.performed)
+                Pool.Inst.GetNotesDynamic(Game.Inst.GetGameTime(), 1f, Rand.Next(0, 4), 1f);
         }
 
-        private void TestTrack()
+        public void GetTrack(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameTestTrack))
-            {
+            if (Ctx.performed && Pool.Inst.TrackUIDIterator == 0)
                 Pool.Inst.GetTracksDynamic();
-            }
         }
 
-        private void SaveGameSettings()
+        public void SaveGameSettings(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameSave))
-            {
-                Game.Inst.SaveGameSettings();
-            }
+            Game.Inst.SaveGameSettings();
         }
 
-        private void LoadGameSettings()
+        public void LoadGameSettings(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKeyDown(Game.Inst.Settings.KeyGameLoad))
-            {
-                Game.Inst.LoadGameSettings(ref Game.Inst.Settings);
-            }
+            Game.Inst.LoadGameSettings(ref Game.Inst.Settings);
         }
 
-        private void TestIgnorePause()
+        public void TestIgnorePause(InputAction.CallbackContext Ctx)
         {
-            if (Input.GetKey(KeyCode.C))
-            {
-                Game.Inst.LockTimeScale(2f);
-            }
+            //Game.Inst.LockTimeScale(2f);
+        }
+
+        public void PauseResumeGame(InputAction.CallbackContext Ctx)
+        {
+            if (Ctx.performed)
+                Game.Inst.PauseResumeGame();
         }
 
         #endregion
+
+        public float RandFloat(float Min, float Max)
+        {
+            return Min + (float)Rand.NextDouble() * (Max - Min);
+        }
     }
+
     #endregion
 }

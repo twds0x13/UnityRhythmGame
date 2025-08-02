@@ -1,3 +1,4 @@
+using System;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ namespace Singleton
             {
                 if (_inst == null)
                 {
-                    Debug.Log(nameof(_inst) + "Null on Get");
+                    throw new MissingReferenceException($"No instance of {typeof(T).Name} found.");
                 }
 
                 return _inst;
@@ -28,7 +29,9 @@ namespace Singleton
         {
             if (_inst != null)
             {
-                Debug.Log(nameof(_inst) + "Not Null when Awake");
+                throw new InvalidOperationException(
+                    $"An instance of {typeof(T).Name} already exists."
+                );
             }
 
             _inst = this as T;
