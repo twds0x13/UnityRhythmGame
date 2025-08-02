@@ -7,7 +7,7 @@
             "id": "32c6d53c-5c92-43b7-b55d-ce81596f2155",
             "actions": [
                 {
-                    "name": "Track Zero",
+                    "name": "Track 0",
                     "type": "Button",
                     "id": "d12e79cb-e02e-4995-b681-b64b97404ae6",
                     "expectedControlType": "",
@@ -16,7 +16,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Track One",
+                    "name": "Track 1",
                     "type": "Button",
                     "id": "5da1d430-75a9-4963-bdef-dd80abfee2a7",
                     "expectedControlType": "",
@@ -25,7 +25,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Track Two",
+                    "name": "Track 2",
                     "type": "Button",
                     "id": "7a8e411e-2dba-41d0-ad9c-4a633041c331",
                     "expectedControlType": "",
@@ -34,7 +34,7 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "Track Three",
+                    "name": "Track 3",
                     "type": "Button",
                     "id": "6aa1aba3-d4df-4492-95ac-b9fac0a1eaae",
                     "expectedControlType": "",
@@ -78,7 +78,7 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Track Zero",
+                    "action": "Track 0",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
@@ -89,29 +89,29 @@
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Track One",
+                    "action": "Track 1",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
                     "id": "78335eec-3310-423f-a73f-54713eabf886",
-                    "path": "<Keyboard>/leftBracket",
+                    "path": "<Keyboard>/o",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Track Two",
+                    "action": "Track 2",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
                 {
                     "name": "",
                     "id": "181d5ed2-8452-44c5-81c5-3b69bfb9119a",
-                    "path": "<Keyboard>/rightBracket",
+                    "path": "<Keyboard>/p",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Track Three",
+                    "action": "Track 3",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

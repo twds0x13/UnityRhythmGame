@@ -6,11 +6,10 @@ using ICSharpCode.SharpZipLib.Zip;
 using Singleton;
 using UnityEngine;
 
-namespace GameManager
+namespace GameManagerNS
 {
     /// <summary>
-    /// 用来存储用户设置，默认参数是默认游戏设置
-    /// 正在被新版输入替换
+    /// 用来存一些新版输入和其他不方便存的东西
     /// </summary>
     #region GameSettings
     public class GameSettings
@@ -21,36 +20,45 @@ namespace GameManager
 
         public float DisplayTimeOffset = 0f;
 
-        public KeyCode KeyGamePause = KeyCode.Escape;
-
-        public KeyCode KeyGameResume = KeyCode.Escape;
-
-        public KeyCode KeyGameSave = KeyCode.Alpha1;
-
-        public KeyCode KeyGameLoad = KeyCode.Alpha2;
-
-        public KeyCode KeyGameTestNote = KeyCode.Alpha3;
-
-        public KeyCode KeyGameTestTrack = KeyCode.Alpha4;
-
-        public bool OneKey // 是不是用同一个按键来处理暂停和恢复
-        {
-            get { return KeyGamePause == KeyGameResume; }
-        }
-
-        public float TimeScaleSpeed
-        {
-            get { return GameTime.TimeScaleSpeed; }
-            set { GameTime.TimeScaleSpeed = Mathf.Clamp(value, 0f, 100f); }
-        }
-
-        public void SetTimeScale(float Speed)
-        {
-            GameTime.TimeScale = Speed;
-        }
+        public float MusicTimeOffset = 0f;
     }
 
     #endregion
+
+    public class GameScore
+    {
+        internal GameScore() { }
+
+        float _score; // 当前分数
+
+        float _maxScore; // 理论最大分数（全 Perfect）
+
+        public float Accuracy // 完成率
+        {
+            get
+            {
+                if (_maxScore != 0f)
+                {
+                    return _score / _maxScore;
+                }
+                else
+                {
+                    return 1f;
+                }
+            }
+        }
+        public float Score
+        {
+            get { return _score; }
+            set { _score = value; }
+        }
+
+        public float MaxScore
+        {
+            get { return _maxScore; }
+            set { _maxScore = value; }
+        }
+    }
 
     /// <summary>
     /// 内嵌类，用于处理 <see cref="Time.timeScale"/> 的全局更改
@@ -131,6 +139,7 @@ namespace GameManager
             }
         }
 
+        /*
         private static void OnTwoKeyPause() // 暂时废弃
         {
             if (Input.GetKeyDown(GameManager.Inst.Settings.KeyGameResume))
@@ -152,6 +161,7 @@ namespace GameManager
                 TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
             }
         }
+        */
 
         private static void OnOneKeyPause()
         {
@@ -176,14 +186,7 @@ namespace GameManager
 
         public static void OnPauseResume()
         {
-            if (!GameManager.Inst.Settings.OneKey)
-            {
-                OnTwoKeyPause();
-            }
-            else
-            {
-                OnOneKeyPause();
-            }
+            OnOneKeyPause();
         }
 
         public static void TimeUpdate()
@@ -200,6 +203,8 @@ namespace GameManager
     /// </summary>
     public class GameManager : Singleton<GameManager>
     {
+        public GameScore Score = new();
+
         public GameSettings Settings = new(); // TODO : 改成 protected 或 private
 
         private string UserSettingsZipPath;
@@ -257,7 +262,7 @@ namespace GameManager
         {
             GameTime.IgnorePause = true;
 
-            Inst.Settings.SetTimeScale(Speed);
+            //Inst.Settings.SetTimeScale(Speed);
         }
 
         public void UnlockTimeScale() => GameTime.IgnorePause = false; // 解锁强制时间流速设置，恢复到正常状态
@@ -270,6 +275,12 @@ namespace GameManager
 
         public bool LoadGameSettings(ref GameSettings Object) =>
             LoadJsonFromZip("Usersettings.zip", ref Object);
+
+        public void ResetGame()
+        {
+            Score.MaxScore = 0f;
+            Score.Score = 0f;
+        }
 
         public bool CompressToZipJson<T>(T Object, string ZipFileName)
         {

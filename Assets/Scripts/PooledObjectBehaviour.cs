@@ -1,10 +1,11 @@
 using Anime;
 using UnityEngine;
 using UnityEngine.Events;
+using UserInterfaceNS;
 
-namespace PooledObject
+namespace PooledObjectNS
 {
-    public class PooledObjectBehaviour : MonoBehaviour // ◊”¿‡”√
+    public class PooledObjectBehaviour : MonoBehaviour, IPageControlled<MonoBehaviour>
     {
         public PooledObjectBehaviour Inst { get; private set; }
 
@@ -23,5 +24,9 @@ namespace PooledObject
             if (Inst != this)
                 Inst = this;
         }
+
+        public virtual void OnOpenPage() { }
+
+        public virtual void OnClosePage() { }
     }
 }

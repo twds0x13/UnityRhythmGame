@@ -1,23 +1,20 @@
-using System;
 using Anime;
 using NoteStateMachine;
-using PooledObject;
+using PooledObjectNS;
 using StateMachine;
-using TrackNamespace;
-using UnityEngine.InputSystem;
-using Judge = NoteJudge.NoteJudge;
+using TrackNS;
+using Game = GameManagerNS.GameManager;
+using Judge = NoteJudgeNS.NoteJudge;
 
-namespace NoteNamespace
+namespace NoteNS
 {
     public class NoteBehaviour : PooledObjectBehaviour
     {
-        // 事实证明，定义几个变量比在状态机里加 Dictionary 然后用 SwitchTo(Enum State) 方便。
-
         private StateMachine<NoteBehaviour> StateMachine; // 动画状态机
 
         public StateInitNote InitNote; // 从动画状态开始更新
 
-        public StateAnimeNote AnimeNote { get; private set; } // 从动画状态开始更新
+        public StateAnimeNote AnimeNote; // 从动画状态开始更新
 
         public StateJudgeAnimeNote JudgeNoteAnime; // 播放被击中的动画，本质是 Disappear 的分支
 
@@ -29,15 +26,13 @@ namespace NoteNamespace
 
         public StateBeforeJudgeNote BeforeJudge; // 进入判定区之前
 
-        public StateOnJudgeNote OnJudge; // 在判断区间内
+        public StateOnJudgeNote ProcessJudge; // 在判断区间内
 
         public StateAfterJudgeNote AfterJudge; // 过了判断区间
 
         public TrackBehaviour ParentTrack; // 归属的那一个轨道，获取 transform.position 作为动画坐标原点（默认情况落到轨道上）
 
         public float JudgeTime { get; private set; } // 预计判定时间
-
-        public bool IsJudged; // 是否被判定
 
         public void InitStateMachine(NoteBehaviour Note)
         {
@@ -50,7 +45,7 @@ namespace NoteNamespace
 
             JudgeMachine = new();
             BeforeJudge = new(Note, JudgeMachine);
-            OnJudge = new(Note, JudgeMachine);
+            ProcessJudge = new(Note, JudgeMachine);
             AfterJudge = new(Note, JudgeMachine);
 
             JudgeMachine.InitState(BeforeJudge);
@@ -63,19 +58,14 @@ namespace NoteNamespace
             StateMachine.CurState?.Update();
         }
 
-        public void AnimeSwitchToJudge()
+        public void OnJudge()
         {
-            if (Judge.GetJudgeEnum(this) != Judge.NoteJudgeEnum.NotEntered)
+            if (JudgeMachine.CurState == ProcessJudge)
             {
-                StateMachine.SwitchState(JudgeNoteAnime);
-            }
-        }
+                Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetJudgeEnum(this));
 
-        public void JudgeAction()
-        {
-            if (!IsJudged)
-            {
-                IsJudged = true;
+                JudgeMachine.SwitchState(AfterJudge);
+                StateMachine.SwitchState(JudgeNoteAnime);
             }
         }
 
@@ -86,6 +76,12 @@ namespace NoteNamespace
             AnimeMachine = Machine;
             InitStateMachine(this);
             return this;
+        }
+
+        public override void OnClosePage()
+        {
+            StateMachine.SwitchState(DisappearNoteAnime);
+            JudgeMachine.SwitchState(AfterJudge);
         }
     }
 }

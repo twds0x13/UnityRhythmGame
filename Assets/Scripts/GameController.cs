@@ -2,8 +2,8 @@ using System;
 using Singleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Game = GameManager.GameManager;
-using Pool = PooledObject.PooledObjectManager;
+using Game = GameManagerNS.GameManager;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 /// <summary>
 /// 负责管理游戏核心逻辑的类
@@ -11,58 +11,59 @@ using Pool = PooledObject.PooledObjectManager;
 /// </summary>
 namespace GameCore
 {
+    [RequireComponent(typeof(PlayerInput))]
     #region GameController
     public class GameController : Singleton<GameController>
     {
-        [SerializeField]
-        public PlayerInput NewInput;
+        public PlayerInput UserInput;
 
-        [SerializeField]
-        InputActionReference[] InputReferences;
+        // 测试用临时变量
 
-        float test;
-
-        bool flag;
-
-        float _score;
-        public float Score
-        {
-            get { return _score; }
-            set
-            {
-                _score = value;
-
-                Debug.Log("Score : " + value.ToString());
-            }
-        }
+        bool _flag;
 
         System.Random Rand = new();
 
-        protected override void SingletonAwake()
-        {
-            NewInput = GetComponent<PlayerInput>();
-        }
+        protected override void SingletonAwake() { }
 
+        // 仅供测试使用
         void Update()
         {
-            test = Game.Inst.GetGameTime();
+            var Time = Game.Inst.GetGameTime();
 
-            if (Math.Ceiling(test * 16f) % 2 == 0 && flag)
+            var Speed = 1.00f;
+
+            //var Speed = RandFloat(0.9f, 1.10f);
+
+            if (Math.Ceiling(Time * 10f) % 2 == 0 && _flag)
             {
-                Pool.Inst.GetNotesDynamic(Rand.Next(0, 4), 0.75f);
-                flag = false;
+                var FirstNum = Rand.Next(0, 4);
+
+                Pool.Inst.GetNotesDynamic(Time, Speed, FirstNum, 0.75f);
+
+                if (Pool.Inst.TrackUIDIterator > 1) // 假装在打大叠
+                {
+                    var SecondNum = Rand.Next(0, 4);
+                    while (SecondNum == FirstNum)
+                    {
+                        SecondNum = Rand.Next(0, 4);
+                    }
+                    //Speed = RandFloat(0.8f, 1.20f);
+                    Pool.Inst.GetNotesDynamic(Time, Speed, SecondNum, 0.75f);
+                }
+
+                _flag = false;
             }
 
-            if (Math.Ceiling(test * 16f) % 2 == 1)
+            if (Math.Ceiling(Time * 10f) % 2 == 1)
             {
-                flag = true;
+                _flag = true;
             }
         }
 
         public void RebindInput(InputActionReference Ref)
         {
-            Debug.Log("Jvav?");
-            NewInput.SwitchCurrentActionMap("UserRebinding");
+            Debug.Log("Iz Thiz Jvav?");
+            UserInput.SwitchCurrentActionMap("UserRebinding");
             Ref.action.PerformInteractiveRebinding()
                 .WithControlsExcluding("Mouse")
                 .WithCancelingThrough("<keyboard>/escape")
@@ -75,7 +76,7 @@ namespace GameCore
         private void SwitchToNormal(InputActionRebindingExtensions.RebindingOperation Operation)
         {
             Operation.Dispose();
-            NewInput.SwitchCurrentActionMap("UserNormal");
+            UserInput.SwitchCurrentActionMap("UserNormal");
         }
 
         #region GameTests
@@ -83,12 +84,12 @@ namespace GameCore
         public void GetNote(InputAction.CallbackContext Ctx)
         {
             if (Ctx.performed)
-                Pool.Inst.GetNotesDynamic(Rand.Next(0, 4), 0.75f);
+                Pool.Inst.GetNotesDynamic(Game.Inst.GetGameTime(), 1f, Rand.Next(0, 4), 1f);
         }
 
         public void GetTrack(InputAction.CallbackContext Ctx)
         {
-            if (Ctx.performed && Pool.Inst.TrackUIDIterator < 4)
+            if (Ctx.performed && Pool.Inst.TrackUIDIterator == 0)
                 Pool.Inst.GetTracksDynamic();
         }
 
@@ -104,7 +105,7 @@ namespace GameCore
 
         public void TestIgnorePause(InputAction.CallbackContext Ctx)
         {
-            Game.Inst.LockTimeScale(2f);
+            //Game.Inst.LockTimeScale(2f);
         }
 
         public void PauseResumeGame(InputAction.CallbackContext Ctx)
@@ -114,6 +115,11 @@ namespace GameCore
         }
 
         #endregion
+
+        public float RandFloat(float Min, float Max)
+        {
+            return Min + (float)Rand.NextDouble() * (Max - Min);
+        }
     }
 
     #endregion

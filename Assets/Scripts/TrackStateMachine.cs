@@ -1,10 +1,9 @@
 using Anime;
-using PooledObject;
 using StateMachine;
-using TrackNamespace;
+using TrackNS;
 using UnityEngine;
 using Ctrl = GameCore.GameController;
-using Game = GameManager.GameManager;
+using Game = GameManagerNS.GameManager;
 
 namespace TrackStateMachine
 {
@@ -54,29 +53,16 @@ namespace TrackStateMachine
             base.Exit();
         }
 
-        private void RegisterJudgeKey() // ∞¶£¨”≤±‡¬Î
+        private void RegisterJudgeKey() // …Ò√ÿ
         {
-            switch (Track.TrackNumber)
+            if (Track.TrackNumber < 4)
             {
-                case 0:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Zero").performed +=
-                        Track.JudgeNote;
-                    break;
-                case 1:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track One").performed +=
-                        Track.JudgeNote;
-                    break;
-                case 2:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Two").performed +=
-                        Track.JudgeNote;
-                    break;
-                case 3:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Three").performed +=
-                        Track.JudgeNote;
-                    break;
+                Ctrl
+                    .Inst.UserInput.currentActionMap.FindAction(
+                        "Track " + Track.TrackNumber.ToString()
+                    )
+                    .performed += Track.JudgeNote;
             }
-
-            Debug.Log("Track Succesfully Registered!");
         }
     }
 
@@ -96,21 +82,11 @@ namespace TrackStateMachine
         public override void Update()
         {
             base.Update();
-
-            if (FinishJudge())
-            {
-                StateMachine.SwitchState(Track.FinishJudge);
-            }
         }
 
         public override void Exit()
         {
             base.Exit();
-        }
-
-        private bool FinishJudge()
-        {
-            return false;
         }
     }
 
@@ -140,24 +116,13 @@ namespace TrackStateMachine
 
         private void UnregisterJudgeKey()
         {
-            switch (Track.TrackNumber)
+            if (Track.TrackNumber < 4)
             {
-                case 0:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Zero").performed -=
-                        Track.JudgeNote;
-                    break;
-                case 1:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track One").performed -=
-                        Track.JudgeNote;
-                    break;
-                case 2:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Two").performed -=
-                        Track.JudgeNote;
-                    break;
-                case 3:
-                    Ctrl.Inst.NewInput.currentActionMap.FindAction("Track Three").performed -=
-                        Track.JudgeNote;
-                    break;
+                Ctrl
+                    .Inst.UserInput.currentActionMap.FindAction(
+                        "Track " + Track.TrackNumber.ToString()
+                    )
+                    .performed -= Track.JudgeNote;
             }
         }
     }
@@ -188,6 +153,10 @@ namespace TrackStateMachine
         {
             Track.Inst.SpriteRenderer.sprite = Track.SpriteList[1];
 
+            Track.transform.SetParent(Track.ParentPage.transform, false);
+
+            Track.ParentPage.RegisterObject(Track);
+
             Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
@@ -215,15 +184,20 @@ namespace TrackStateMachine
 
         private void UpdatePosition()
         {
-            AnimeMachine.CurT = Mathf.Pow(
-                (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
-                    / AnimeMachine.CurAnime.TotalTimeElapse(),
-                1f
-            );
+            AnimeMachine.CurT =
+                0.5f
+                - 0.5f
+                    * Mathf.Cos(
+                        Mathf.PI
+                            * (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
+                            / AnimeMachine.CurAnime.TotalTimeElapse()
+                    );
 
-            Track.transform.position =
-                (1 - AnimeMachine.CurT) * AnimeMachine.CurAnime.StartV
-                + AnimeMachine.CurT * AnimeMachine.CurAnime.EndV;
+            Track.transform.position = Vector3.Lerp(
+                AnimeMachine.CurAnime.StartV,
+                AnimeMachine.CurAnime.EndV,
+                AnimeMachine.CurT
+            );
         }
 
         private void AnimeManager()
@@ -305,8 +279,8 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
-            Track.Inst.transform.position = new Vector3(0f, 20f, 0f);
+            AnimeExit();
+            ParentExit();
             Track.DestroyEvent?.Invoke();
         }
 
@@ -318,6 +292,19 @@ namespace TrackStateMachine
         public override void Exit()
         {
             base.Exit();
+        }
+
+        private void AnimeExit()
+        {
+            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Track.Inst.transform.position = new Vector3(0f, 20f, 0f);
+        }
+
+        private void ParentExit()
+        {
+            Track.ParentPage.UnregisterObject(Track);
+            // Track.AllList.Clear();
+            // Track.JudgeList.Clear();
         }
     }
 }
