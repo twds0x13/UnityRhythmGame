@@ -5,8 +5,11 @@ TagManager:
   serializedVersion: 2
   tags:
   - DevInterface
-  - Canvas
   - PooledObject
+  - Page
+  - PageContainer
+  - ResizeDetector
+  - GameSingletons
   layers:
   - Default
   - TransparentFX

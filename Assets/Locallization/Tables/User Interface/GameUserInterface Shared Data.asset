@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: GameUserInterface Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: GameUserInterface
+  m_TableCollectionNameGuidString: 2f4247aecf1ebcf47b389725d439d571
+  m_Entries:
+  - m_Id: 7197663547392
+    m_Key: UIMainTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4134814994432
+    m_Key: UIGameAccuracy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 32451907670016
+    m_Key: UIGameTimeScale
+    m_Metadata:
+      m_Items: []
+  - m_Id: 32697626775552
+    m_Key: UIGameMaxScore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 32875444293632
+    m_Key: UIGameScore
+    m_Metadata:
+      m_Items: []
+  - m_Id: 44570845761536
+    m_Key: UIUserGuide
+    m_Metadata:
+      m_Items: []
+  - m_Id: 45112229744640
+    m_Key: UIButtonWhat
+    m_Metadata:
+      m_Items: []
+  - m_Id: 187668875825152
+    m_Key: UIButtonReturnToMain
+    m_Metadata:
+      m_Items: []
+  - m_Id: 187402722070528
+    m_Key: UISelectSong
+    m_Metadata:
+      m_Items: []
+  - m_Id: 49365077839872
+    m_Key: UIInputField
+    m_Metadata:
+      m_Items: []
+  - m_Id: 87228897153024
+    m_Key: UIStartGame
+    m_Metadata:
+      m_Items: []
+  - m_Id: 188306049323008
+    m_Key: UIButtonGameStart
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2963822150148096
+    m_Key: UIButtonStory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2989661180776448
+    m_Key: UIButtonNextRow
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3011992129228800
+    m_Key: UIAutoAddEntry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3025365562675200
+    m_Key: UINull
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3099285963788288
+    m_Key: UIButtonExitGame
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3388987522535424
+    m_Key: SwitchLanguage
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3730880513036288
+    m_Key: UIReturnToGame
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 5791047639913463862
+  references:
+    version: 2
+    RefIds:
+    - rid: 5791047639913463862
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1754538750745

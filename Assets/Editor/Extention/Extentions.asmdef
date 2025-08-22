@@ -1,0 +1,18 @@
+{
+    "name": "Extentions",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e27af6c49050fb0488277b5816adf906"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
