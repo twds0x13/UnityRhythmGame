@@ -1,0 +1,21 @@
+{
+    "name": "EditorWindows",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e27af6c49050fb0488277b5816adf906",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:eec0964c48f6f4e40bc3ec2257ccf8c5",
+        "GUID:2e77701fe0ceda44fb763f03ee704c37"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
