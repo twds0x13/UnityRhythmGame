@@ -74,7 +74,7 @@
                 {
                     "name": "",
                     "id": "c03e30f8-b75e-4b19-8c71-385616d04417",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/z",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -85,7 +85,7 @@
                 {
                     "name": "",
                     "id": "cdea50d9-e074-4eab-845c-088fec94d0ce",
-                    "path": "<Keyboard>/w",
+                    "path": "<Keyboard>/x",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -96,7 +96,7 @@
                 {
                     "name": "",
                     "id": "78335eec-3310-423f-a73f-54713eabf886",
-                    "path": "<Keyboard>/o",
+                    "path": "<Keyboard>/period",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -107,33 +107,11 @@
                 {
                     "name": "",
                     "id": "181d5ed2-8452-44c5-81c5-3b69bfb9119a",
-                    "path": "<Keyboard>/p",
+                    "path": "<Keyboard>/slash",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
                     "action": "Track 3",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "f815aca4-aad9-47b4-8201-038a10ddba25",
-                    "path": "<Keyboard>/a",
-                    "interactions": "Press",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Add Track",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "d777b8f7-fcd2-430e-9613-0dc27fee44b6",
-                    "path": "<Keyboard>/d",
-                    "interactions": "Press",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Add Note",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },
