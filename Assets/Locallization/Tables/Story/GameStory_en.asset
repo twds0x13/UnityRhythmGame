@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: GameStory_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 654cbddf8af8b464a9dd8a57a95c513a, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 13332575539200
+    m_Localized: It's Empty.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 50742743126016
+    m_Localized: Wut do you meant?
+    m_Metadata:
+      m_Items: []
+  - m_Id: 31206484594688
+    m_Localized: " The pinnacle of the core spectrum of the Wu Duan system. Seven
+      years of my charting essence culminate here: extreme note alignment\u2014even
+      at 0.6x speed, every note remains perfectly aligned; intricate note patterns
+      featuring solutions most charters could never conceive; exceptional courage\u2014I
+      employ every dangerous configuration others dare not use; unbeatable patience\u2014every
+      repeated musical passage is entirely redesigned; my will embodies a charting
+      philosophy of extreme precision, stable rest sections, and innovative climaxes.
+      This chart contains every conceivable pattern, offering zero repetition from
+      start to finish, deserving to be experienced by all at a reduced speed. This
+      is the ultimate proof. This is the final destination of conventional charting.
+      \"I have passed the ultimate proof; now I must enter Laputa."
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []
