@@ -30,7 +30,7 @@ namespace UIManagerNS
     }
 
     /// <summary>
-    /// »ù±¾¾ÍÊÇ×´Ì¬»ú UI °æ
+    /// åŸºæœ¬å°±æ˜¯çŠ¶æ€æœº UI ç‰ˆ
     /// </summary>
     public class PageController : Singleton<PageController>
     {
@@ -39,13 +39,13 @@ namespace UIManagerNS
         public List<BaseUIPage> HoverPageList { get; private set; }
 
         [SerializeField]
-        Canvas BackGroundCanvas; // ¹«ÓÃ±³¾°Í¼²ã ( äÖÈ¾Ë³Ğò -1 ) ÔÚÇĞ»»µ½²»Í¬Ò³ÃæÊ±²Ù×÷Õâ¸öÍ¼²ãÄÚµÄÄÚÈİ
+        Canvas BackGroundCanvas; // å…¬ç”¨èƒŒæ™¯å›¾å±‚ ( æ¸²æŸ“é¡ºåº -1 ) åœ¨åˆ‡æ¢åˆ°ä¸åŒé¡µé¢æ—¶æ“ä½œè¿™ä¸ªå›¾å±‚å†…çš„å†…å®¹
 
         [SerializeField]
-        List<BaseUIPage> PageObjects; // ·½±ãÔÚ Inspector Àï²é¿´
+        List<BaseUIPage> PageObjects; // æ–¹ä¾¿åœ¨ Inspector é‡ŒæŸ¥çœ‹
 
         [SerializeField]
-        List<BaseUIPage> HoverPageObjects; // Ğü¸¡Ò³Ãæ (µ¯´°)
+        List<BaseUIPage> HoverPageObjects; // æ‚¬æµ®é¡µé¢ (å¼¹çª—)
 
         public Dictionary<string, BaseUIPage> AllPages { get; private set; } = new();
 
@@ -122,7 +122,7 @@ namespace UIManagerNS
             UniTask.Void(DelayedOpen);
         }
 
-        public void JumpToPage(string Name) // OnClosePage ´¥·¢ÍË³ö¶¯»­£¬È»ºóÓÉÍË³ö¶¯»­µÄ OnCompleted ´¥·¢Õâ¸öº¯Êı£¬ËùÒÔ²»Ó¦¸ÃÖØ¸´´¥·¢ OnClosePage
+        public void JumpToPage(string Name) // OnClosePage è§¦å‘é€€å‡ºåŠ¨ç”»ï¼Œç„¶åç”±é€€å‡ºåŠ¨ç”»çš„ OnCompleted è§¦å‘è¿™ä¸ªå‡½æ•°ï¼Œæ‰€ä»¥ä¸åº”è¯¥é‡å¤è§¦å‘ OnClosePage
         {
             CurPage = AllPages[Name];
 
@@ -151,9 +151,9 @@ namespace UIManagerNS
                 }
             }
 
-            // ÇÉÃîµÄÊ¹ÓÃÒ»¸öÖĞ¼äÒ³ÃæÀ´¼Ù×°¿´²»µ½¿ªÍ·¿¨¶Ù
+            // å·§å¦™çš„ä½¿ç”¨ä¸€ä¸ªä¸­é—´é¡µé¢æ¥å‡è£…çœ‹ä¸åˆ°å¼€å¤´å¡é¡¿
 
-            // ÔİÊ±Ã»ÓÃ
+            // æš‚æ—¶æ²¡ç”¨
 
             UniTask.Void(DelayedOpen);
         }

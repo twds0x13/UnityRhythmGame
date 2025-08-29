@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NavigatorNS
 {
     /// <summary>
-    /// ¹ÜÀí <see cref="BaseUIPage"/> ÖĞ×é¼şµÄ³öÏÖ¶¯»­ºÍ½áÊø¶¯»­£¬ºÍ½çÃæËõ·ÅÊ±µÄ×Ô¶¯ÖØ¶¨Î»
+    /// ç®¡ç† <see cref="BaseUIPage"/> ä¸­ç»„ä»¶çš„å‡ºç°åŠ¨ç”»å’Œç»“æŸåŠ¨ç”»ï¼Œå’Œç•Œé¢ç¼©æ”¾æ—¶çš„è‡ªåŠ¨é‡å®šä½
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
     public class UINavigator : MonoBehaviour
@@ -226,7 +226,7 @@ namespace NavigatorNS
             throw new ArgumentOutOfRangeException();
         }
 
-        public void SetPivotByType(PivotType Type) // ĞèÒªÑÏÃÜ¹Û²ì
+        public void SetPivotByType(PivotType Type) // éœ€è¦ä¸¥å¯†è§‚å¯Ÿ
         {
             switch (Type)
             {
@@ -273,25 +273,25 @@ namespace NavigatorNS
 
             switch (NavigateAxis)
             {
-                case AxisType.LeftUp: // Canvas ×óÉÏ½ÇÎª×ø±ê 0 µã£¬ÓÒÏÂ½ÇÎª£¨1£¬1£©
+                case AxisType.LeftUp: // Canvas å·¦ä¸Šè§’ä¸ºåæ ‡ 0 ç‚¹ï¼Œå³ä¸‹è§’ä¸ºï¼ˆ1ï¼Œ1ï¼‰
                     return new Vector3(
                         -0.5f * Rect.width + AppendPosition.x * Rect.width,
                         0.5f * Rect.height - AppendPosition.y * Rect.height,
                         AppendPosition.z
                     );
-                case AxisType.RightUp: // Canvas ÓÒÉÏ½ÇÎª×ø±ê 0 µã£¬×óÏÂ½ÇÎª£¨1£¬1£©
+                case AxisType.RightUp: // Canvas å³ä¸Šè§’ä¸ºåæ ‡ 0 ç‚¹ï¼Œå·¦ä¸‹è§’ä¸ºï¼ˆ1ï¼Œ1ï¼‰
                     return new Vector3(
                         0.5f * Rect.width - AppendPosition.x * Rect.width,
                         0.5f * Rect.height - AppendPosition.y * Rect.height,
                         AppendPosition.z
                     );
-                case AxisType.LeftDown: // Canvas ×óÏÂ½ÇÎª×ø±ê 0 µã£¬ÓÒÉÏ½ÇÎª£¨1£¬1£©
+                case AxisType.LeftDown: // Canvas å·¦ä¸‹è§’ä¸ºåæ ‡ 0 ç‚¹ï¼Œå³ä¸Šè§’ä¸ºï¼ˆ1ï¼Œ1ï¼‰
                     return new Vector3(
                         -0.5f * Rect.width + AppendPosition.x * Rect.width,
                         -0.5f * Rect.height + AppendPosition.y * Rect.height,
                         AppendPosition.z
                     );
-                case AxisType.RightDown: // Canvas ÓÒÏÂ½ÇÎª×ø±ê 0 µã£¬×óÉÏ½ÇÎª£¨1£¬1£©
+                case AxisType.RightDown: // Canvas å³ä¸‹è§’ä¸ºåæ ‡ 0 ç‚¹ï¼Œå·¦ä¸Šè§’ä¸ºï¼ˆ1ï¼Œ1ï¼‰
                     return new Vector3(
                         0.5f * Rect.width - AppendPosition.x * Rect.width,
                         -0.5f * Rect.height + AppendPosition.y * Rect.height,

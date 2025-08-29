@@ -12,29 +12,29 @@ namespace TrackNS
 {
     public class TrackBehaviour : PooledObjectBehaviour
     {
-        private StateMachine<TrackBehaviour> StateMachine; // ¶¯»­×´Ì¬»ú
+        private StateMachine<TrackBehaviour> StateMachine; // åŠ¨ç”»çŠ¶æ€æœº
 
-        public StateInitTrack InitTrack; // ´Ó¶¯»­×´Ì¬¿ªÊ¼¸üĞÂ
+        public StateInitTrack InitTrack; // ä»åŠ¨ç”»çŠ¶æ€å¼€å§‹æ›´æ–°
 
-        public StateAnimeTrack AnimeTrack; // ´Ó¶¯»­×´Ì¬¿ªÊ¼¸üĞÂ
+        public StateAnimeTrack AnimeTrack; // ä»åŠ¨ç”»çŠ¶æ€å¼€å§‹æ›´æ–°
 
-        public StateDisappearTrack DisappearTrack; // ÏûÊ§
+        public StateDisappearTrack DisappearTrack; // æ¶ˆå¤±
 
-        public StateDestroyTrack DestroyTrack; // ´İ»Ù¸ÃÎïÌå
+        public StateDestroyTrack DestroyTrack; // æ‘§æ¯è¯¥ç‰©ä½“
 
-        private StateMachine<TrackBehaviour> JudgeMachine; // ¸ºÔğ¹ÜÀí Note ÅĞ¶¨
+        private StateMachine<TrackBehaviour> JudgeMachine; // è´Ÿè´£ç®¡ç† Note åˆ¤å®š
 
-        public StateInitJudgeTrack InitJudge; // ³õÊ¼»¯ÅĞ¶¨Âß¼­£¬ÔİÊ±Ö»ÓĞ×¢²á Input ÅĞ¶¨
+        public StateInitJudgeTrack InitJudge; // åˆå§‹åŒ–åˆ¤å®šé€»è¾‘ï¼Œæš‚æ—¶åªæœ‰æ³¨å†Œ Input åˆ¤å®š
 
-        public StateProcessJudgeTrack ProcessJudge; // ´¦ÀíÅĞ¶ÏĞòÁĞ
+        public StateProcessJudgeTrack ProcessJudge; // å¤„ç†åˆ¤æ–­åºåˆ—
 
-        public StateFinishJudgeTrack FinishJudge; // ×¢Ïú Input ÅĞ¶¨£¬µÈ´ıÓÎÏ·½áÊø
+        public StateFinishJudgeTrack FinishJudge; // æ³¨é”€ Input åˆ¤å®šï¼Œç­‰å¾…æ¸¸æˆç»“æŸ
 
-        private List<NoteBehaviour> AllList = new(); // ±éÀúÉ¾³ı»òÆäËû²Ù×÷²ÅÊ¹ÓÃ
+        private List<NoteBehaviour> AllList = new(); // éå†åˆ é™¤æˆ–å…¶ä»–æ“ä½œæ‰ä½¿ç”¨
 
-        private List<NoteBehaviour> JudgeList = new(); // ±È¶ÓÁĞºÃµÄÒ»µã£º¿ÉÖ¸¶¨É¾³ıÔªËØ
+        private List<NoteBehaviour> JudgeList = new(); // æ¯”é˜Ÿåˆ—å¥½çš„ä¸€ç‚¹ï¼šå¯æŒ‡å®šåˆ é™¤å…ƒç´ 
 
-        public BaseUIPage ParentPage; // Ä¸Ò³Ãæ
+        public BaseUIPage ParentPage; // æ¯é¡µé¢
 
         public int TrackNumber { get; private set; }
 
@@ -64,21 +64,21 @@ namespace TrackNS
 
         /*
          
-        ÔÚÕı³£Çé¿öÏÂ£¬JudgeList Ó¦¸ÃÊÇ°´ÕÕ Note µÄ JudgeTime ÏÈºóÓĞĞòÅÅÁĞµÄ ¾ÍËãÄãÏÈÉú³ÉÒ»¸ö¶¯»­ºÜ³¤µÄ Note Ò²ÊÇÕâÑù
+        åœ¨æ­£å¸¸æƒ…å†µä¸‹ï¼ŒJudgeList åº”è¯¥æ˜¯æŒ‰ç…§ Note çš„ JudgeTime å…ˆåæœ‰åºæ’åˆ—çš„ å°±ç®—ä½ å…ˆç”Ÿæˆä¸€ä¸ªåŠ¨ç”»å¾ˆé•¿çš„ Note ä¹Ÿæ˜¯è¿™æ ·
 
-        ÒòÎª½øÈë OnJudge ×´Ì¬µÄÌõ¼şÊÇ Note ½øÈë Miss Çø¼ä£¬¶ø Miss Çø¼äµÄ¼ÆËã½á¹ûÊÇ JudgeTime ¼õÈ¥ NoteJudgeTime.Miss£¨ËüÊÇÒ»¸ö³£Á¿£©
+        å› ä¸ºè¿›å…¥ OnJudge çŠ¶æ€çš„æ¡ä»¶æ˜¯ Note è¿›å…¥ Miss åŒºé—´ï¼Œè€Œ Miss åŒºé—´çš„è®¡ç®—ç»“æœæ˜¯ JudgeTime å‡å» NoteJudgeTime.Missï¼ˆå®ƒæ˜¯ä¸€ä¸ªå¸¸é‡ï¼‰
 
-        ËùÒÔÔÚ¸³ÖµµÄÊ±ºò JudgeTime µÄ´óĞ¡Ë³Ğò¾ÍÊÇ JudgeList ÁĞ±íÄÚµÄÇ°ºóË³Ğò
+        æ‰€ä»¥åœ¨èµ‹å€¼çš„æ—¶å€™ JudgeTime çš„å¤§å°é¡ºåºå°±æ˜¯ JudgeList åˆ—è¡¨å†…çš„å‰åé¡ºåº
 
-        ËùÒÔ JudgeList ÊÇÒ»¸öÓĞĞòÁĞ±í
+        æ‰€ä»¥ JudgeList æ˜¯ä¸€ä¸ªæœ‰åºåˆ—è¡¨
 
-        ÎÒÃÇÒÑ¾­Í¨¹ı RegisterJudge() ºÍ UnregisterJudge() ÊµÏÖÁË JudgeList ÖĞÎ´ÅĞ¶¨ Note µÄ×Ô¶¯ÒÆ³ı
+        æˆ‘ä»¬å·²ç»é€šè¿‡ RegisterJudge() å’Œ UnregisterJudge() å®ç°äº† JudgeList ä¸­æœªåˆ¤å®š Note çš„è‡ªåŠ¨ç§»é™¤
 
-        ÒÑÖª ÓÃ»§Ã¿°´ÏÂÒ»¸ö°´¼ü¶¼Ö»Ïë»÷´òÒ»¸öÒô·û£¬²»Ïë¹ÜºóÃæÍ¬¹ìµÀµÄÒô·û
+        å·²çŸ¥ ç”¨æˆ·æ¯æŒ‰ä¸‹ä¸€ä¸ªæŒ‰é”®éƒ½åªæƒ³å‡»æ‰“ä¸€ä¸ªéŸ³ç¬¦ï¼Œä¸æƒ³ç®¡åé¢åŒè½¨é“çš„éŸ³ç¬¦
 
-        ËùÒÔ Ö»ĞèÒªÔÚÁĞ±í·Ç¿ÕµÄÇé¿öÏÂ Ã¿´ÎÈ¡³öÁĞ±íÖĞµÄµÚÒ»¸ö Note È»ºó´¥·¢ÅĞ¶¨ÊÂ¼ş
+        æ‰€ä»¥ åªéœ€è¦åœ¨åˆ—è¡¨éç©ºçš„æƒ…å†µä¸‹ æ¯æ¬¡å–å‡ºåˆ—è¡¨ä¸­çš„ç¬¬ä¸€ä¸ª Note ç„¶åè§¦å‘åˆ¤å®šäº‹ä»¶
         
-        ÎÒÃÇ¾ÍÍê³ÉÁËÒ»¸ö²»ĞèÒª±éÀúÅĞ¶¨ÁĞ±íµÄÅĞ¶¨¹ÜÀíÆ÷
+        æˆ‘ä»¬å°±å®Œæˆäº†ä¸€ä¸ªä¸éœ€è¦éå†åˆ¤å®šåˆ—è¡¨çš„åˆ¤å®šç®¡ç†å™¨
         
         */
 
@@ -104,7 +104,7 @@ namespace TrackNS
             StateMachine.SwitchState(DisappearTrack);
         }
 
-        public TrackBehaviour Init(BaseUIPage Page, AnimeMachine Machine, int Number) // ÔÚ Objectpool ÖĞµ÷ÓÃÕâ¸öº¯Êı×÷ÎªÍ¨ÓÃ³õÊ¼»¯£¬±£Ö¤Ã¿´Îµ÷ÓÃ¶¼´ÓÕâÀï¿ªÊ¼
+        public TrackBehaviour Init(BaseUIPage Page, AnimeMachine Machine, int Number) // åœ¨ Objectpool ä¸­è°ƒç”¨è¿™ä¸ªå‡½æ•°ä½œä¸ºé€šç”¨åˆå§‹åŒ–ï¼Œä¿è¯æ¯æ¬¡è°ƒç”¨éƒ½ä»è¿™é‡Œå¼€å§‹
         {
             ParentPage = Page;
             TrackNumber = Number;

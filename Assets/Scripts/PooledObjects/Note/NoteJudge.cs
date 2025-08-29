@@ -32,10 +32,10 @@ namespace NoteJudgeNS
             Prefect,
             Great,
             Miss,
-            NotEntered, // ´ú±íÉĞÎ´½øÈëÅĞ¶¨Çø¼ä
+            NotEntered, // ä»£è¡¨å°šæœªè¿›å…¥åˆ¤å®šåŒºé—´
         }
 
-        public static NoteJudgeEnum GetJudgeEnum(NoteBehaviour Note) // ·Ç Miss
+        public static NoteJudgeEnum GetJudgeEnum(NoteBehaviour Note) // é Miss
         {
             var Tmp = Math.Abs(Game.Inst.GetGameTime() - Note.JudgeTime);
 

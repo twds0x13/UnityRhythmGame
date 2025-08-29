@@ -56,7 +56,7 @@ namespace TrackStateMachine
             base.Exit();
         }
 
-        private void RegisterJudgeKey() // …Ò√ÿ
+        private void RegisterJudgeKey() // Á•ûÁßò
         {
             if (Track.TrackNumber < 4)
             {
@@ -203,7 +203,7 @@ namespace TrackStateMachine
 
         private void AnimeManager()
         {
-            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // ÷¡…Ÿ "”¶∏√" ”–“ª∏ˆµÊµ◊∂Øª≠
+            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // Ëá≥Â∞ë "Â∫îËØ•" Êúâ‰∏Ä‰∏™Âû´Â∫ïÂä®Áîª
 
             if (Game.Inst.GetGameTime() < AnimeMachine.CurAnime.EndT)
             {
@@ -213,9 +213,9 @@ namespace TrackStateMachine
             {
                 if (!AnimeMachine.AnimeQueue.TryDequeue(out AnimeMachine.CurAnime))
                 {
-                    if (!AnimeMachine.IsDestroyable) // ≤ªø…¥›ªŸµƒtrack
+                    if (!AnimeMachine.IsDestroyable) // ‰∏çÂèØÊëßÊØÅÁöÑtrack
                     {
-                        return; // TODO : ◊¢≤·»´æ÷π„≤•Ω” ’∆˜£¨‘⁄±ææ÷”Œœ∑ÕÀ≥ˆ ±«–ªªµΩ Disappear ◊¥Ã¨£®≤‚ ‘”√ return √ªŒ Ã‚£©
+                        return; // TODO : Ê≥®ÂÜåÂÖ®Â±ÄÂπøÊí≠Êé•Êî∂Âô®ÔºåÂú®Êú¨Â±ÄÊ∏∏ÊàèÈÄÄÂá∫Êó∂ÂàáÊç¢Âà∞ Disappear Áä∂ÊÄÅÔºàÊµãËØïÁî® return Ê≤°ÈóÆÈ¢òÔºâ
                     }
                     if (AnimeMachine.HasDisappearAnime)
                     {

@@ -43,9 +43,10 @@ namespace TextManagerNS
                 case DynamicNum.GameMaxScore:
                     return Game.Inst.Score.MaxScore.ToString("F2");
                 case DynamicNum.GameAccuracy:
-                    return Game.Inst.Score.Accuracy.ToString("P2"); // "P" ´ú±í°Ù·ÖÊı¸ñÊ½£¬ÆäËûÍ¬ "F"
+                    return Game.Inst.Score.Accuracy.ToString("P2"); // "P" ä»£è¡¨ç™¾åˆ†æ•°æ ¼å¼ï¼Œå…¶ä»–åŒ "F"
                 case DynamicNum.StoryChapter:
-                    return Story.Inst.StoryContainer.ToString();
+                    return 0f.ToString();
+                //  return Story.Inst.StoryContainer.ToString();
             }
             throw new ArgumentOutOfRangeException("Text Type Out Of Range.");
         }

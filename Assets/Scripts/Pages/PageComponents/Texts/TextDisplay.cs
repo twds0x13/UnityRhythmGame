@@ -22,7 +22,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     private List<Comp.DynamicNum> DynamicEnumList;
 
     [Ext.ReadOnlyInGame, SerializeField]
-    private UINavigator Navigator; // ¸ºÔğ¿ØÖÆ ParentRect ( Õâ¸öÎïÌåµÄ RectTransform )
+    private UINavigator Navigator; // è´Ÿè´£æ§åˆ¶ ParentRect ( è¿™ä¸ªç‰©ä½“çš„ RectTransform )
 
     [Ext.ReadOnlyInGame, SerializeField]
     private LocalizeStringEvent LocalizeStringEvent;
@@ -43,16 +43,16 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     private TextMeshProUGUI SelfTextMesh;
 
     [Ext.ReadOnly, Range(0f, 1f), SerializeField]
-    private float TypeProcess; // ÔİÊ±Ö»ÓÃÀ´ÏÔÊ¾ TypeProcess ½ø¶ÈÌõ
+    private float TypeProcess; // æš‚æ—¶åªç”¨æ¥æ˜¾ç¤º TypeProcess è¿›åº¦æ¡
 
     [Ext.ReadOnlyInGame, Range(1f, 10f), SerializeField]
     private float TypeSpeed;
 
-    private bool ProtectFlag; // »¹ÊÇµÃ¼ÓÉÏ CancellationToken, Õâ¸öÖ»ÄÜÁÙÊ±ÓÃ
+    private bool ProtectFlag; // è¿˜æ˜¯å¾—åŠ ä¸Š CancellationToken, è¿™ä¸ªåªèƒ½ä¸´æ—¶ç”¨
 
-    private CancellationTokenSource CancellationTokenSource; // È¡Ïû´ò×Ö»ú UniTask Ğ­³Ì
+    private CancellationTokenSource CancellationTokenSource; // å–æ¶ˆæ‰“å­—æœº UniTask åç¨‹
 
-    public void SetParentPage(BaseUIPage Parent) // ÔÚ OnAwake Ö®ºóÓÉ ParentPage µ÷ÓÃÒ»´Î
+    public void SetParentPage(BaseUIPage Parent) // åœ¨ OnAwake ä¹‹åç”± ParentPage è°ƒç”¨ä¸€æ¬¡
     {
         ParentPage = Parent;
         Navigator.Init(ParentPage);
@@ -99,7 +99,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         }
     }
 
-    private async UniTaskVoid Offset(CancellationToken Token) // ĞèÒª¼ÓÈë CancellationToken ÏÖÔÚÈç¹û¿¨×¡Ê±¼äÔÚ await ÉĞÎ´Íê³ÉÊ±ÍË³ö »á¿¨µô TypeWriterCoroutine Ôì³É¿ÕÒıÓÃ
+    private async UniTaskVoid Offset(CancellationToken Token) // çœ‹èµ·æ¥å¾ˆæ£’
     {
         try
         {
@@ -149,11 +149,10 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         else
         {
             Story.Inst.GetNextLine();
+
             OnTypeWriter();
         }
     }
-
-    private void GetNextLine() { }
 
     private void OnSkipTypeWriter()
     {

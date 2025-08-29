@@ -2,7 +2,7 @@ using PageNS;
 
 public class InitPage : BaseUIPage
 {
-    public override void OnAwake() // Ë³ĞòÒ»¶¨ÊÇÏÈÉèÃû×ÖÔÙ´¦Àí»ùÀà
+    public override void OnAwake() // é¡ºåºä¸€å®šæ˜¯å…ˆè®¾åå­—å†å¤„ç†åŸºç±»
     {
         SetName(nameof(InitPage));
 

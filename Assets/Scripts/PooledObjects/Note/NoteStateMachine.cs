@@ -73,7 +73,7 @@ namespace NoteStateMachine
         {
             base.Enter();
 
-            RegisterJudge(); // ¿ÉÒÔÔÚÊ¹ÓÃµÄÊ±ºò²Å×¢²á£¬ÕâÑùÄÜÊ¡µô JudgeList ÀïµÄ¶îÍâÅÐ¶Ï£¡ÕâÊÇºÃÎÄÃ÷
+            RegisterJudge(); // å¯ä»¥åœ¨ä½¿ç”¨çš„æ—¶å€™æ‰æ³¨å†Œï¼Œè¿™æ ·èƒ½çœæŽ‰ JudgeList é‡Œçš„é¢å¤–åˆ¤æ–­ï¼è¿™æ˜¯å¥½æ–‡æ˜Ž
         }
 
         public override void Update()
@@ -93,7 +93,7 @@ namespace NoteStateMachine
             UnregisterJudge();
         }
 
-        // ÔÚ³¬¹ýÅÐ¶¨Ê±¼äÖ®ºó×Ô¶¯ÒÆ³ý
+        // åœ¨è¶…è¿‡åˆ¤å®šæ—¶é—´ä¹‹åŽè‡ªåŠ¨ç§»é™¤
         private bool ExitJudge =>
             Game.Inst.GetGameTime() > Note.JudgeTime
             && Judge.GetJudgeEnum(Note) == Judge.NoteJudgeEnum.Miss;
@@ -216,7 +216,7 @@ namespace NoteStateMachine
 
         public void AnimeManager()
         {
-            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // ÖÁÉÙ "Ó¦¸Ã" ÓÐÒ»¸öµæµ×¶¯»­
+            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // è‡³å°‘ "åº”è¯¥" æœ‰ä¸€ä¸ªåž«åº•åŠ¨ç”»
 
             if (Game.Inst.GetGameTime() < AnimeMachine.CurAnime.EndT)
             {

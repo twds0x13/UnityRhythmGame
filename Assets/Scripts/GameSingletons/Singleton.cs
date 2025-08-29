@@ -1,11 +1,13 @@
 using System;
+using System.Diagnostics;
 using Unity.VisualScripting;
+using UnityEditor.Localization.Plugins.XLIFF.V12;
 using UnityEngine;
 
 namespace Singleton
 {
     /// <summary>
-    /// ¼Ì³Ğ×Ô <see cref="MonoBehaviour"/> µÄÈ«¾Öµ¥Àı»ùÀà£¬ÒªÇóÔÚ³¡¾°ÇĞ»»Ê±²»ÄÜÏú»Ù
+    /// ç»§æ‰¿è‡ª <see cref="MonoBehaviour"/> çš„å…¨å±€å•ä¾‹åŸºç±»ï¼Œè¦æ±‚åœ¨åœºæ™¯åˆ‡æ¢æ—¶ä¸èƒ½é”€æ¯
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public abstract class Singleton<T> : MonoBehaviour
@@ -18,6 +20,14 @@ namespace Singleton
             {
                 if (_inst == null)
                 {
+                    // è·å–è°ƒç”¨å †æ ˆ
+                    StackTrace stackTrace = new StackTrace(1, true); // è·³è¿‡1å¸§ï¼ˆå½“å‰get_Instæ–¹æ³•ï¼‰
+
+                    StackFrame callerFrame = stackTrace.GetFrame(0);
+
+                    string callerInfo =
+                        $"Called from: {callerFrame.GetFileName()}:{callerFrame.GetFileLineNumber()}";
+
                     throw new MissingReferenceException($"No instance of {typeof(T).Name} found.");
                 }
 
@@ -42,7 +52,7 @@ namespace Singleton
         }
 
         /// <summary>
-        /// ×ÓÀà±ØĞëÊµÏÖ Awake ·½·¨
+        /// å­ç±»å¿…é¡»å®ç° Awake æ–¹æ³•
         /// </summary>
         protected abstract void SingletonAwake();
     }

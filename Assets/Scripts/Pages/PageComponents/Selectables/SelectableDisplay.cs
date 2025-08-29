@@ -17,7 +17,7 @@ public class SelectableDisplay : MonoBehaviour, IPageComponent
     List<Comp.DynamicNum> DynamicEnumList;
 
     [Ext.ReadOnlyInGame, SerializeField]
-    UINavigator Navigator; // ¸ºÔğ¿ØÖÆ ParentRect ( Õâ¸öÎïÌåµÄ RectTransform )
+    UINavigator Navigator; // è´Ÿè´£æ§åˆ¶ ParentRect ( è¿™ä¸ªç‰©ä½“çš„ RectTransform )
 
     [Ext.ReadOnlyInGame, SerializeField]
     LocalizeStringEvent LocalizeStringEvent;
@@ -25,7 +25,7 @@ public class SelectableDisplay : MonoBehaviour, IPageComponent
     [Ext.ReadOnly, SerializeField]
     BaseUIPage ParentPage;
 
-    public void SetParentPage(BaseUIPage Parent) // ÔÚ OnAwake Ö®ºóÓÉ ParentPage µ÷ÓÃÒ»´Î
+    public void SetParentPage(BaseUIPage Parent) // åœ¨ OnAwake ä¹‹åç”± ParentPage è°ƒç”¨ä¸€æ¬¡
     {
         ParentPage = Parent;
         Navigator.Init(ParentPage);

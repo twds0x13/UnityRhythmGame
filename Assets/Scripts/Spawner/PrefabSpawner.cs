@@ -18,7 +18,7 @@ namespace PrefabSpawner
         static string ButtonPath = "Assets/GameObjects/UI Elements/Button/SampleButton.prefab";
 
         /// <summary>
-        /// ÒòÎªÃ¿¸öÒ³Ãæ¶¼Ó¦¸Ã¼Ì³Ğ×Ô²»Í¬µÄÀà£¬ËùÒÔ¼ÇµÃÒªÊÖ¶¯¸ü»»½Å±¾
+        /// å› ä¸ºæ¯ä¸ªé¡µé¢éƒ½åº”è¯¥ç»§æ‰¿è‡ªä¸åŒçš„ç±»ï¼Œæ‰€ä»¥è®°å¾—è¦æ‰‹åŠ¨æ›´æ¢è„šæœ¬
         /// </summary>
         [MenuItem("Quick Spawn/Sample Page")]
         private static void CreateSamplePage()
@@ -30,7 +30,7 @@ namespace PrefabSpawner
         }
 
         /// <summary>
-        /// ²»ÄÜÓÃÀ´ÅúÁ¿Éú³É×Ö¶Î£¬Ö»»áÆ¥Åä <see cref="Selection.activeGameObject"/> µÄ×îºóÒ»¸ö
+        /// ä¸èƒ½ç”¨æ¥æ‰¹é‡ç”Ÿæˆå­—æ®µï¼Œåªä¼šåŒ¹é… <see cref="Selection.activeGameObject"/> çš„æœ€åä¸€ä¸ª
         /// </summary>
         [MenuItem("Quick Spawn/Sample Text")]
         private static void CreateSampleText()
@@ -122,14 +122,14 @@ namespace PrefabSpawner
         }
 
         /// <summary>
-        /// Ö»¶Ôº¬ÓĞ <see cref="BaseUIPage"/> ×é¼şµÄ¶ÔÏóÉúĞ§£¬ÓÃÀ´Ìí¼Ó¼Ì³Ğ×Ô½Ó¿Ú <see cref="IPageComponent"/> µÄ¶ÔÏó
+        /// åªå¯¹å«æœ‰ <see cref="BaseUIPage"/> ç»„ä»¶çš„å¯¹è±¡ç”Ÿæ•ˆï¼Œç”¨æ¥æ·»åŠ ç»§æ‰¿è‡ªæ¥å£ <see cref="IPageComponent"/> çš„å¯¹è±¡
         /// </summary>
         /// <param name="Object"></param>
         /// <returns></returns>
         private static GameObject RegisterDisplay<T>(this GameObject Object)
             where T : IPageComponent
         {
-            // Éñ»Ø
+            // ç¥å›
 
             if (
                 Selection.activeGameObject.HasComponent<BaseUIPage>()
@@ -145,7 +145,7 @@ namespace PrefabSpawner
         }
 
         /// <summary>
-        /// Ö»¶Ôº¬ÓĞ <see cref="SelectableDisplay"/> ×é¼şµÄ <see cref="Selectable"/> ¶ÔÏóÉúĞ§
+        /// åªå¯¹å«æœ‰ <see cref="SelectableDisplay"/> ç»„ä»¶çš„ <see cref="Selectable"/> å¯¹è±¡ç”Ÿæ•ˆ
         /// </summary>
         /// <param name="Object"></param>
         /// <returns></returns>

@@ -25,7 +25,7 @@ public class ResizeDetector : Singleton<ResizeDetector>
     {
         if (!Lock)
         {
-            if (Mathf.Abs(Rect.rect.height - 1080f) < 1f) // ÔÚÒ»Ð©ÌØ¶¨Çé¿öÏÂ£¨ÉèÖÃÎª Free, 16:9 ºÍ 16:10£©£¬Unity ×Ô¶¯µ÷ÕûµÄÆÁÄ»¸ß¶ÈºÍ 1080f ²¢·Ç Pixel Perfect £¨ÎªÉ¶£¿£©
+            if (Mathf.Abs(Rect.rect.height - 1080f) < 1f) // åœ¨ä¸€äº›ç‰¹å®šæƒ…å†µä¸‹ï¼ˆè®¾ç½®ä¸º Free, 16:9 å’Œ 16:10ï¼‰ï¼ŒUnity è‡ªåŠ¨è°ƒæ•´çš„å±å¹•é«˜åº¦å’Œ 1080f å¹¶éž Pixel Perfect ï¼ˆä¸ºå•¥ï¼Ÿï¼‰
             {
                 Debug.Log($"Resize Detected: {Rect.rect.width} x {Rect.rect.height}");
 

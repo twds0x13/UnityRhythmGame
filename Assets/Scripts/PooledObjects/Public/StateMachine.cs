@@ -15,7 +15,7 @@ namespace StateMachine
     }
 
     /// <summary>
-    /// ͨ��״̬������棬��Ҫ�Լ�����ÿһ��״̬��Ȼ����״̬����д��ת�߼��������SwitchState��ת
+    /// 通用状态机极简版，需要自己定义每一个状态，然后在状态里面写跳转逻辑，最后用SwitchState跳转
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class StateMachine<T>
@@ -40,7 +40,7 @@ namespace StateMachine
     }
 
     /// <summary>
-    /// ͳһ Note �� Track ����״̬�ĳ��ԣ���ʱ�ò���
+    /// 统一 Note 和 Track 基本状态的尝试，暂时用不到
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /*

@@ -114,7 +114,7 @@ namespace UIEventSystemNS
 
         protected void AddSelectionListeners(Selectable Selectable)
         {
-            // »ñÈ¡ÊÂ¼ş´¥·¢Æ÷×é¼ş
+            // è·å–äº‹ä»¶è§¦å‘å™¨ç»„ä»¶
 
             EventTrigger Trigger = Selectable.gameObject.GetComponent<EventTrigger>();
 
@@ -123,7 +123,7 @@ namespace UIEventSystemNS
                 Trigger = Selectable.gameObject.AddComponent<EventTrigger>();
             }
 
-            // Ìí¼ÓÑ¡ÖĞÊÂ¼ş´¥·¢Æ÷
+            // æ·»åŠ é€‰ä¸­äº‹ä»¶è§¦å‘å™¨
 
             EventTrigger.Entry Select = new EventTrigger.Entry
             {
@@ -132,7 +132,7 @@ namespace UIEventSystemNS
             Select.callback.AddListener(OnSelect);
             Trigger.triggers.Add(Select);
 
-            // Ìí¼ÓÈ¡ÏûÑ¡ÖĞÊÂ¼ş´¥·¢Æ÷
+            // æ·»åŠ å–æ¶ˆé€‰ä¸­äº‹ä»¶è§¦å‘å™¨
 
             EventTrigger.Entry Deselect = new EventTrigger.Entry
             {
@@ -141,7 +141,7 @@ namespace UIEventSystemNS
             Deselect.callback.AddListener(OnDeselect);
             Trigger.triggers.Add(Deselect);
 
-            // Ìí¼Ó¹â±êÑ¡ÖĞÊÂ¼ş´¥·¢Æ÷
+            // æ·»åŠ å…‰æ ‡é€‰ä¸­äº‹ä»¶è§¦å‘å™¨
 
             EventTrigger.Entry PointerEnter = new EventTrigger.Entry
             {
@@ -150,7 +150,7 @@ namespace UIEventSystemNS
             PointerEnter.callback.AddListener(OnPointerEnter);
             Trigger.triggers.Add(PointerEnter);
 
-            // Ìí¼Ó¹â±êÈ¡ÏûÑ¡ÖĞÊÂ¼ş´¥·¢Æ÷
+            // æ·»åŠ å…‰æ ‡å–æ¶ˆé€‰ä¸­äº‹ä»¶è§¦å‘å™¨
 
             EventTrigger.Entry PointerExit = new EventTrigger.Entry
             {

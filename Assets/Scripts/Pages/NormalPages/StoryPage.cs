@@ -2,7 +2,7 @@ using PageNS;
 
 public class StoryPage : BaseUIPage
 {
-    public override void OnAwake() // ÒÑ½â³ı×÷Îª¾çÇé±à¼­Æ÷µÄÈÎÎñ£¬Ö»ÊÇ¾çÇéÕ¹Ê¾
+    public override void OnAwake() // å·²è§£é™¤ä½œä¸ºå‰§æƒ…ç¼–è¾‘å™¨çš„ä»»åŠ¡ï¼Œåªç”¨æ¥å±•ç¤ºå‰§æƒ…
     {
         SetName(nameof(StoryPage));
 

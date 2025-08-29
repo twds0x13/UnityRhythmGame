@@ -12,8 +12,8 @@ namespace InterpNS
     }
 
     /// <summary>
-    /// °üº¬Êä³ö´Ó 0 ~ 1 ¸¡µãÊýµÄº¯Êý¹¤¾ßÀà
-    /// Cos µÈÔÚ 0 ~ <see cref="Mathf.PI"/>/2 ¶¨ÒåÓòÉÏÊä³ö 1 ~ 0 µÄº¯ÊýÈ¡¸ºÊý
+    /// åŒ…å«è¾“å‡ºä»Ž 0 ~ 1 æµ®ç‚¹æ•°çš„å‡½æ•°å·¥å…·ç±»
+    /// Cos ç­‰åœ¨ 0 ~ <see cref="Mathf.PI"/>/2 å®šä¹‰åŸŸä¸Šè¾“å‡º 1 ~ 0 çš„å‡½æ•°å–è´Ÿæ•°
     /// </summary>
     public class InterpFunc
     {

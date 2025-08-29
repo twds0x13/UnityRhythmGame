@@ -9,14 +9,14 @@ using UnityEngine;
 namespace JsonLoader
 {
     /// <summary>
-    /// ¸ºÔğ½âÑ¹ <see cref="ZipFile"/> ²¢´ÓÖĞ½âÎö <see cref="Newtonsoft.Json"/> ÎÄ¼ş
+    /// è´Ÿè´£è§£å‹ <see cref="ZipFile"/> å¹¶ä»ä¸­è§£æ <see cref="Newtonsoft.Json"/> æ–‡ä»¶
     /// </summary>
     public static class JsonManager
     {
         public static readonly string ZipPath = Application.persistentDataPath;
 
         /// <summary>
-        /// µ÷ÓÃ <see cref=" JsonConvert"/> ¿â½«ÈÎÒâ¿ÉĞòÁĞ»¯ <paramref name="Object"/> µÄÒÑÑ¹Ëõ .json ÎÄ¼ş´æ´¢µ½ <see cref="Application.persistentDataPath"/>¡£ÎÄ¼şÃûÎª <paramref name="ZipFileName"/>
+        /// è°ƒç”¨ <see cref=" JsonConvert"/> åº“å°†ä»»æ„å¯åºåˆ—åŒ– <paramref name="Object"/> çš„å·²å‹ç¼© .json æ–‡ä»¶å­˜å‚¨åˆ° <see cref="Application.persistentDataPath"/>ã€‚æ–‡ä»¶åä¸º <paramref name="ZipFileName"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Object"></param>
@@ -28,7 +28,7 @@ namespace JsonLoader
         }
 
         /// <summary>
-        /// ÆäÊµÕâ¸ö <paramref name="JsonName"/> Ö»ÊÇÎªÁËÓÃ»§¿´×ÅÊæ·ş£¬ÒòÎª <see cref="LoadJsonFromZip{T}(string, ref T)"/> ²»ÒªÇó´«Èë <paramref name="JsonName"/>
+        /// å…¶å®è¿™ä¸ª <paramref name="JsonName"/> åªæ˜¯ä¸ºäº†ç”¨æˆ·çœ‹ç€èˆ’æœï¼Œå› ä¸º <see cref="LoadJsonFromZip{T}(string, ref T)"/> ä¸è¦æ±‚ä¼ å…¥ <paramref name="JsonName"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Object"></param>
@@ -74,25 +74,25 @@ namespace JsonLoader
             }
             catch (JsonReaderException)
             {
-                Debug.LogWarning($"±£´æÊ±¼ì²âµ½ {ZipFileName} ÎÄ¼şÖĞµÄ {JsonName} Óï·¨½á¹¹´íÎó¡£");
+                Debug.LogWarning($"ä¿å­˜æ—¶æ£€æµ‹åˆ° {ZipFileName} æ–‡ä»¶ä¸­çš„ {JsonName} è¯­æ³•ç»“æ„é”™è¯¯ã€‚");
                 return false;
             }
             catch (JsonSerializationException)
             {
                 Debug.LogWarning(
-                    $"±£´æÊ±¼ì²âµ½ {ZipFileName} ÎÄ¼şÖĞµÄ {JsonName} °üº¬ÀàĞÍ×ª»¯´íÎó¡£"
+                    $"ä¿å­˜æ—¶æ£€æµ‹åˆ° {ZipFileName} æ–‡ä»¶ä¸­çš„ {JsonName} åŒ…å«ç±»å‹è½¬åŒ–é”™è¯¯ã€‚"
                 );
                 return false;
             }
             catch (Exception)
             {
-                Debug.LogWarning($"±£´æÊ±¼ì²âµ½ {ZipFileName} ÎÄ¼şÖĞµÄ {JsonName} ½âÎö´íÎó¡£");
+                Debug.LogWarning($"ä¿å­˜æ—¶æ£€æµ‹åˆ° {ZipFileName} æ–‡ä»¶ä¸­çš„ {JsonName} è§£æé”™è¯¯ã€‚");
                 return false;
             }
         }
 
         /// <summary>
-        /// µ÷ÓÃ <see cref=" JsonConvert"/> ¿â´ÓÎ»ÓÚ <see cref="ZipPath"/> Ä¿Â¼ÏÂÃûÎª <paramref name="ZipFileName"/> µÄ <see cref="ZipFile"/> ÖĞ¶ÁÈ¡ÈÎÒâ¿ÉĞòÁĞ»¯Îª <paramref name="RefObject"/> µÄjsonÎÄ¼ş
+        /// è°ƒç”¨ <see cref=" JsonConvert"/> åº“ä»ä½äº <see cref="ZipPath"/> ç›®å½•ä¸‹åä¸º <paramref name="ZipFileName"/> çš„ <see cref="ZipFile"/> ä¸­è¯»å–ä»»æ„å¯åºåˆ—åŒ–ä¸º <paramref name="RefObject"/> çš„jsonæ–‡ä»¶
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="RefObject"></param>
@@ -108,7 +108,7 @@ namespace JsonLoader
         }
 
         /// <summary>
-        /// µ÷ÓÃ <see cref="JsonConvert"/> ¿â´Ó <see cref="ZipPath"/> Ä¿Â¼ÏÂÎÄ¼şÃûÎª <paramref name="ZipFileName"/> µÄ Zip ÎÄ¼şÖĞ³¢ÊÔ¶ÁÈ¡ <typeparamref name="T"/> ÀàĞÍµÄ¿ÉĞòÁĞ»¯ <paramref name="Object"/>
+        /// è°ƒç”¨ <see cref="JsonConvert"/> åº“ä» <see cref="ZipPath"/> ç›®å½•ä¸‹æ–‡ä»¶åä¸º <paramref name="ZipFileName"/> çš„ Zip æ–‡ä»¶ä¸­å°è¯•è¯»å– <typeparamref name="T"/> ç±»å‹çš„å¯åºåˆ—åŒ– <paramref name="Object"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="ZipFileName"></param>
@@ -149,21 +149,21 @@ namespace JsonLoader
             }
             catch (JsonReaderException)
             {
-                Debug.LogWarning($"¶ÁÈ¡Ê±¼ì²âµ½ {ZipFileName} ÎÄ¼şÖĞµÄ {JsonName} Óï·¨½á¹¹´íÎó¡£");
+                Debug.LogWarning($"è¯»å–æ—¶æ£€æµ‹åˆ° {ZipFileName} æ–‡ä»¶ä¸­çš„ {JsonName} è¯­æ³•ç»“æ„é”™è¯¯ã€‚");
                 RefObject = Default;
                 return false;
             }
             catch (JsonSerializationException)
             {
                 Debug.LogWarning(
-                    $"¶ÁÈ¡Ê±¼ì²âµ½ {ZipFileName} ÎÄ¼şÖĞµÄ {JsonName} °üº¬ÀàĞÍ×ª»¯´íÎó¡£"
+                    $"è¯»å–æ—¶æ£€æµ‹åˆ° {ZipFileName} æ–‡ä»¶ä¸­çš„ {JsonName} åŒ…å«ç±»å‹è½¬åŒ–é”™è¯¯ã€‚"
                 );
                 RefObject = Default;
                 return false;
             }
             catch (Exception)
             {
-                Debug.LogWarning($"¶ÁÈ¡Ê±¼ì²âµ½ {ZipFileName} ÎÄ¼şÖĞµÄ {JsonName} ½âÎö´íÎó¡£");
+                Debug.LogWarning($"è¯»å–æ—¶æ£€æµ‹åˆ° {ZipFileName} æ–‡ä»¶ä¸­çš„ {JsonName} è§£æé”™è¯¯ã€‚");
                 RefObject = Default;
                 return false;
             }

@@ -12,9 +12,9 @@ using Page = UIManagerNS.PageController;
 namespace PooledObjectNS
 {
     /// <summary>
-    /// ÔÚÓÎÏ·¹ı³ÌÖĞ¶¯Ì¬Éú³ÉËùĞèµÄ <see cref="PooledObjectBehaviour"/> ¶ÔÏó£¬ĞèÒª¶ÁÈ¡Æ×ÃæÎÄ¼ş×÷ÎªĞèÇóÁĞ±í¡£
-    /// TODO : ÊµÏÖ¶ÁÈ¡ÎÄ¼şºÍ½á¹¹»¯´æ´¢NoteĞÅÏ¢
-    /// TODO ?: ÊÊÅä.mcz
+    /// åœ¨æ¸¸æˆè¿‡ç¨‹ä¸­åŠ¨æ€ç”Ÿæˆæ‰€éœ€çš„ <see cref="PooledObjectBehaviour"/> å¯¹è±¡ï¼Œéœ€è¦è¯»å–è°±é¢æ–‡ä»¶ä½œä¸ºéœ€æ±‚åˆ—è¡¨ã€‚
+    /// TODO : å®ç°è¯»å–æ–‡ä»¶å’Œç»“æ„åŒ–å­˜å‚¨Noteä¿¡æ¯
+    /// TODO ?: é€‚é….mcz
     /// </summary>
     public class PooledObjectManager : Singleton<PooledObjectManager>
     {
@@ -34,10 +34,10 @@ namespace PooledObjectNS
         GameObject TrackInst;
 
         [SerializeField]
-        public int NoteUIDIterator { get; private set; } = 0; // ÄãÓ¦¸ÃÃ»Í¬Ê±ÓÃµ½21ÒÚ¸ö Note, ¶Ô°É£¿
+        public int NoteUIDIterator { get; private set; } = 0; // ä½ åº”è¯¥æ²¡åŒæ—¶ç”¨åˆ°21äº¿ä¸ª Note, å¯¹å§ï¼Ÿ
 
         [SerializeField]
-        public int TrackUIDIterator { get; private set; } = 0; // ÕâÁ½¸ö¼ÆÊıÆ÷²»»á½µµÍ£¬Ö»»áµİÔö
+        public int TrackUIDIterator { get; private set; } = 0; // è¿™ä¸¤ä¸ªè®¡æ•°å™¨ä¸ä¼šé™ä½ï¼Œåªä¼šé€’å¢
 
         protected override void SingletonAwake()
         {
@@ -87,7 +87,7 @@ namespace PooledObjectNS
                 },
                 true,
                 4,
-                32 - 4 // ÕâÀïµÄ maxSize Ö»ÏŞÖÆ³ØÄÚÎ´ÆôÓÃÎïÌåÊıÁ¿....
+                32 - 4 // è¿™é‡Œçš„ maxSize åªé™åˆ¶æ± å†…æœªå¯ç”¨ç‰©ä½“æ•°é‡....
             );
         }
 
@@ -151,7 +151,7 @@ namespace PooledObjectNS
 
                 AnimeMachine Machine = new(Tmp);
 
-                Machine.HasJudgeAnime = true; // ÇĞ»»ÅĞ¶¨¶¯»­¿ª¹Ø
+                Machine.HasJudgeAnime = true; // åˆ‡æ¢åˆ¤å®šåŠ¨ç”»å¼€å…³
 
                 TrackBehaviour Object;
 
@@ -208,7 +208,7 @@ namespace PooledObjectNS
         }
 
         /// <summary>
-        /// ´Ó¶ÔÏó³ØÖĞ»ñÈ¡Ò»¸öĞÂµÄ <see cref="NoteBehaviour"/> ¶ÔÏó£¬²¢Í¬Ê±³õÊ¼»¯ËüµÄ¶¯»­»úºÍÄ¸¹ì
+        /// ä»å¯¹è±¡æ± ä¸­è·å–ä¸€ä¸ªæ–°çš„ <see cref="NoteBehaviour"/> å¯¹è±¡ï¼Œå¹¶åŒæ—¶åˆå§‹åŒ–å®ƒçš„åŠ¨ç”»æœºå’Œæ¯è½¨
         /// </summary>
         private void GetOneNote(AnimeMachine Machine, TrackBehaviour Track, float JudgeTime)
         {
@@ -218,7 +218,7 @@ namespace PooledObjectNS
         }
 
         /// <summary>
-        /// ´Ó¶ÔÏó³ØÖĞ»ñÈ¡Ò»¸öĞÂµÄ <see cref="TrackBehaviour"/> ¶ÔÏó£¬²¢Í¬Ê±³õÊ¼»¯ËüµÄ¶¯»­»ú
+        /// ä»å¯¹è±¡æ± ä¸­è·å–ä¸€ä¸ªæ–°çš„ <see cref="TrackBehaviour"/> å¯¹è±¡ï¼Œå¹¶åŒæ—¶åˆå§‹åŒ–å®ƒçš„åŠ¨ç”»æœº
         /// </summary>
         private void GetOneTrack(BaseUIPage Page, AnimeMachine Machine)
         {

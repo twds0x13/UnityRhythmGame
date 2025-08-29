@@ -2,18 +2,18 @@ using UnityEngine;
 
 public class Ext
 {
-    public class ReadOnlyAttribute : PropertyAttribute // ¼ÇµÃ°Ñ×¢ÊÍĞ´ÔÚ¹¹Ôìº¯ÊıÉÏÃæ
+    public class ReadOnlyAttribute : PropertyAttribute // è®°å¾—æŠŠæ³¨é‡Šå†™åœ¨æ„é€ å‡½æ•°ä¸Šé¢
     {
         /// <summary>
-        /// ´ú±íÔÚ <see cref="InspectorWindow"/> ÄÚ²»ÄÜ±»±à¼­£¬×¢Òâ²»ÒªºÍ <see cref="Unity.Collections.ReadOnlyAttribute"/> »ìÏı
+        /// ä»£è¡¨åœ¨ <see cref="InspectorWindow"/> å†…ä¸èƒ½è¢«ç¼–è¾‘ï¼Œæ³¨æ„ä¸è¦å’Œ <see cref="Unity.Collections.ReadOnlyAttribute"/> æ··æ·†
         /// </summary>
         public ReadOnlyAttribute() { }
     }
 
-    public class ReadOnlyInGameAttribute : PropertyAttribute // ¼ÇµÃ°Ñ×¢ÊÍĞ´ÔÚ¹¹Ôìº¯ÊıÉÏÃæ
+    public class ReadOnlyInGameAttribute : PropertyAttribute // è®°å¾—æŠŠæ³¨é‡Šå†™åœ¨æ„é€ å‡½æ•°ä¸Šé¢
     {
         /// <summary>
-        /// ´ú±íÔÚ <see cref="InspectorWindow"/> ÄÚ¿ÉÒÔ±»±à¼­£¬ÔÚÔËĞĞÊ±²»ÄÜ´Ó <see cref="InspectorWindow"/> ÖĞ±à¼­
+        /// ä»£è¡¨åœ¨ <see cref="InspectorWindow"/> å†…å¯ä»¥è¢«ç¼–è¾‘ï¼Œåœ¨è¿è¡Œæ—¶ä¸èƒ½ä» <see cref="InspectorWindow"/> ä¸­ç¼–è¾‘
         /// </summary>
         public ReadOnlyInGameAttribute() { }
     }

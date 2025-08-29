@@ -7,7 +7,6 @@ using Newtonsoft.Json.Linq;
 using Singleton;
 using UnityEngine;
 using Audio = AudioNS.AudioManager;
-using Game = GameManagerNS.GameManager;
 using Json = JsonLoader.JsonManager;
 
 namespace StoryNS
@@ -148,13 +147,13 @@ namespace StoryNS
             }
         }
 
-        public string Translator(int Chapter, int Node, int Line)
+        public string GetLocalizationKey(int Chapter, int Node, int Line)
         {
             return "C" + Chapter + "_N" + Node + "_L" + Line;
         }
     }
 
-    public enum NodeType : byte // ²»Òª¶¯ÕâÀïµÄË³Ğò£¬Ç¿ÖÆ×ª»»ÒªÓÃ
+    public enum NodeType : byte // ä¸è¦åŠ¨è¿™é‡Œçš„é¡ºåºï¼Œå¼ºåˆ¶è½¬æ¢è¦ç”¨
     {
         Null,
         Chapter,
@@ -163,7 +162,7 @@ namespace StoryNS
     }
 
     /// <summary>
-    /// Chapter - Node - Line ºÍµ¥¼¶ Node ½á¹¹ÊµÏÖÍêÈ«µÈ¼Û
+    /// Chapter - Node - Line å’Œå•çº§ Node ç»“æ„å®ç°å®Œå…¨ç­‰ä»·
     /// </summary>
     [Serializable]
     public class StoryNode
@@ -212,7 +211,7 @@ namespace StoryNS
             }
             else
             {
-                this?.InvokeActions(); // ÕâÀï¼Ù¶¨ÎÒÃÇÓÃ StoryJumpAction Ìø×ªµ½ÏÂÒ»¸ö½Úµã
+                this?.InvokeActions(); // è¿™é‡Œå‡å®šæˆ‘ä»¬ç”¨ StoryJumpAction è·³è½¬åˆ°ä¸‹ä¸€ä¸ªèŠ‚ç‚¹
             }
         }
 
@@ -250,7 +249,7 @@ namespace StoryNS
         PlayAudio,
     }
 
-    public interface IStoryAction // Õâ¸ö½Ó¿Ú¿´ËÆÃ»ÓÃ µ«ÊÇÉñÃØµÄ½â¾öÁË¿ÕÒıÓÃ Bug ÁîÈËÈÌ¿¡²»½û
+    public interface IStoryAction // è¿™ä¸ªæ¥å£çœ‹ä¼¼æ²¡ç”¨ ä½†æ˜¯ç¥ç§˜çš„è§£å†³äº†ç©ºå¼•ç”¨ Bug ä»¤äººå¿ä¿Šä¸ç¦
     {
         public ActionType Type { get; set; }
 
@@ -269,13 +268,13 @@ namespace StoryNS
         public ActionType Type { get; set; }
 
         /// <summary>
-        /// ÔÚÄ¬ÈÏÇé¿öÏÂ£¬ÄãÓ¦¸Ã°Ñ½á¹¹»¯µÄÊı¾İ£¬Èç <see cref="List{T}"/> »ò <see cref="Tuple{T1, T2, T3}"/> µÈ×÷ÎªÒ»¸ö <see cref="object"/> ´æÈë×Öµä£¬Ä¬ÈÏ¼üÖµÎª <see cref="Type"/>¡£
-        /// ÄãÒ²¿ÉÒÔÓÃ¶à¸ö¼ü´æÈë¶à¸ö½á¹¹»¯Êı¾İ¡£
+        /// åœ¨é»˜è®¤æƒ…å†µä¸‹ï¼Œä½ åº”è¯¥æŠŠç»“æ„åŒ–çš„æ•°æ®ï¼Œå¦‚ <see cref="List{T}"/> æˆ– <see cref="Tuple{T1, T2, T3}"/> ç­‰ä½œä¸ºä¸€ä¸ª <see cref="object"/> å­˜å…¥å­—å…¸ï¼Œé»˜è®¤é”®å€¼ä¸º <see cref="Type"/>ã€‚
+        /// ä½ ä¹Ÿå¯ä»¥ç”¨å¤šä¸ªé”®å­˜å…¥å¤šä¸ªç»“æ„åŒ–æ•°æ®ã€‚
         /// </summary>
-        public Dictionary<string, object> Params { get; set; } // ´óÎ»´üÕâÒ»¿é/.
+        public Dictionary<string, object> Params { get; set; } // å¤§ä½è¢‹è¿™ä¸€å—/.
 
         /// <summary>
-        /// Íù <see cref="Params"/> ×ÖµäÖĞÌí¼ÓÒ»¸ö <typeparamref name="T"/> ÀàĞÍ¶ÔÏó²¢×Ô¶¯×ªÎª <see cref="object"/> ¶ÔÏó
+        /// å¾€ <see cref="Params"/> å­—å…¸ä¸­æ·»åŠ ä¸€ä¸ª <typeparamref name="T"/> ç±»å‹å¯¹è±¡å¹¶è‡ªåŠ¨è½¬ä¸º <see cref="object"/> å¯¹è±¡
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Key"></param>
@@ -290,18 +289,18 @@ namespace StoryNS
         }
 
         /// <summary>
-        /// <see cref="SafeGet{T}(string, T)"/> µÄ¾«¼ò°æ±¾£¬Ä¬ÈÏ¼üÖµÎª <see cref="Type"/> ÖµµÄ <see cref="Enum.ToString()"/>
+        /// <see cref="SafeGet{T}(string, T)"/> çš„ç²¾ç®€ç‰ˆæœ¬ï¼Œé»˜è®¤é”®å€¼ä¸º <see cref="Type"/> å€¼çš„ <see cref="Enum.ToString()"/>
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Default"></param>
         /// <returns></returns>
-        public T SafeGet<T>(T Default = default) // ÎÔ²Û Õâ¸öº¯ÊıÌ«ÓĞÖÇ»ÛÁË
+        public T SafeGet<T>(T Default = default) // å§æ§½ è¿™ä¸ªå‡½æ•°å¤ªæœ‰æ™ºæ…§äº†
         {
             return SafeGet(Type.ToString(), Default);
         }
 
         /// <summary>
-        /// °²È«µÄ½« <see cref="Params"/> ÖĞµÄ <see cref="object"/> ¶ÔÏóÍ¨¹ı <see cref="Newtonsoft.Json"/> ¿â×ª»»»ØËùĞèµÄ <typeparamref name="T"/> ÀàĞÍ¶ÔÏó
+        /// å®‰å…¨çš„å°† <see cref="Params"/> ä¸­çš„ <see cref="object"/> å¯¹è±¡é€šè¿‡ <see cref="Newtonsoft.Json"/> åº“è½¬æ¢å›æ‰€éœ€çš„ <typeparamref name="T"/> ç±»å‹å¯¹è±¡
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="Key"></param>
@@ -311,12 +310,12 @@ namespace StoryNS
         {
             if (Params.TryGetValue(Key, out object Value))
             {
-                if (Value is T TypeValue) // ÎŞĞè×ª»»
+                if (Value is T TypeValue) // æ— éœ€è½¬æ¢
                 {
                     return TypeValue;
                 }
 
-                if (Value is JToken JToken) // Newtonsoft.Json.Linq.JToken °²È«×ª»»
+                if (Value is JToken JToken) // Newtonsoft.Json.Linq.JToken å®‰å…¨è½¬æ¢
                 {
                     try
                     {
@@ -331,7 +330,7 @@ namespace StoryNS
                     }
                 }
 
-                try // ³¢ÊÔÇ¿ÖÆ×ª»»
+                try // å°è¯•å¼ºåˆ¶è½¬æ¢
                 {
                     return (T)Convert.ChangeType(Value, typeof(T));
                 }
@@ -356,7 +355,7 @@ namespace StoryNS
     public class LogAction : StoryAction
     {
         /// <summary>
-        /// ÔÚ¿ØÖÆÌ¨ÄÚÊä³ö <paramref name="StringArg"/> ×Ö·û´®
+        /// åœ¨æ§åˆ¶å°å†…è¾“å‡º <paramref name="StringArg"/> å­—ç¬¦ä¸²
         /// </summary>
         /// <param name="StringArgs"></param>
         public LogAction(string StringArg)
@@ -370,7 +369,7 @@ namespace StoryNS
     public class LogMergedAction : StoryAction
     {
         /// <summary>
-        /// ÔÚ¿ØÖÆÌ¨ÄÚÊä³ö <paramref name="StringArgs"/> ÄÚËùÓĞ×Ö·û´®µÄ <see cref="StringBuilder.Append(string)"/> ºó°æ±¾
+        /// åœ¨æ§åˆ¶å°å†…è¾“å‡º <paramref name="StringArgs"/> å†…æ‰€æœ‰å­—ç¬¦ä¸²çš„ <see cref="StringBuilder.Append(string)"/> åç‰ˆæœ¬
         /// </summary>
         /// <param name="StringArgs"></param>
         public LogMergedAction(List<string> StringArgs)
@@ -384,12 +383,12 @@ namespace StoryNS
     public class StoryJumpAction : StoryAction
     {
         /// <summary>
-        /// Ìø×ªµ½ <paramref name="Chapter"/> ÕÂ½Ú <paramref name="Node"/> ½ÚµãµÄ <paramref name="Line"/> ĞĞ
+        /// è·³è½¬åˆ° <paramref name="Chapter"/> ç« èŠ‚ <paramref name="Node"/> èŠ‚ç‚¹çš„ <paramref name="Line"/> è¡Œ
         /// </summary>
         /// <param name="Chapter"></param>
         /// <param name="Node"></param>
         /// <param name="Line"></param>
-        public StoryJumpAction((int Chapter, int Node, int Line) Destination) // Destination ÊÇÔª×éÀàĞÍ£¡
+        public StoryJumpAction((int Chapter, int Node, int Line) Destination) // Destination æ˜¯å…ƒç»„ç±»å‹ï¼
         {
             Type = ActionType.LogMerged;
             SafeAdd(ActionType.LogMerged.ToString(), Destination);
@@ -400,7 +399,7 @@ namespace StoryNS
     public class PlayAudioAction : StoryAction
     {
         /// <summary>
-        /// ¶ÁÈ¡ <paramref name="StringArgs"/> ÄÚµÄµÚÒ»¸ö×Ö·û´®£¬ÉèÎªÓÎÏ·È«¾Ö±³¾°ÒôÀÖ
+        /// è¯»å– <paramref name="StringArgs"/> å†…çš„ç¬¬ä¸€ä¸ªå­—ç¬¦ä¸²ï¼Œè®¾ä¸ºæ¸¸æˆå…¨å±€èƒŒæ™¯éŸ³ä¹
         /// </summary>
         /// <param name="StringArgs"></param>
         public PlayAudioAction(string[] StringArgs)
@@ -410,7 +409,7 @@ namespace StoryNS
         }
     }
 
-    public static class StoryActionHandler // ´¦ÀíÂß¼­È«²¿Èûµ½ÕâÀï
+    public static class StoryActionHandler // å¤„ç†é€»è¾‘å…¨éƒ¨å¡åˆ°è¿™é‡Œ
     {
         public static void Invoke(this IStoryAction Action)
         {
@@ -453,6 +452,7 @@ namespace StoryNS
         }
     }
 
+    /*
     public class StoryManager : Singleton<StoryManager>
     {
         public readonly string FileName = "GameStory.story";
@@ -494,4 +494,5 @@ namespace StoryNS
             Json.TryLoadJsonFromZip(FileName, out _storyContainer);
         }
     }
+    */
 }

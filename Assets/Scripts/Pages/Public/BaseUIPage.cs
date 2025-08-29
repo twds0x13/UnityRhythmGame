@@ -19,7 +19,7 @@ namespace PageNS
     ]
     public abstract class BaseUIPage : MonoBehaviour
     {
-        protected PageController Manager { get; private set; } // ºÃÎÄÃ÷
+        protected PageController Manager { get; private set; } // å¥½æ–‡æ˜
 
         [Ext.ReadOnlyInGame, SerializeField]
         protected BaseUIEventSystem EventSystem;
@@ -70,7 +70,7 @@ namespace PageNS
         }
 
         /// <summary>
-        /// µã»÷ÔËĞĞÊ±×Ô¶¯¼ì²â²¢É¾³ı¿ÕÒıÓÃ£¬µ«ÊÇÔÚ·¢²¼°æ±¾ÖĞ²»Ó¦¸ÃÁôÏÂ¿ÕÒıÓÃ
+        /// ç‚¹å‡»è¿è¡Œæ—¶è‡ªåŠ¨æ£€æµ‹å¹¶åˆ é™¤ç©ºå¼•ç”¨ï¼Œä½†æ˜¯åœ¨å‘å¸ƒç‰ˆæœ¬ä¸­ä¸åº”è¯¥ç•™ä¸‹ç©ºå¼•ç”¨
         /// </summary>
         private void OnValidate()
         {
@@ -154,7 +154,7 @@ namespace PageNS
             UniTask.Void(DelayedOpen);
         }
 
-        private async UniTaskVoid DelayedOpen() // Èç¹ûÖ®ºóÒ²ÓÃ²»µ½ÔÙÉ¾³ı£¬Èç¹ûÓÃµ½ÁË¾Í¼Ó±äÁ¿¿ØÖÆ
+        private async UniTaskVoid DelayedOpen() // å¦‚æœä¹‹åä¹Ÿç”¨ä¸åˆ°å†åˆ é™¤ï¼Œå¦‚æœç”¨åˆ°äº†å°±åŠ å˜é‡æ§åˆ¶
         {
             await UniTask.WaitForSeconds(0f);
 
@@ -214,7 +214,7 @@ namespace PageNS
 
         public Rect GetRect() => SelfRect.rect;
 
-        public async UniTaskVoid DelayedClose() // Õâ¸öºÜÓĞÓÃ
+        public async UniTaskVoid DelayedClose() // è¿™ä¸ªå¾ˆæœ‰ç”¨
         {
             await UniTask.WaitForSeconds(PageCloseAnimeDuration);
 

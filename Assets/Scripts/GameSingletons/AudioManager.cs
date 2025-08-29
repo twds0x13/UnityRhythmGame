@@ -141,7 +141,7 @@ namespace AudioNS
         }
 
         /// <summary>
-        /// ��ȫ�ļ�����ƵƬ��
+        /// 安全的加载音频片段
         /// </summary>
         /// <param name="ClipName"></param>
         /// <param name="SourceName"></param>

@@ -10,29 +10,29 @@ namespace NoteNS
 {
     public class NoteBehaviour : PooledObjectBehaviour
     {
-        private StateMachine<NoteBehaviour> StateMachine; // ¶¯»­×´Ì¬»ú
+        private StateMachine<NoteBehaviour> StateMachine; // åŠ¨ç”»çŠ¶æ€æœº
 
-        public StateInitNote InitNote; // ´Ó¶¯»­×´Ì¬¿ªÊ¼¸üĞÂ
+        public StateInitNote InitNote; // ä»åŠ¨ç”»çŠ¶æ€å¼€å§‹æ›´æ–°
 
-        public StateAnimeNote AnimeNote; // ´Ó¶¯»­×´Ì¬¿ªÊ¼¸üĞÂ
+        public StateAnimeNote AnimeNote; // ä»åŠ¨ç”»çŠ¶æ€å¼€å§‹æ›´æ–°
 
-        public StateJudgeAnimeNote JudgeNoteAnime; // ²¥·Å±»»÷ÖĞµÄ¶¯»­£¬±¾ÖÊÊÇ Disappear µÄ·ÖÖ§
+        public StateJudgeAnimeNote JudgeNoteAnime; // æ’­æ”¾è¢«å‡»ä¸­çš„åŠ¨ç”»ï¼Œæœ¬è´¨æ˜¯ Disappear çš„åˆ†æ”¯
 
-        public StateDisappearNote DisappearNoteAnime; // Èç¹ûÃ»»÷ÖĞ¾Í´¦ÀíÏûÊ§¶¯»­Âß¼­
+        public StateDisappearNote DisappearNoteAnime; // å¦‚æœæ²¡å‡»ä¸­å°±å¤„ç†æ¶ˆå¤±åŠ¨ç”»é€»è¾‘
 
-        public StateDestroyNote DestroyNoteAnime; // »÷ÖĞ»òÏûÊ§Ö®ºóÒªÉ¾³ınote
+        public StateDestroyNote DestroyNoteAnime; // å‡»ä¸­æˆ–æ¶ˆå¤±ä¹‹åè¦åˆ é™¤note
 
-        private StateMachine<NoteBehaviour> JudgeMachine; // ÅĞ¶¨×´Ì¬»ú
+        private StateMachine<NoteBehaviour> JudgeMachine; // åˆ¤å®šçŠ¶æ€æœº
 
-        public StateBeforeJudgeNote BeforeJudge; // ½øÈëÅĞ¶¨ÇøÖ®Ç°
+        public StateBeforeJudgeNote BeforeJudge; // è¿›å…¥åˆ¤å®šåŒºä¹‹å‰
 
-        public StateOnJudgeNote ProcessJudge; // ÔÚÅĞ¶ÏÇø¼äÄÚ
+        public StateOnJudgeNote ProcessJudge; // åœ¨åˆ¤æ–­åŒºé—´å†…
 
-        public StateAfterJudgeNote AfterJudge; // ¹ıÁËÅĞ¶ÏÇø¼ä
+        public StateAfterJudgeNote AfterJudge; // è¿‡äº†åˆ¤æ–­åŒºé—´
 
-        public TrackBehaviour ParentTrack; // ¹éÊôµÄÄÇÒ»¸ö¹ìµÀ£¬»ñÈ¡ transform.position ×÷Îª¶¯»­×ø±êÔ­µã£¨Ä¬ÈÏÇé¿öÂäµ½¹ìµÀÉÏ£©
+        public TrackBehaviour ParentTrack; // å½’å±çš„é‚£ä¸€ä¸ªè½¨é“ï¼Œè·å– transform.position ä½œä¸ºåŠ¨ç”»åæ ‡åŸç‚¹ï¼ˆé»˜è®¤æƒ…å†µè½åˆ°è½¨é“ä¸Šï¼‰
 
-        public float JudgeTime { get; private set; } // Ô¤¼ÆÅĞ¶¨Ê±¼ä
+        public float JudgeTime { get; private set; } // é¢„è®¡åˆ¤å®šæ—¶é—´
 
         public void InitStateMachine(NoteBehaviour Note)
         {
@@ -52,7 +52,7 @@ namespace NoteNS
             StateMachine.InitState(InitNote);
         }
 
-        private void Update() // Á½¸ö×´Ì¬»ú
+        private void Update() // ä¸¤ä¸ªçŠ¶æ€æœº
         {
             JudgeMachine.CurState?.Update();
             StateMachine.CurState?.Update();
@@ -69,7 +69,7 @@ namespace NoteNS
             }
         }
 
-        public NoteBehaviour Init(AnimeMachine Machine, TrackBehaviour Track, float Time) // ÔÚ Objectpool ÖĞµ÷ÓÃÕâ¸öº¯Êı×÷ÎªÍ¨ÓÃÆğÊÖ£¬±£Ö¤Ã¿´Îµ÷ÓÃ¶¼´ÓÕâÀï¿ªÊ¼
+        public NoteBehaviour Init(AnimeMachine Machine, TrackBehaviour Track, float Time) // åœ¨ Objectpool ä¸­è°ƒç”¨è¿™ä¸ªå‡½æ•°ä½œä¸ºé€šç”¨èµ·æ‰‹ï¼Œä¿è¯æ¯æ¬¡è°ƒç”¨éƒ½ä»è¿™é‡Œå¼€å§‹
         {
             JudgeTime = Time;
             ParentTrack = Track;

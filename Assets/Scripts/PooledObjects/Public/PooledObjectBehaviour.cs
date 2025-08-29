@@ -9,17 +9,17 @@ namespace PooledObjectNS
     {
         public PooledObjectBehaviour Inst { get; private set; }
 
-        public System.Random RandInst = new(); // ËæÊ±ÄÜÓÃµÄËæ»ú
+        public System.Random RandInst = new(); // éšæ—¶èƒ½ç”¨çš„éšæœº
 
-        public UnityEvent DestroyEvent = new(); // Íâ²¿µ÷ÓÃ
+        public UnityEvent DestroyEvent = new(); // å¤–éƒ¨è°ƒç”¨
 
-        public SpriteRenderer SpriteRenderer; // Object Pool µÄÔ¤ÖÆÌå¶¼ĞèÒª SpriteRenderer
+        public SpriteRenderer SpriteRenderer; // Object Pool çš„é¢„åˆ¶ä½“éƒ½éœ€è¦ SpriteRenderer
 
-        public AnimeMachine AnimeMachine; // ÔÚ×ÓÀàÖĞ³õÊ¼»¯
+        public AnimeMachine AnimeMachine; // åœ¨å­ç±»ä¸­åˆå§‹åŒ–
 
-        public Sprite[] SpriteList; // ĞèÒªÊÇ·Ç¿ÕµÄ
+        public Sprite[] SpriteList; // éœ€è¦æ˜¯éç©ºçš„
 
-        private void Awake() // Õâ¸ö²»ÄÜÔËĞĞÊ±Éú³É
+        private void Awake() // è¿™ä¸ªä¸èƒ½è¿è¡Œæ—¶ç”Ÿæˆ
         {
             if (Inst != this)
                 Inst = this;
