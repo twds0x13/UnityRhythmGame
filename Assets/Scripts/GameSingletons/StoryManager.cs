@@ -446,7 +446,7 @@ namespace StoryNS
             switch (Action.Type)
             {
                 case ActionType.PlayAudio:
-                    Audio.Inst.LoadAudioClip(Action.SafeGet<string>(), nameof(BackGroundMusic));
+                    Audio.Inst.LoadAudioClip(Action.SafeGet<string>(), null);
                     break;
             }
         }
