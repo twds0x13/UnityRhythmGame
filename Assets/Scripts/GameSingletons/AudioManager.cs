@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using Singleton;
 using UnityEngine;
 
@@ -21,6 +22,14 @@ namespace AudioNS
         {
             RegisterAudioClips();
             RegisterAudioSources();
+            UniTask.Void(Test);
+        }
+
+        private async UniTaskVoid Test()
+        {
+            await UniTask.Delay(5000);
+            Debug.Log("AudioManager Test");
+            LoadAudioClip("Zephyrs", "BackGroundMusic");
         }
 
         private void RegisterAudioClips()
@@ -29,7 +38,6 @@ namespace AudioNS
             foreach (AudioClip AudioClip in AudioClips)
             {
                 RegisteredAudioClips.Add(AudioClip.name, AudioClip);
-                Debug.Log(AudioClip.name);
             }
         }
 
@@ -39,7 +47,6 @@ namespace AudioNS
             foreach (AudioSource AudioSource in AudioSources)
             {
                 RegisteredAudioSources.Add(AudioSource.name, AudioSource);
-                Debug.Log(AudioSource.name);
             }
         }
 
@@ -51,26 +58,26 @@ namespace AudioNS
             }
         }
 
-        public void CloseAudioSource(string ClosedSource)
+        public void CloseAudioSource(string closedSource)
         {
-            if (ClosedSource is not null)
+            if (closedSource is not null)
             {
-                if (RegisteredAudioSources.TryGetValue(ClosedSource, out AudioSource Closed))
+                if (RegisteredAudioSources.TryGetValue(closedSource, out AudioSource closedRef))
                 {
-                    Closed.enabled = false;
+                    closedRef.enabled = false;
                 }
                 else
                 {
-                    Debug.LogWarning($"Audio source '{ClosedSource}' not found.");
+                    Debug.LogWarning($"Audio source '{closedSource}' not found.");
                 }
             }
         }
 
-        public void CloseAudioSource(string[] ClosedSources)
+        public void CloseAudioSource(string[] closedSources)
         {
-            if (ClosedSources is not null)
+            if (closedSources is not null)
             {
-                foreach (string Source in ClosedSources)
+                foreach (string Source in closedSources)
                 {
                     CloseAudioSource(Source);
                 }
@@ -85,19 +92,19 @@ namespace AudioNS
             }
         }
 
-        public AudioSource RequireAudioSource(string RequiredSource)
+        public AudioSource RequireAudioSource(string requiredSource)
         {
-            if (RequiredSource is not null)
+            if (requiredSource is not null)
             {
-                if (RegisteredAudioSources.TryGetValue(RequiredSource, out AudioSource Required))
+                if (RegisteredAudioSources.TryGetValue(requiredSource, out AudioSource requiredRef))
                 {
-                    Required.enabled = true;
+                    requiredRef.enabled = true;
 
-                    return Required;
+                    return requiredRef;
                 }
                 else
                 {
-                    Debug.LogWarning($"Audio source '{RequiredSource}' not found.");
+                    Debug.LogWarning($"Audio source '{requiredSource}' not found.");
 
                     throw new ArgumentNullException();
                 }
@@ -106,54 +113,58 @@ namespace AudioNS
             throw new ArgumentNullException("RequiredSource String Null");
         }
 
-        public List<AudioSource> RequireAudioSource(string[] RequiredSources)
+        public List<AudioSource> RequireAudioSource(string[] requiredSources)
         {
-            List<AudioSource> ReturnSources = new();
+            List<AudioSource> returnSources = new();
 
-            if (RequiredSources is not null)
+            if (requiredSources is not null)
             {
-                foreach (string Source in RequiredSources)
+                foreach (string source in requiredSources)
                 {
-                    ReturnSources.Add(RequireAudioSource(Source));
+                    if (source is null)
+                    {
+                        returnSources.Add(RequireAudioSource(source));
+                    }
                 }
 
-                return ReturnSources;
+                return returnSources;
             }
 
             throw new ArgumentNullException();
         }
 
-        public AudioClip RequireAudioClip(string RequiredClip)
+        public AudioClip RequireAudioClip(string requiredClip)
         {
-            if (RequiredClip is not null)
+            if (requiredClip is not null)
             {
-                if (RegisteredAudioClips.TryGetValue(RequiredClip, out AudioClip Required))
+                if (RegisteredAudioClips.TryGetValue(requiredClip, out AudioClip returnedRef))
                 {
-                    return Required;
+                    return returnedRef;
                 }
                 else
                 {
-                    Debug.LogWarning($"Audio clip '{RequiredClip}' not found.");
+                    Debug.LogWarning($"Audio clip '{requiredClip}' not found.");
                     throw new ArgumentNullException();
                 }
             }
+
             throw new ArgumentNullException("RequiredClip String Null");
         }
 
         /// <summary>
         /// 安全的加载音频片段
         /// </summary>
-        /// <param name="ClipName"></param>
-        /// <param name="SourceName"></param>
-        public void LoadAudioClip(string ClipName, string SourceName)
+        /// <param name="clipName"></param>
+        /// <param name="sourceName"></param>
+        public void LoadAudioClip(string clipName, string sourceName)
         {
-            AudioSource Source = RequireAudioSource(SourceName);
+            AudioSource source = RequireAudioSource(sourceName);
 
-            AudioClip Clip = RequireAudioClip(ClipName);
+            AudioClip clip = RequireAudioClip(clipName);
 
-            Source.clip = Clip;
+            source.clip = clip;
 
-            Source.Play();
+            source.Play();
         }
     }
 }

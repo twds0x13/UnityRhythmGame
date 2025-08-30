@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
+using UnityEngine;
 
-// 我再也不搞大跨步了
-// 看起来能用了？
+// 看起来能用？
 
 namespace ECS
 {
@@ -13,14 +14,86 @@ namespace ECS
     public class ECSManager
     {
         private readonly Dictionary<int, Entity> _entities = new();
-        private int _nextEntityId = 0;
 
         public Entity CreateEntity()
         {
-            var entity = new Entity(_nextEntityId);
-            _entities[_nextEntityId] = entity;
-            _nextEntityId++;
+            int id;
+
+            var root = FindRootEntity();
+
+            if (root != null && root.HasComponent<Comp.IdManager>())
+            {
+                var idManager = root.GetComponent<Comp.IdManager>();
+                id = idManager.GetNextId();
+            }
+            else
+            {
+                // 回退到简单计数器（仅用于测试或特殊情况）
+                id = _entities.Count > 0 ? _entities.Keys.Max() + 1 : 0;
+                Debug.LogWarning("无法获取 IdManager ，已回退到简单计数器");
+            }
+
+            var entity = new Entity(id);
+            _entities[id] = entity;
             return entity;
+        }
+
+        // 清空所有实体
+        public void ClearAllEntities()
+        {
+            _entities.Clear();
+        }
+
+        /// <summary>
+        /// 添加一个已存在的实体（ 从序列化中读取 ）
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <param name="overwrite">强制覆写，危险操作，后果自负</param>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentException"></exception>
+        public void AddEntity(Entity entity, bool overwrite = false)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            if (_entities.ContainsKey(entity.Id))
+            {
+                if (overwrite)
+                {
+                    _entities[entity.Id] = entity;
+                    return;
+                }
+                else
+                {
+                    throw new ArgumentException($"实体ID {entity.Id} 已存在");
+                }
+            }
+
+            _entities[entity.Id] = entity;
+
+            // 注册 ID 到管理器
+            var root = FindRootEntity();
+            if (root != null && root.HasComponent<Comp.IdManager>())
+            {
+                var idManager = root.GetComponent<Comp.IdManager>();
+
+                try
+                {
+                    idManager.RegisterId(entity.Id);
+                }
+                catch (ArgumentException ex)
+                {
+                    // 如果ID冲突且不允许覆盖，则抛出异常
+                    if (!overwrite)
+                    {
+                        _entities.Remove(entity.Id);
+                        throw new InvalidOperationException($"无法获取新 Id", ex);
+                    }
+
+                    // 如果允许覆盖，则继续
+                    Console.WriteLine($"警告: {ex.Message}");
+                }
+            }
         }
 
         public Entity GetEntity(int id)
@@ -93,6 +166,14 @@ namespace ECS
                 }
             }
 
+            // 更新实体计数
+            var root = FindRootEntity();
+            if (root != null && root.HasComponent<Comp.IdManager>())
+            {
+                var idManager = root.GetComponent<Comp.IdManager>();
+                idManager.UnregisterId(id);
+            }
+
             _entities.Remove(id);
         }
 
@@ -160,7 +241,7 @@ namespace ECS
             Entity current = potentialParent;
 
             // 最多遍历3层（深度为3）
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 6; i++)
             {
                 // 如果当前节点没有父节点，停止遍历
                 if (current == null || !current.HasComponent<Comp.Parent>())
