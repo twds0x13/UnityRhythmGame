@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro;
 using UnityEngine;
 
 // 看起来能用？
@@ -11,9 +10,17 @@ namespace ECS
     /// <summary>
     /// 用来管理 ECS 实体的类，应该在 StoryManager 中创建唯一实例
     /// </summary>
-    public class ECSManager
+    public class ECSFramework
     {
-        private readonly Dictionary<int, Entity> _entities = new();
+        // 天机工程这一块/.
+
+        private static readonly Lazy<ECSFramework> _instance = new(() => new());
+
+        public static ECSFramework Inst => _instance.Value;
+
+        private ECSFramework() => _entities = new();
+
+        private readonly Dictionary<int, Entity> _entities;
 
         public Entity CreateEntity()
         {
@@ -25,12 +32,24 @@ namespace ECS
             {
                 var idManager = root.GetComponent<Comp.IdManager>();
                 id = idManager.GetNextId();
+
+                // 确保不会返回 0（保留给根节点）
+                while (id == 0)
+                {
+                    id = idManager.GetNextId();
+                }
             }
             else
             {
                 // 回退到简单计数器（仅用于测试或特殊情况）
-                id = _entities.Count > 0 ? _entities.Keys.Max() + 1 : 0;
-                Debug.LogWarning("无法获取 IdManager ，已回退到简单计数器");
+                id = 1;
+
+                while (_entities.ContainsKey(id))
+                {
+                    id++;
+                }
+
+                Debug.LogWarning($"无法获取 IdManager ，已回退到简单计数器。(ID : {id} )");
             }
 
             var entity = new Entity(id);
@@ -42,6 +61,48 @@ namespace ECS
         public void ClearAllEntities()
         {
             _entities.Clear();
+        }
+
+        /// <summary>
+        /// 强制添加实体，跳过 ID 检查和管理器注册
+        /// </summary>
+        /// <param name="entity">要添加的实体</param>
+        /// <param name="isRoot">是否是根节点</param>
+        public void ForceAddEntity(Entity entity, bool isRoot = false)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+
+            if (_entities.ContainsKey(entity.Id))
+            {
+                // 如果实体已存在，记录警告但不抛出异常
+                Debug.LogWarning($"实体 ID {entity.Id} 已存在，将被覆盖");
+            }
+
+            _entities[entity.Id] = entity;
+
+            // 如果是根节点，需要特殊处理 ID 管理器
+            if (isRoot && entity.HasComponent<Comp.IdManager>())
+            {
+                var idManager = entity.GetComponent<Comp.IdManager>();
+
+                // 确保 ID 0 已注册
+                if (!idManager.IsIdUsed(0))
+                {
+                    idManager.RegisterId(0);
+                }
+
+                // 设置下一个可用 ID
+                if (_entities.Count > 0)
+                {
+                    int maxId = _entities.Keys.Max();
+                    idManager.NextAvailableId = maxId + 1;
+                }
+                else
+                {
+                    idManager.NextAvailableId = 1; // 从 1 开始，因为 0 已被根节点使用
+                }
+            }
         }
 
         /// <summary>
@@ -265,6 +326,12 @@ namespace ECS
         }
 
         // 获取所有直接子节点
+        public List<Entity> GetChildren(int entityId)
+        {
+            return GetChildren(GetEntity(entityId));
+        }
+
+        // 获取所有直接子节点
         public List<Entity> GetChildren(Entity parent)
         {
             if (parent == null || !parent.HasComponent<Comp.Children>())
@@ -309,15 +376,38 @@ namespace ECS
             return 1 + GetNodeLevel(parent);
         }
 
-        // 添加获取根节点的公共方法
-        public Entity FindRootEntity()
+        // 在绝大多数情况下，你可以安全的用这个方法来获取根节点
+        public Entity GetRootEntity()
         {
-            return _entities.Values.FirstOrDefault(e =>
-                !e.HasComponent<Comp.Parent>() || !e.GetComponent<Comp.Parent>().ParentId.HasValue
-            );
+            return GetEntity(0);
         }
 
-        // 获取根节点
+        // 在ECSFramework中手动查找根节点的方法
+        public Entity FindRootEntity()
+        {
+            // 查找所有没有父组件的实体
+            var potentialRoots = _entities
+                .Values.Where(e =>
+                    !e.HasComponent<Comp.Parent>()
+                    || (
+                        e.HasComponent<Comp.Parent>()
+                        && !e.GetComponent<Comp.Parent>().ParentId.HasValue
+                    )
+                )
+                .ToList();
+
+            // 如果有多个候选根节点，选择有Root组件的那个
+            var rootWithComponent = potentialRoots.FirstOrDefault(e => e.HasComponent<Comp.Root>());
+            if (rootWithComponent != null)
+            {
+                return rootWithComponent;
+            }
+
+            // 如果没有找到有Root组件的根节点，返回第一个候选
+            return potentialRoots.FirstOrDefault();
+        }
+
+        // 从一个普通节点向上获取到根节点
         public Entity GetRoot(Entity entity)
         {
             if (!entity.HasComponent<Comp.Parent>())

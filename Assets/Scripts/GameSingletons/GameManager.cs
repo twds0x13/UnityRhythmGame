@@ -264,7 +264,15 @@ namespace GameManagerNS
 
         public void PauseResumeGame() => GameTime.OnPauseResume();
 
-        public void SaveGameSettings() => Json.TrySaveJsonToZip("UserSettings.zip", Inst.Settings);
+        public void SaveGameSettings() =>
+            Json.TrySaveJsonToZip(
+                "UserSettings.zip",
+                Inst.Settings,
+                new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    Formatting = Newtonsoft.Json.Formatting.None,
+                }
+            );
 
         public bool LoadGameSettings(ref GameSettings Object) =>
             Json.TryLoadJsonFromZip("Usersettings.zip", out Object);

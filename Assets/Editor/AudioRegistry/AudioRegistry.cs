@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,7 @@ public static class AudioScannerGenerator
     {
         try
         {
-            // ¶¨ÒåÒªÉ¨ÃèµÄÒôÆµÎÄ¼ş¼ĞÂ·¾¶
+            // å®šä¹‰è¦æ‰«æçš„éŸ³é¢‘æ–‡ä»¶å¤¹è·¯å¾„
             string[] audioFolders =
             {
                 "Assets/Audio/BGM",
@@ -21,14 +21,14 @@ public static class AudioScannerGenerator
                 // "Assets/Audio/Ambience",
             };
 
-            // ´´½¨Êä³öÄ¿Â¼
+            // åˆ›å»ºè¾“å‡ºç›®å½•
             string outputDirectory = "Assets/Audio/AudioRegistry";
             if (!Directory.Exists(outputDirectory))
             {
                 Directory.CreateDirectory(outputDirectory);
             }
 
-            // É¨ÃèÃ¿¸öÎÄ¼ş¼Ğ²¢Éú³É¶ÔÓ¦µÄÀà
+            // æ‰«ææ¯ä¸ªæ–‡ä»¶å¤¹å¹¶ç”Ÿæˆå¯¹åº”çš„ç±»
             foreach (string folder in audioFolders)
             {
                 if (Directory.Exists(folder))
@@ -47,7 +47,7 @@ public static class AudioScannerGenerator
                 }
             }
 
-            // Ë¢ĞÂAssetDatabaseÒÔÈ·±£ĞÂÎÄ¼ş±»Ê¶±ğ
+            // åˆ·æ–°AssetDatabaseä»¥ç¡®ä¿æ–°æ–‡ä»¶è¢«è¯†åˆ«
             AssetDatabase.Refresh();
 
             Debug.Log("Audio class generation completed!");
@@ -60,9 +60,9 @@ public static class AudioScannerGenerator
 
     private static string GetClassNameFromPath(string path)
     {
-        // ´ÓÂ·¾¶ÖĞÌáÈ¡×îºóÒ»¸öÎÄ¼ş¼ĞÃû×÷ÎªÀàÃû
+        // ä»è·¯å¾„ä¸­æå–æœ€åä¸€ä¸ªæ–‡ä»¶å¤¹åä½œä¸ºç±»å
         string folderName = Path.GetFileName(path);
-        // È·±£ÀàÃûÊÇÓĞĞ§µÄC#±êÊ¶·û
+        // ç¡®ä¿ç±»åæ˜¯æœ‰æ•ˆçš„C#æ ‡è¯†ç¬¦
         return MakeValidIdentifier(folderName);
     }
 
@@ -70,36 +70,36 @@ public static class AudioScannerGenerator
     {
         StringBuilder sb = new StringBuilder();
 
-        // Ìí¼ÓÎÄ¼şÍ·
-        sb.AppendLine("// ×Ô¶¯Éú³ÉÀà - ²»ÒªÊÖ¶¯ĞŞ¸Ä");
-        sb.AppendLine("// ÎÄ¼ş¼ĞÔ´: " + folderPath);
-        sb.AppendLine("// Éú³ÉÈÕÆÚ: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        // æ·»åŠ æ–‡ä»¶å¤´
+        sb.AppendLine("// è‡ªåŠ¨ç”Ÿæˆç±» - ä¸è¦æ‰‹åŠ¨ä¿®æ”¹");
+        sb.AppendLine("// æ–‡ä»¶å¤¹æº: " + folderPath);
+        sb.AppendLine("// ç”Ÿæˆæ—¥æœŸ: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         sb.AppendLine();
 
-        // Ìí¼ÓÃüÃû¿Õ¼ä
+        // æ·»åŠ å‘½åç©ºé—´
         sb.AppendLine("namespace AudioRegistry");
         sb.AppendLine("{");
 
-        // ¿ªÊ¼Àà¶¨Òå
+        // å¼€å§‹ç±»å®šä¹‰
         sb.AppendLine($"    public static class {className}");
         sb.AppendLine("    {");
 
-        // É¨ÃèÎÄ¼ş¼ĞÖĞµÄÒôÆµÎÄ¼ş
+        // æ‰«ææ–‡ä»¶å¤¹ä¸­çš„éŸ³é¢‘æ–‡ä»¶
         string[] audioFiles = Directory
             .GetFiles(folderPath, "*.*", SearchOption.AllDirectories)
             .Where(file => IsAudioFile(file))
             .ToArray();
 
-        // ÎªÃ¿¸öÒôÆµÎÄ¼şÉú³É³£Á¿
+        // ä¸ºæ¯ä¸ªéŸ³é¢‘æ–‡ä»¶ç”Ÿæˆå¸¸é‡
         foreach (string filePath in audioFiles)
         {
             try
             {
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
                 string constantName = MakeValidIdentifier(fileName);
-                string relativePath = GetRelativePath(filePath, folderPath);
+                // string relativePath = GetRelativePath(filePath, folderPath);
 
-                sb.AppendLine($"        public const string {constantName} = \"{relativePath}\";");
+                sb.AppendLine($"        public const string {constantName} = \"{constantName}\";");
             }
             catch (Exception ex)
             {
@@ -107,10 +107,10 @@ public static class AudioScannerGenerator
             }
         }
 
-        // ½áÊøÀà¶¨Òå
+        // ç»“æŸç±»å®šä¹‰
         sb.AppendLine("    }");
 
-        // ½áÊøÃüÃû¿Õ¼ä
+        // ç»“æŸå‘½åç©ºé—´
         sb.AppendLine("}");
 
         return sb.ToString();
@@ -131,38 +131,38 @@ public static class AudioScannerGenerator
     {
         try
         {
-            // È·±£Â·¾¶Ê¹ÓÃÍ³Ò»µÄ·Ö¸ô·û
+            // ç¡®ä¿è·¯å¾„ä½¿ç”¨ç»Ÿä¸€çš„åˆ†éš”ç¬¦
             fullPath = fullPath.Replace('\\', '/');
             basePath = basePath.Replace('\\', '/');
 
-            // È·±£»ùÂ·¾¶ÒÔ·Ö¸ô·û½áÎ²
+            // ç¡®ä¿åŸºè·¯å¾„ä»¥åˆ†éš”ç¬¦ç»“å°¾
             if (!basePath.EndsWith("/"))
                 basePath += "/";
 
-            // ¼ì²éÍêÕûÂ·¾¶ÊÇ·ñÒÔ»ùÂ·¾¶¿ªÍ·
+            // æ£€æŸ¥å®Œæ•´è·¯å¾„æ˜¯å¦ä»¥åŸºè·¯å¾„å¼€å¤´
             if (!fullPath.StartsWith(basePath))
             {
                 Debug.LogWarning($"Path '{fullPath}' does not start with base path '{basePath}'");
-                return Path.GetFileName(fullPath); // »ØÍËµ½Ö»·µ»ØÎÄ¼şÃû
+                return Path.GetFileName(fullPath); // å›é€€åˆ°åªè¿”å›æ–‡ä»¶å
             }
 
-            // ÌáÈ¡Ïà¶ÔÂ·¾¶
+            // æå–ç›¸å¯¹è·¯å¾„
             string relativePath = fullPath.Substring(basePath.Length);
             return relativePath;
         }
         catch (Exception ex)
         {
             Debug.LogError($"Error getting relative path: {ex.Message}");
-            return Path.GetFileName(fullPath); // »ØÍËµ½Ö»·µ»ØÎÄ¼şÃû
+            return Path.GetFileName(fullPath); // å›é€€åˆ°åªè¿”å›æ–‡ä»¶å
         }
     }
 
     private static string MakeValidIdentifier(string input)
     {
-        // ÒÆ³ıÎŞĞ§×Ö·û²¢½«Æä×ª»»ÎªÓĞĞ§µÄC#±êÊ¶·û
+        // ç§»é™¤æ— æ•ˆå­—ç¬¦å¹¶å°†å…¶è½¬æ¢ä¸ºæœ‰æ•ˆçš„C#æ ‡è¯†ç¬¦
         StringBuilder sb = new StringBuilder();
 
-        // ´¦ÀíµÚÒ»¸ö×Ö·û - ±ØĞëÊÇ×ÖÄ¸»òÏÂ»®Ïß
+        // å¤„ç†ç¬¬ä¸€ä¸ªå­—ç¬¦ - å¿…é¡»æ˜¯å­—æ¯æˆ–ä¸‹åˆ’çº¿
         if (input.Length > 0)
         {
             if (char.IsLetter(input[0]) || input[0] == '_')
@@ -175,7 +175,7 @@ public static class AudioScannerGenerator
             }
         }
 
-        // ´¦ÀíÊ£Óà×Ö·û
+        // å¤„ç†å‰©ä½™å­—ç¬¦
         for (int i = 1; i < input.Length; i++)
         {
             if (char.IsLetterOrDigit(input[i]) || input[i] == '_')
