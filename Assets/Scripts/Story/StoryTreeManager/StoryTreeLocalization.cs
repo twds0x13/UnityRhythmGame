@@ -167,7 +167,7 @@ namespace ECS
         }
 
         // 创建章节节点（添加重复检查和覆盖功能）
-        public Entity CreateChapter(int number = 0, string title = "", bool overwrite = false)
+        public Entity CreateChapter(int number = 0, string title = null, bool overwrite = false)
         {
             // 检查是否已存在相同序号的章节
             var existingChapter = FindChapterByNumber(number);
@@ -209,7 +209,7 @@ namespace ECS
         public Entity CreateEpisode(
             Entity chapter,
             int number = 0,
-            string title = "",
+            string title = null,
             bool overwrite = false
         )
         {
@@ -260,8 +260,8 @@ namespace ECS
         public Entity CreateLine(
             Entity episode,
             int number = 0,
-            string dialogue = "",
-            string speaker = "",
+            string dialogue = null,
+            string speaker = null,
             bool overwrite = false
         )
         {

@@ -31,7 +31,7 @@ namespace ECS
             public int Number { get; set; } = 0;
 
             [JsonProperty]
-            public string Label { get; set; } = "";
+            public string Label { get; set; } = null;
 
             /// <summary>
             /// 获取格式化的序号标签
@@ -50,7 +50,7 @@ namespace ECS
 
             public Order() { }
 
-            public Order(int number, string label = "")
+            public Order(int number, string label = null)
             {
                 Number = number;
                 Label = label;

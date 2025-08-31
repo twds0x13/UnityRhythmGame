@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
-using Unity.Plastic.Antlr3.Runtime.Debug;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using UnityEngine;
 using static ECS.Comp;
 using Json = JsonLoader.JsonManager;
@@ -12,13 +14,44 @@ namespace ECS
 {
     public partial class StoryTreeManager
     {
+        public static class TreeSerializerHelper
+        {
+            private static JsonSerializerSettings _settings = new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Auto,
+                Formatting = Formatting.None,
+                NullValueHandling = NullValueHandling.Ignore,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+            };
+
+            public static string Serialize(object obj)
+            {
+                return JsonConvert.SerializeObject(obj, _settings);
+            }
+
+            public static T Deserialize<T>(string json)
+            {
+                return JsonConvert.DeserializeObject<T>(json, _settings);
+            }
+
+            public static object Deserialize(string json, Type type)
+            {
+                return JsonConvert.DeserializeObject(json, type, _settings);
+            }
+        }
+
         // 保存故事树到文件
-        public void SaveStoryTree(string filePath)
+        public void SaveStoryTree(string fileName)
         {
             var entities = _ecsFramework.GetAllEntities().ToList();
 
-            var settings = new JsonSerializerSettings { Formatting = Formatting.None };
-            Json.TrySaveJsonToZip(filePath, entities, settings);
+            Json.TrySaveToZip(fileName, TreeSerializerHelper.Serialize(entities));
+        }
+
+        public void ClearStoryTree()
+        {
+            _ecsFramework.ClearAllEntities();
+            _rootEntity = null;
         }
 
         // 从文件加载故事树
@@ -100,12 +133,47 @@ namespace ECS
                 _ecsFramework.ClearAllEntities();
                 _rootEntity = null;
 
-                // 添加所有实体
+                // 首先找到根节点实体
+                Entity rootEntity = entities.FirstOrDefault(e =>
+                    e.HasComponent<Root>() && e.GetComponent<Root>() != null
+                );
+
+                if (rootEntity == null)
+                {
+                    LogFile.Error("找不到根节点实体", "StoryTreeManager");
+                    if (createNewIfMissing)
+                    {
+                        // 创建新的根节点
+                        CreateRoot("新建故事树");
+                        return true;
+                    }
+                    return false;
+                }
+
+                // 添加其他实体（排除根节点）
                 int successCount = 0;
                 int errorCount = 0;
 
+                try
+                {
+                    _ecsFramework.ForceAddEntity(rootEntity, true);
+                    _rootEntity = rootEntity;
+                    successCount++;
+                    LogFile.Info($"已添加根节点实体 (ID: {rootEntity.Id})", "StoryTreeManager");
+                }
+                catch (Exception ex)
+                {
+                    errorCount++;
+                    LogFile.Exception(ex, "StoryTreeManager");
+                    LogFile.Error($"添加根节点实体失败: {ex.Message}", "StoryTreeManager");
+                }
+
                 foreach (var entity in entities)
                 {
+                    // 跳过已经添加的根节点实体
+                    if (entity.Id == rootEntity.Id)
+                        continue;
+
                     try
                     {
                         _ecsFramework.AddEntity(entity);

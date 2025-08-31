@@ -26,7 +26,7 @@ namespace ECS
         {
             int id;
 
-            var root = FindRootEntity();
+            var root = GetRootEntity();
 
             if (root != null && root.HasComponent<Comp.IdManager>())
             {
@@ -76,7 +76,10 @@ namespace ECS
             if (_entities.ContainsKey(entity.Id))
             {
                 // 如果实体已存在，记录警告但不抛出异常
-                Debug.LogWarning($"实体 ID {entity.Id} 已存在，将被覆盖");
+                if (isRoot)
+                {
+                    LogFile.Log($"初始化根节点 Id = {entity.Id}");
+                }
             }
 
             _entities[entity.Id] = entity;

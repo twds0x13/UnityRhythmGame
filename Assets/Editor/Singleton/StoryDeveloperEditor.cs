@@ -39,7 +39,7 @@ public class StoryEditorWindow : EditorWindow
 
     private void OnEnable()
     {
-        Json.TryLoadJsonFromZip("GameStory.story", out _storyContainer);
+        Json.TryLoadJsonFromZip("GameStory.story", out _storyContainer, default);
     }
 
     private void TestAllNodeActions()

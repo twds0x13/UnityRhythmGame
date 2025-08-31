@@ -10,7 +10,7 @@ namespace ECS
     {
         public bool HasRoot()
         {
-            return SearchActualRootEntities().Any();
+            return FindActualRootEntities().Any();
         }
 
         /// <summary>
@@ -81,7 +81,7 @@ namespace ECS
                 return _rootEntity;
 
             // 使用公共方法查找根节点
-            _rootEntity = _ecsFramework.FindRootEntity();
+            _rootEntity = _ecsFramework.GetRootEntity();
 
             if (_rootEntity != null)
             {
@@ -99,7 +99,7 @@ namespace ECS
                     _rootEntity.AddComponent(new IdManager(true));
 
                     Debug.LogWarning(
-                        $"自动为 Root 实体 {_rootEntity.Id} 添加 IdManager 组件，初始值设定为{0}"
+                        $"自动为 Root 实体 {_rootEntity.Id} 添加 IdManager 组件，初始值设定为 {0}"
                     );
                 }
 
@@ -114,7 +114,7 @@ namespace ECS
             }
 
             // 创建新的根节点 (只有在没有找到根节点时才执行)
-            return CreateRoot(RootName);
+            return CreateRoot(RootName, true);
         }
 
         /// <summary>
@@ -123,7 +123,7 @@ namespace ECS
         /// <returns>验证结果和相关信息</returns>
         public (bool isValid, string message) ValidateRootStructure()
         {
-            var actualRoots = SearchActualRootEntities();
+            var actualRoots = FindActualRootEntities();
 
             if (actualRoots.Count == 0)
             {
@@ -161,60 +161,12 @@ namespace ECS
         }
 
         /// <summary>
-        /// 查找所有可能成为根节点的实体（没有父节点或父节点不存在的实体）
-        /// </summary>
-        /// <returns>潜在根节点实体的列表</returns>
-        public List<Entity> SearchPotentialRootEntities()
-        {
-            var potentialRoots = new List<Entity>();
-            var allEntities = _ecsFramework.GetAllEntities();
-
-            foreach (var entity in allEntities)
-            {
-                // 检查实体是否有父组件
-                if (!entity.HasComponent<Parent>())
-                {
-                    // 没有父组件，可能是根节点
-                    potentialRoots.Add(entity);
-                    LogFile.Log($"找到潜在根节点 (无父组件): ID={entity.Id}", "StoryTreeManager");
-                    continue;
-                }
-
-                var parentComp = entity.GetComponent<Parent>();
-
-                // 检查父组件是否有父ID
-                if (!parentComp.ParentId.HasValue)
-                {
-                    // 有父组件但没有父ID，可能是根节点
-                    potentialRoots.Add(entity);
-                    LogFile.Log($"找到潜在根节点 (无父ID): ID={entity.Id}", "StoryTreeManager");
-                    continue;
-                }
-
-                // 检查父ID对应的实体是否存在
-                var parentEntity = _ecsFramework.GetEntity(parentComp.ParentId.Value);
-                if (parentEntity == null)
-                {
-                    // 父实体不存在，可能是根节点
-                    potentialRoots.Add(entity);
-                    LogFile.Log(
-                        $"找到潜在根节点 (父实体不存在): ID={entity.Id}, 父ID={parentComp.ParentId.Value}",
-                        "StoryTreeManager"
-                    );
-                }
-            }
-
-            LogFile.Info($"找到 {potentialRoots.Count} 个潜在根节点实体", "StoryTreeManager");
-            return potentialRoots;
-        }
-
-        /// <summary>
         /// 查找并返回所有真正的根节点实体（ 有Root组件 没有有效父节点 Id为0 的实体）
         /// </summary>
         /// <returns>真正的根节点实体的列表</returns>
-        public List<Entity> SearchActualRootEntities()
+        public List<Entity> FindActualRootEntities()
         {
-            var potentialRoots = SearchPotentialRootEntities();
+            var potentialRoots = FindPotentialRootEntities();
             var actualRoots = new List<Entity>();
 
             foreach (var entity in potentialRoots)
@@ -237,14 +189,14 @@ namespace ECS
         /// <returns>修复后的根节点实体，如果修复失败返回null</returns>
         public Entity FindAndFixRootIssues()
         {
-            var actualRoots = SearchActualRootEntities();
+            var actualRoots = FindActualRootEntities();
 
             // 情况1：没有根节点
             if (actualRoots.Count == 0)
             {
                 LogFile.Warning("没有找到根节点实体", "StoryTreeManager");
 
-                var potentialRoots = SearchPotentialRootEntities();
+                var potentialRoots = FindPotentialRootEntities();
 
                 if (potentialRoots.Count > 0)
                 {
@@ -252,7 +204,7 @@ namespace ECS
                     var selectedRoot = potentialRoots[0];
                     LogFile.Info($"将实体 ID={selectedRoot.Id} 转换为根节点", "StoryTreeManager");
 
-                    selectedRoot.AddComponent(new Comp.Root { RootName = "修复的根节点" });
+                    selectedRoot.AddComponent(new Root { RootName = "修复的根节点" });
 
                     // 确保没有父组件
                     if (selectedRoot.HasComponent<Parent>())
@@ -261,9 +213,9 @@ namespace ECS
                     }
 
                     // 确保有IdManager组件
-                    if (!selectedRoot.HasComponent<Comp.IdManager>())
+                    if (!selectedRoot.HasComponent<IdManager>())
                     {
-                        selectedRoot.AddComponent(new Comp.IdManager(true));
+                        selectedRoot.AddComponent(new IdManager(true));
                     }
 
                     _rootEntity = selectedRoot;
@@ -347,7 +299,7 @@ namespace ECS
         }
 
         /// <summary>
-        /// +创建根节点实体
+        /// 创建根节点实体
         /// </summary>
         /// <param name="title"></param>
         /// <param name="overwrite">开启时强制抛弃现有 <see cref="_rootEntity"/> 对象</param>
@@ -361,7 +313,7 @@ namespace ECS
             }
 
             // 检查是否已存在根节点实体
-            var existingRoots = SearchActualRootEntities();
+            var existingRoots = FindActualRootEntities();
 
             if (existingRoots.Count > 0 && !overwrite)
             {
@@ -384,7 +336,7 @@ namespace ECS
                 }
             }
 
-            _rootEntity = new Entity(0); // 强制限制 Root 节点编号为 0
+            _rootEntity = new Entity(0);
 
             _rootEntity.AddComponent(
                 new Root
@@ -398,6 +350,7 @@ namespace ECS
             _rootEntity.AddComponent(new IdManager(true));
 
             // 确保根节点没有父组件
+
             if (_rootEntity.HasComponent<Parent>())
             {
                 _rootEntity.RemoveComponent<Parent>();

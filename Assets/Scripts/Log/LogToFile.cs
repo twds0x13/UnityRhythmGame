@@ -108,7 +108,7 @@ public static class LogFile
         try
         {
             // 构建日志条目
-            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
+            string timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.ffffff");
             string levelStr = level.ToString().ToUpper();
             string contextStr = string.IsNullOrEmpty(context) ? "" : $"[{context}] ";
 

@@ -275,7 +275,7 @@ namespace GameManagerNS
             );
 
         public bool LoadGameSettings(ref GameSettings Object) =>
-            Json.TryLoadJsonFromZip("Usersettings.zip", out Object);
+            Json.TryLoadJsonFromZip("Usersettings.zip", out Object, default);
 
         public void ResetGame()
         {
