@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using Singleton;
 using Game = GameManagerNS.GameManager;
-using Story = StoryNS.StoryManager;
 
 namespace TextManagerNS
 {

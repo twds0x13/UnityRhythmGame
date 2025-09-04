@@ -1,12 +1,9 @@
-using StoryNS;
 using UnityEditor;
 using UnityEngine;
-using Json = JsonLoader.JsonManager;
-
+using Json = JsonLoader.BaseJsonLoader;
+/*
 public class StoryEditorWindow : EditorWindow
 {
-    private static StoryContainer _storyContainer;
-
     private static StoryEditorWindow WindowObject;
 
     private int NewObjectLayer = 0;
@@ -23,8 +20,6 @@ public class StoryEditorWindow : EditorWindow
 
     private Color GUIBackgroundColor;
 
-    public StoryContainer StoryContainer => _storyContainer;
-
     [MenuItem("Tools/Story Editor")]
     public static void ShowWindow()
     {
@@ -39,13 +34,10 @@ public class StoryEditorWindow : EditorWindow
 
     private void OnEnable()
     {
-        Json.TryLoadJsonFromZip("GameStory.story", out _storyContainer);
+        // Json.TryLoadJsonFromZip("GameStory.story", out _storyContainer, default);
     }
 
-    private void TestAllNodeActions()
-    {
-        StoryContainer.ActionTest();
-    }
+    private void TestAllNodeActions() { }
 
     private void OnGUI()
     {
@@ -57,8 +49,6 @@ public class StoryEditorWindow : EditorWindow
 
         EditorGUILayout.EndHorizontal();
     }
-
-    private void DrawNode(StoryNode Node) { }
 
     private void DrawTreePanel()
     {
@@ -140,3 +130,4 @@ public class StoryEditorWindow : EditorWindow
         EditorGUILayout.EndVertical();
     }
 }
+*/

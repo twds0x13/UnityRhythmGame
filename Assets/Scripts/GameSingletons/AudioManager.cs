@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Singleton;
 using UnityEngine;
+using BGM = AudioRegistry.BGM;
 
 namespace AudioNS
 {
@@ -28,8 +29,8 @@ namespace AudioNS
         private async UniTaskVoid Test()
         {
             await UniTask.Delay(5000);
-            Debug.Log("AudioManager Test");
-            LoadAudioClip("Zephyrs", "BackGroundMusic");
+            // Debug.Log("AudioManager Test");
+            // LoadAudioClip(BGM.Zephyrs, "BackGroundMusic");
         }
 
         private void RegisterAudioClips()

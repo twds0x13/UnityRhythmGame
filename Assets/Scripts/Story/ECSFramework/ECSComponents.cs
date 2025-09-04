@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace ECS
 {
@@ -18,6 +19,66 @@ namespace ECS
             // 用来处理反序列化，其余同理
             [JsonConstructor]
             public Root() { }
+        }
+
+        /// <summary>
+        /// 处理同级节点之间的顺序。序号应当唯一，需要自动维护。
+        /// </summary>
+        [JsonObject(MemberSerialization.OptIn)]
+        public class Order : IComponent
+        {
+            [JsonProperty]
+            public int Number { get; set; } = 0;
+
+            [JsonProperty]
+            public string Label { get; set; } = null;
+
+            /// <summary>
+            /// 获取格式化的序号标签
+            /// </summary>
+            [JsonIgnore]
+            public string FormattedLabel
+            {
+                get
+                {
+                    if (!string.IsNullOrEmpty(Label))
+                        return Label;
+
+                    return Number.ToString();
+                }
+            }
+
+            public Order() { }
+
+            public Order(int number, string label = null)
+            {
+                Number = number;
+                Label = label;
+            }
+
+            /// <summary>
+            /// 创建章节序号
+            /// </summary>
+            public static Order CreateChapterOrder(int number)
+            {
+                return new Order(number, $"第{number}章");
+            }
+
+            /// <summary>
+            /// 创建情节序号
+            /// </summary>
+            public static Order CreateEpisodeOrder(int number)
+            {
+                return new Order(number, $"第{number}节");
+            }
+
+            /// <summary>
+            /// 创建对白序号
+            /// </summary>
+            public static Order CreateLineOrder(int number)
+            {
+                return new Order(number, $"{number}.");
+            }
         }
 
         [JsonObject(MemberSerialization.OptIn)]
@@ -74,7 +135,7 @@ namespace ECS
             }
 
             // 检查ID是否已被使用
-            public bool IsIdUsed(int id)
+            public bool IdRegistered(int id)
             {
                 return _usedIds.Contains(id);
             }
@@ -95,10 +156,20 @@ namespace ECS
                 return _usedIds.ToList();
             }
 
-            public IdManager(int startId = 0)
+            public IdManager(bool isRoot = false)
             {
                 _usedIds.Clear();
-                NextAvailableId = startId;
+
+                if (isRoot)
+                {
+                    // 如果是根节点，强制使用 ID 0
+                    NextAvailableId = 1; // 下一个可用 ID 从 1 开始
+                    RegisterId(0); // 注册 ID 0
+                }
+                else
+                {
+                    NextAvailableId = 0;
+                }
             }
 
             [JsonConstructor]
@@ -134,8 +205,15 @@ namespace ECS
             [JsonProperty]
             public string ContextKey { get; private set; } = "";
 
+            // 添加对 Order 组件的引用
+            [JsonIgnore]
+            public int OrderNumber
+            {
+                get { return Number; }
+            }
+
             // 仅供开发者模式使用
-            public void GenerateLocalizationKey(Entity entity, ECSManager ecsManager)
+            public void GenerateLocalizationKey(Entity entity, ECSFramework ecsManager)
             {
                 if (entity == null || ecsManager == null)
                     return;
@@ -143,7 +221,7 @@ namespace ECS
                 switch (Type)
                 {
                     case NodeType.Chapter:
-                        ContextKey = $"C{Number}";
+                        ContextKey = $"C{OrderNumber}";
                         break;
 
                     case NodeType.Episode:
@@ -153,11 +231,11 @@ namespace ECS
                             var parentComp = entity.GetComponent<Parent>();
                             if (parentComp.ParentId.HasValue)
                             {
-                                var parent = ecsManager.GetEntity(parentComp.ParentId.Value);
+                                var parent = ecsManager.GetEntitySafe(parentComp.ParentId.Value);
                                 if (parent != null && parent.HasComponent<Localization>())
                                 {
                                     var parentLoc = parent.GetComponent<Localization>();
-                                    ContextKey = $"{parentLoc.ContextKey}_E{Number}";
+                                    ContextKey = $"{parentLoc.ContextKey}_E{OrderNumber}";
                                 }
                             }
                         }
@@ -170,11 +248,11 @@ namespace ECS
                             var parentComp = entity.GetComponent<Parent>();
                             if (parentComp.ParentId.HasValue)
                             {
-                                var parent = ecsManager.GetEntity(parentComp.ParentId.Value);
+                                var parent = ecsManager.GetEntitySafe(parentComp.ParentId.Value);
                                 if (parent != null && parent.HasComponent<Localization>())
                                 {
                                     var parentLoc = parent.GetComponent<Localization>();
-                                    ContextKey = $"{parentLoc.ContextKey}_L{Number}";
+                                    ContextKey = $"{parentLoc.ContextKey}_L{OrderNumber}";
                                 }
                             }
                         }

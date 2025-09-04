@@ -1,6 +1,6 @@
 using Singleton;
 using UnityEngine;
-using Json = JsonLoader.JsonManager;
+using Json = JsonLoader.BaseJsonLoader;
 
 namespace GameManagerNS
 {
@@ -264,10 +264,18 @@ namespace GameManagerNS
 
         public void PauseResumeGame() => GameTime.OnPauseResume();
 
-        public void SaveGameSettings() => Json.TrySaveJsonToZip("UserSettings.zip", Inst.Settings);
+        public void SaveGameSettings() =>
+            Json.TrySaveJsonToZip(
+                "UserSettings.zip",
+                Inst.Settings,
+                new Newtonsoft.Json.JsonSerializerSettings
+                {
+                    Formatting = Newtonsoft.Json.Formatting.None,
+                }
+            );
 
         public bool LoadGameSettings(ref GameSettings Object) =>
-            Json.TryLoadJsonFromZip("Usersettings.zip", out Object);
+            Json.TryLoadJsonFromZip("Usersettings.zip", out Object, default);
 
         public void ResetGame()
         {
