@@ -1,3 +1,4 @@
+/*
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,7 +8,7 @@ using Newtonsoft.Json.Linq;
 using Singleton;
 using UnityEngine;
 using Audio = AudioNS.AudioManager;
-using Json = JsonLoader.JsonManager;
+using Json = JsonLoader.StoryJsonManager
 
 namespace StoryNS
 {
@@ -494,5 +495,6 @@ namespace StoryNS
             Json.TryLoadJsonFromZip(FileName, out _storyContainer);
         }
     }
-    */
+    
 }
+*/

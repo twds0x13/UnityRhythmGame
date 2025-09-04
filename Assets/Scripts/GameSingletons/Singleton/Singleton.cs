@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using UnityEngine;
 
 namespace Singleton
@@ -108,9 +107,7 @@ namespace Singleton
             if (_instance == this)
             {
                 _instance = null;
-                Debug.Log(
-                    $"[{DateTime.Now.ToString("HH:mm:ss:FFFFFF")}] 自动销毁 {typeof(T).Name} 实例。"
-                );
+                // LogManager.Info($"自动销毁 {typeof(T).Name} 实例", nameof(GameSingletons));
             }
 #else
             if (_inst.IsValueCreated && _inst.Value == this)

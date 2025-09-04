@@ -26,14 +26,14 @@ namespace ECS
                 }
                 catch (ArgumentException ex)
                 {
-                    LogFile.Warning(
+                    LogManager.Warning(
                         $"注册ID时发生冲突 (ID: {entity.Id}): {ex.Message}",
                         "StoryTreeManager"
                     );
                 }
             }
 
-            LogFile.Log($"ID管理器已更新，已注册 {allEntities.Count()} 个实体", "StoryTreeManager");
+            LogManager.Info($"成功注册 {allEntities.Count()} 个实体", nameof(StoryTreeManager));
         }
     }
 }

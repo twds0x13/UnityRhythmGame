@@ -10,9 +10,8 @@ namespace ECS
         // 获取所有章节
         public List<Entity> GetChapters()
         {
-            var root = GetOrCreateRoot();
-            return _ecsFramework
-                .GetChildren(root)
+            return GetOrCreateRoot()
+                .Children()
                 .Where(e =>
                     e.HasComponent<Comp.Localization>()
                     && e.GetComponent<Comp.Localization>().Type
@@ -27,8 +26,8 @@ namespace ECS
             if (chapter == null || !chapter.HasComponent<Comp.Localization>())
                 return new List<Entity>();
 
-            return _ecsFramework
-                .GetChildren(chapter)
+            return chapter
+                .Children()
                 .Where(e =>
                     e.HasComponent<Comp.Localization>()
                     && e.GetComponent<Comp.Localization>().Type
@@ -43,8 +42,8 @@ namespace ECS
             if (episode == null || !episode.HasComponent<Comp.Localization>())
                 return new List<Entity>();
 
-            return _ecsFramework
-                .GetChildren(episode)
+            return episode
+                .Children()
                 .Where(e =>
                     e.HasComponent<Comp.Localization>()
                     && e.GetComponent<Comp.Localization>().Type == Comp.Localization.NodeType.Line
@@ -52,21 +51,38 @@ namespace ECS
                 .ToList();
         }
 
-        // 批量创建章节
+        /// <summary>
+        /// 批量创建章节，使用Order系统分配序号
+        /// </summary>
+        /// <param name="titles">章节标题数组</param>
+        /// <returns>创建的章节实体列表</returns>
         public List<Entity> CreateChapters(params string[] titles)
         {
+            var root = GetOrCreateRoot();
+            if (root == null)
+                throw new InvalidOperationException("无法创建章节，因为根节点不存在");
+
             var chapters = new List<Entity>();
+
+            // 获取起始序号
+            int startOrder = GetNextOrderNumber(root);
 
             for (int i = 0; i < titles.Length; i++)
             {
-                var chapter = CreateChapter(i + 1, titles[i]);
+                // 使用自动分配的序号
+                var chapter = CreateChapter(startOrder + i, titles[i]);
                 chapters.Add(chapter);
             }
 
             return chapters;
         }
 
-        // 批量创建小节
+        /// <summary>
+        /// 从当前最大序号开始批量创建小节，按顺序分配序号
+        /// </summary>
+        /// <param name="chapter">父章节实体</param>
+        /// <param name="titles">小节标题数组</param>
+        /// <returns>创建的小节实体列表</returns>
         public List<Entity> CreateEpisodes(Entity chapter, params string[] titles)
         {
             if (chapter == null)
@@ -74,16 +90,25 @@ namespace ECS
 
             var episodes = new List<Entity>();
 
+            // 获取起始序号 - 使用新的重载方法
+            int startOrder = GetNextOrderNumber(chapter);
+
             for (int i = 0; i < titles.Length; i++)
             {
-                var episode = CreateEpisode(chapter, i + 1, titles[i]);
+                // 使用自动分配的序号
+                var episode = CreateEpisode(chapter, startOrder + i, titles[i]);
                 episodes.Add(episode);
             }
 
             return episodes;
         }
 
-        // 批量创建对话行
+        /// <summary>
+        /// 从当前最大序号开始批量创建对话行，按顺序分配序号
+        /// </summary>
+        /// <param name="episode">父小节实体</param>
+        /// <param name="dialogues">对话内容数组</param>
+        /// <returns>创建的对话行实体列表</returns>
         public List<Entity> CreateLines(Entity episode, params string[] dialogues)
         {
             if (episode == null)
@@ -91,9 +116,13 @@ namespace ECS
 
             var lines = new List<Entity>();
 
+            // 获取起始序号 - 使用新的重载方法
+            int startOrder = GetNextOrderNumber(episode);
+
             for (int i = 0; i < dialogues.Length; i++)
             {
-                var line = CreateLine(episode, i + 1, dialogues[i]);
+                // 使用自动分配的序号
+                var line = CreateLine(episode, startOrder + i, dialogues[i]);
                 lines.Add(line);
             }
 
@@ -103,10 +132,7 @@ namespace ECS
         // 根据序号查找章节
         public Entity FindChapterByNumber(int number)
         {
-            var root = GetOrCreateRoot();
-            var chapters = GetChildren(root.Id);
-
-            foreach (var chapter in chapters)
+            foreach (var chapter in GetOrCreateRoot().Children())
             {
                 int chapterNumber = GetEntityOrder(chapter);
                 if (chapterNumber == number)
@@ -158,30 +184,34 @@ namespace ECS
             return null;
         }
 
-        // 创建章节节点（自动分配序号）
-        public Entity CreateChapter(string title = "")
-        {
-            var root = GetOrCreateRoot();
-            int nextNumber = GetNextOrderNumber(root.Id);
-            return CreateChapter(nextNumber, title);
-        }
-
-        // 创建章节节点（添加重复检查和覆盖功能）
+        /// <summary>
+        /// 注意！<paramref name="overwrite"/> 只在手动指定 <paramref name="number"/> 章节序号时才会生效。
+        /// 在启用 <paramref name="overwrite"/> 时，会强制要求 <paramref name="number"/> 不为 0。
+        /// </summary>
+        /// <param name="number"></param>
+        /// <param name="title"></param>
+        /// <param name="overwrite"></param>
+        /// <returns></returns>
         public Entity CreateChapter(int number = 0, string title = null, bool overwrite = false)
         {
             // 检查是否已存在相同序号的章节
             var existingChapter = FindChapterByNumber(number);
-            if (existingChapter != null && !overwrite)
+            if (existingChapter != null && !overwrite && number > 0)
             {
-                Debug.Log($"已存在序号为 {number} 的章节，跳过创建");
+                LogManager.Log($"已存在序号为 {number} 的章节，跳过创建");
                 return existingChapter;
             }
 
             // 如果存在且允许覆盖，先删除现有章节
-            if (existingChapter != null && overwrite)
+            if (existingChapter != null && overwrite && number > 0)
             {
-                Debug.Log($"覆盖序号为 {number} 的现有章节");
+                LogManager.Log($"覆盖序号为 {number} 的现有章节");
                 _ecsFramework.RemoveEntity(existingChapter.Id);
+            }
+
+            if (number <= 0 && overwrite)
+            {
+                throw new ArgumentOutOfRangeException("启用覆盖时，章节序号必须大于 0");
             }
 
             var chapter = _ecsFramework.CreateEntity();
@@ -196,11 +226,8 @@ namespace ECS
 
             _ecsFramework.SetParent(chapter, GetOrCreateRoot());
 
-            // 仅在开发者模式下生成本地化键
-            if (_developerMode)
-            {
-                locComp.GenerateLocalizationKey(chapter, _ecsFramework);
-            }
+            // 生成本地化键
+            locComp.GenerateLocalizationKey(chapter, _ecsFramework);
 
             return chapter;
         }
@@ -224,14 +251,14 @@ namespace ECS
             var existingEpisode = FindEpisodeByNumber(chapter, number);
             if (existingEpisode != null && !overwrite)
             {
-                Debug.Log($"在章节 {chapter.Id} 中已存在序号为 {number} 的小节，跳过创建");
+                LogManager.Log($"在章节 {chapter.Id} 中已存在序号为 {number} 的小节，跳过创建");
                 return existingEpisode;
             }
 
             // 如果存在且允许覆盖，先删除现有小节
             if (existingEpisode != null && overwrite)
             {
-                Debug.Log($"覆盖章节 {chapter.Id} 中序号为 {number} 的现有小节");
+                LogManager.Log($"覆盖章节 {chapter.Id} 中序号为 {number} 的现有小节");
                 _ecsFramework.RemoveEntity(existingEpisode.Id);
             }
 
@@ -247,11 +274,8 @@ namespace ECS
 
             _ecsFramework.SetParent(episode, chapter);
 
-            // 仅在开发者模式下生成本地化键
-            if (_developerMode)
-            {
-                locComp.GenerateLocalizationKey(episode, _ecsFramework);
-            }
+            // 生成本地化键
+            locComp.GenerateLocalizationKey(episode, _ecsFramework);
 
             return episode;
         }
@@ -275,14 +299,14 @@ namespace ECS
             var existingLine = FindLineByNumber(episode, number);
             if (existingLine != null && !overwrite)
             {
-                Debug.Log($"在小节 {episode.Id} 中已存在序号为 {number} 的对白行，跳过创建");
+                LogManager.Log($"在小节 {episode.Id} 中已存在序号为 {number} 的对白行，跳过创建");
                 return existingLine;
             }
 
             // 如果存在且允许覆盖，先删除现有对白行
             if (existingLine != null && overwrite)
             {
-                Debug.Log($"覆盖小节 {episode.Id} 中序号为 {number} 的现有对白行");
+                LogManager.Log($"覆盖小节 {episode.Id} 中序号为 {number} 的现有对白行");
                 _ecsFramework.RemoveEntity(existingLine.Id);
             }
 
@@ -296,13 +320,28 @@ namespace ECS
 
             _ecsFramework.SetParent(line, episode);
 
-            // 仅在开发者模式下生成本地化键
-            if (_developerMode)
-            {
-                locComp.GenerateLocalizationKey(line, _ecsFramework);
-            }
+            // 生成本地化键
+            locComp.GenerateLocalizationKey(line, _ecsFramework);
 
             return line;
+        }
+
+        /// <summary>
+        /// 自动分配章节序号时不会进行重复检查和覆盖。
+        /// </summary>
+        /// <param name="title"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        // 创建章节节点（自动分配序号）
+        public Entity CreateChapter(string title = "")
+        {
+            var root = GetOrCreateRoot();
+
+            if (root == null)
+                throw new InvalidOperationException("无法创建章节，因为根节点不存在");
+
+            int nextNumber = GetNextOrderNumber(root.Id);
+            return CreateChapter(nextNumber, title);
         }
 
         // 创建小节节点（自动分配序号）
@@ -338,8 +377,6 @@ namespace ECS
         // 更新节点后重新生成本地化键（仅在开发者模式下）
         public void UpdateLocalizationKey(Entity entity)
         {
-            if (!_developerMode)
-                return;
             if (entity == null || !entity.HasComponent<Comp.Localization>())
                 return;
 

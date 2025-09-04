@@ -1,6 +1,6 @@
 using Singleton;
 using UnityEngine;
-using Json = JsonLoader.JsonManager;
+using Json = JsonLoader.BaseJsonLoader;
 
 namespace GameManagerNS
 {

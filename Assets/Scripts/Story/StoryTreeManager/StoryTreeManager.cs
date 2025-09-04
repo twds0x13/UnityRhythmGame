@@ -6,8 +6,6 @@ namespace ECS
     {
         public static readonly string RootName = "Root";
 
-        private bool _developerMode = true;
-
         private Entity _rootEntity;
 
         private readonly ECSFramework _ecsFramework;

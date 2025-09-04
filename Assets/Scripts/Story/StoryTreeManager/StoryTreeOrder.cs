@@ -7,6 +7,14 @@ namespace ECS
 {
     public partial class StoryTreeManager
     {
+        public int GetNextOrderNumber(Entity parent)
+        {
+            if (parent == null)
+                throw new ArgumentNullException(nameof(parent));
+
+            return GetNextOrderNumber(parent.Id);
+        }
+
         /// <summary>
         /// 获取同级实体的下一个序号
         /// </summary>
@@ -89,7 +97,7 @@ namespace ECS
         /// </summary>
         public List<Entity> GetSiblingsOrdered(int entityId)
         {
-            var entity = _ecsFramework.GetEntity(entityId);
+            var entity = _ecsFramework.GetEntitySafe(entityId);
             if (entity == null || !entity.HasComponent<Parent>())
                 return new List<Entity>();
 

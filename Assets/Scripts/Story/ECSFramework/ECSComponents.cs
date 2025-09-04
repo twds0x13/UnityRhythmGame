@@ -135,7 +135,7 @@ namespace ECS
             }
 
             // 检查ID是否已被使用
-            public bool IsIdUsed(int id)
+            public bool IdRegistered(int id)
             {
                 return _usedIds.Contains(id);
             }
@@ -209,31 +209,7 @@ namespace ECS
             [JsonIgnore]
             public int OrderNumber
             {
-                get
-                {
-                    // 如果实体有 Order 组件，优先使用 Order 组件的序号
-                    if (_entity != null && _entity.HasComponent<Order>())
-                    {
-                        return _entity.GetComponent<Order>().Number;
-                    }
-
-                    // 否则使用 Localization 组件自身的 Number
-
-                    Debug.LogWarning(
-                        $"实体 ID {_entity?.Id} 缺失 Order 组件，使用 Localization 组件的 Number 属性。"
-                    );
-
-                    return Number;
-                }
-            }
-
-            [JsonIgnore]
-            private Entity _entity;
-
-            // 设置关联的实体（用于获取 Order 组件）
-            public void SetEntity(Entity entity)
-            {
-                _entity = entity;
+                get { return Number; }
             }
 
             // 仅供开发者模式使用
@@ -241,8 +217,6 @@ namespace ECS
             {
                 if (entity == null || ecsManager == null)
                     return;
-
-                SetEntity(entity);
 
                 switch (Type)
                 {
@@ -257,7 +231,7 @@ namespace ECS
                             var parentComp = entity.GetComponent<Parent>();
                             if (parentComp.ParentId.HasValue)
                             {
-                                var parent = ecsManager.GetEntity(parentComp.ParentId.Value);
+                                var parent = ecsManager.GetEntitySafe(parentComp.ParentId.Value);
                                 if (parent != null && parent.HasComponent<Localization>())
                                 {
                                     var parentLoc = parent.GetComponent<Localization>();
@@ -274,7 +248,7 @@ namespace ECS
                             var parentComp = entity.GetComponent<Parent>();
                             if (parentComp.ParentId.HasValue)
                             {
-                                var parent = ecsManager.GetEntity(parentComp.ParentId.Value);
+                                var parent = ecsManager.GetEntitySafe(parentComp.ParentId.Value);
                                 if (parent != null && parent.HasComponent<Localization>())
                                 {
                                     var parentLoc = parent.GetComponent<Localization>();
