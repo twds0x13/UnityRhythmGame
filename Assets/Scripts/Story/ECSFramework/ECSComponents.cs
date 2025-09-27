@@ -81,6 +81,101 @@ namespace ECS
             }
         }
 
+        /// <summary>
+        /// 跳转组件，定义节点间的跳转关系
+        /// </summary>
+        [JsonObject(MemberSerialization.OptIn)]
+        public class Jump : IComponent
+        {
+            [JsonProperty]
+            public List<int> AllowedTargetIds { get; set; } = new();
+
+            [JsonProperty]
+            public JumpCondition Condition { get; set; } = JumpCondition.Always;
+
+            [JsonProperty]
+            public string ConditionKey { get; set; } = "";
+
+            [JsonProperty]
+            public JumpType Type { get; set; } = JumpType.Custom;
+
+            /// <summary>
+            /// 添加可跳转的目标
+            /// </summary>
+            public void AddTarget(int targetId)
+            {
+                if (!AllowedTargetIds.Contains(targetId))
+                {
+                    AllowedTargetIds.Add(targetId);
+                }
+            }
+
+            /// <summary>
+            /// 移除跳转目标
+            /// </summary>
+            public void RemoveTarget(int targetId)
+            {
+                AllowedTargetIds.Remove(targetId);
+            }
+
+            /// <summary>
+            /// 检查是否可以跳转到指定目标
+            /// </summary>
+            public bool CanJumpTo(int targetId)
+            {
+                return AllowedTargetIds.Contains(targetId);
+            }
+
+            [JsonConstructor]
+            private Jump() { }
+
+            public Jump(
+                JumpCondition condition = JumpCondition.Always,
+                JumpType type = JumpType.Custom
+            )
+            {
+                Condition = condition;
+                Type = type;
+            }
+
+            /// <summary>
+            /// 创建默认顺序跳转（自动跳转到下一个兄弟节点）
+            /// </summary>
+            public static Jump CreateDefaultOrderJump()
+            {
+                return new Jump(JumpCondition.Always, JumpType.DefaultOrder);
+            }
+
+            /// <summary>
+            /// 创建episode间跳转
+            /// </summary>
+            public static Jump CreateEpisodeJump()
+            {
+                return new Jump(JumpCondition.Always, JumpType.EpisodeTransition);
+            }
+        }
+
+        /// <summary>
+        /// 跳转条件枚举
+        /// </summary>
+        public enum JumpCondition
+        {
+            Always, // 总是允许
+            Conditional, // 有条件跳转
+            Once, // 只能跳转一次
+            Locked, // 锁定状态，不能跳转
+        }
+
+        /// <summary>
+        /// 跳转类型枚举
+        /// </summary>
+        public enum JumpType
+        {
+            Custom, // 自定义跳转
+            DefaultOrder, // 默认顺序跳转（按Order排序）
+            EpisodeTransition, // Episode间跳转
+        }
+
         [JsonObject(MemberSerialization.OptIn)]
         public class IdManager : IComponent
         {

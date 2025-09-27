@@ -8,7 +8,7 @@ using UIEventSystemNS;
 using UIManagerNS;
 using UnityEngine;
 using UnityEngine.UI;
-using PageController = UIManagerNS.PageController;
+using PageManager = UIManagerNS.PageManager;
 
 namespace PageNS
 {
@@ -19,7 +19,7 @@ namespace PageNS
     ]
     public abstract class BaseUIPage : MonoBehaviour
     {
-        protected PageController Manager { get; private set; } // 好文明
+        protected PageManager Manager { get; private set; } // 好文明
 
         [Ext.ReadOnlyInGame, SerializeField]
         protected BaseUIEventSystem EventSystem;
@@ -91,7 +91,7 @@ namespace PageNS
 
         public virtual void OnAwake()
         {
-            Manager = PageController.Inst;
+            Manager = PageManager.Inst;
 
             RegisterEventSystem();
 
@@ -146,6 +146,11 @@ namespace PageNS
                 DisplayImages[i].gameObject.SetActive(false);
             }
         }
+
+        public Image GetDisplayImage(int num) => DisplayImages[num];
+
+        public Image FindDisplayImage(string name) =>
+            DisplayImages.Find(image => image.name == name);
 
         public virtual void OnOpenPage()
         {

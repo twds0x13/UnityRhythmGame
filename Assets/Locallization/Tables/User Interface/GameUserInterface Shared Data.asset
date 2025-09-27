@@ -91,6 +91,18 @@ MonoBehaviour:
     m_Key: UIReturnToGame
     m_Metadata:
       m_Items: []
+  - m_Id: 18607763826266112
+    m_Key: UIChapter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18607867224248320
+    m_Key: UIEpisode
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18608206484721664
+    m_Key: UILine
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -45,10 +45,11 @@ MonoBehaviour:
   - m_Id: 44570845761536
     m_Localized: 'Defalut Keys:
 
-      [Z] [X] [.] [/]
+      [{0}] [{1}] [{2}] [{3}]
 
 
-      Press [Esc] to Pause.'
+      Press [Esc]
+      to Pause.'
     m_Metadata:
       m_Items: []
   - m_Id: 45112229744640

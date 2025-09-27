@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using AudioRegistry;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,7 +18,7 @@ public static class AudioScannerGenerator
             {
                 "Assets/Audio/BGM",
                 "Assets/Audio/SFX",
-                // "Assets/Audio/UI",
+                "Assets/Audio/Song",
                 // "Assets/Audio/Ambience",
             };
 
@@ -34,7 +35,7 @@ public static class AudioScannerGenerator
                 if (Directory.Exists(folder))
                 {
                     string className = GetClassNameFromPath(folder);
-                    string code = GenerateAudioClass(folder, className);
+                    string code = GenerateAudioStruct(folder, className);
 
                     string filePath = Path.Combine(outputDirectory, $"{className}.cs");
                     File.WriteAllText(filePath, code);
@@ -66,12 +67,12 @@ public static class AudioScannerGenerator
         return MakeValidIdentifier(folderName);
     }
 
-    private static string GenerateAudioClass(string folderPath, string className)
+    private static string GenerateAudioStruct(string folderPath, string structName)
     {
         StringBuilder sb = new StringBuilder();
 
         // 添加文件头
-        sb.AppendLine("// 自动生成类 - 不要手动修改");
+        sb.AppendLine("// 自动生成结构体 - 不要手动修改");
         sb.AppendLine("// 文件夹源: " + folderPath);
         sb.AppendLine("// 生成日期: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
         sb.AppendLine();
@@ -80,9 +81,13 @@ public static class AudioScannerGenerator
         sb.AppendLine("namespace AudioRegistry");
         sb.AppendLine("{");
 
-        // 开始类定义
-        sb.AppendLine($"    public static class {className}");
+        // 开始结构体定义
+        sb.AppendLine($"    public readonly struct {structName} : {nameof(IAudio)}");
         sb.AppendLine("    {");
+        sb.AppendLine("        public string Value { get; }");
+        sb.AppendLine("        ");
+        sb.AppendLine($"        private {structName}(string value) => Value = value;");
+        sb.AppendLine("        ");
 
         // 扫描文件夹中的音频文件
         string[] audioFiles = Directory
@@ -90,16 +95,17 @@ public static class AudioScannerGenerator
             .Where(file => IsAudioFile(file))
             .ToArray();
 
-        // 为每个音频文件生成常量
+        // 为每个音频文件生成静态属性
         foreach (string filePath in audioFiles)
         {
             try
             {
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
-                string constantName = MakeValidIdentifier(fileName);
-                // string relativePath = GetRelativePath(filePath, folderPath);
+                string propertyName = MakeValidIdentifier(fileName);
 
-                sb.AppendLine($"        public const string {constantName} = \"{constantName}\";");
+                sb.AppendLine(
+                    $"        public static {structName} {propertyName} => new {structName}(\"{propertyName}\");"
+                );
             }
             catch (Exception ex)
             {
@@ -107,7 +113,14 @@ public static class AudioScannerGenerator
             }
         }
 
-        // 结束类定义
+        sb.AppendLine("        ");
+        // 添加单向隐式转换：结构体 → string
+        sb.AppendLine(
+            $"        public static implicit operator string({structName} id) => id.Value;"
+        );
+        sb.AppendLine("        ");
+
+        // 结束结构体定义
         sb.AppendLine("    }");
 
         // 结束命名空间
@@ -125,36 +138,6 @@ public static class AudioScannerGenerator
             || extension == ".aiff"
             || extension == ".aif"
             || extension == ".flac";
-    }
-
-    private static string GetRelativePath(string fullPath, string basePath)
-    {
-        try
-        {
-            // 确保路径使用统一的分隔符
-            fullPath = fullPath.Replace('\\', '/');
-            basePath = basePath.Replace('\\', '/');
-
-            // 确保基路径以分隔符结尾
-            if (!basePath.EndsWith("/"))
-                basePath += "/";
-
-            // 检查完整路径是否以基路径开头
-            if (!fullPath.StartsWith(basePath))
-            {
-                Debug.LogWarning($"Path '{fullPath}' does not start with base path '{basePath}'");
-                return Path.GetFileName(fullPath); // 回退到只返回文件名
-            }
-
-            // 提取相对路径
-            string relativePath = fullPath.Substring(basePath.Length);
-            return relativePath;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"Error getting relative path: {ex.Message}");
-            return Path.GetFileName(fullPath); // 回退到只返回文件名
-        }
     }
 
     private static string MakeValidIdentifier(string input)

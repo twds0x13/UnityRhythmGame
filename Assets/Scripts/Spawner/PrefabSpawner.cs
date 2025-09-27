@@ -178,8 +178,8 @@ namespace PrefabSpawner
                     );
 
                 GameObject
-                    .FindGameObjectWithTag("GameSingletons")
-                    .GetComponent<PageController>()
+                    .FindGameObjectWithTag("PageSingletons")
+                    .GetComponent<PageManager>()
                     .AddPageObject(Object.GetComponent<BaseUIPage>());
             }
 

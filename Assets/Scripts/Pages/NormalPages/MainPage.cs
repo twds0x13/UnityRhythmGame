@@ -1,7 +1,6 @@
+using Cysharp.Threading.Tasks;
 using PageNS;
 using UnityEditor;
-using UnityEngine;
-using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 
 public class MainPage : BaseUIPage
@@ -55,10 +54,17 @@ public class MainPage : BaseUIPage
 
     public void GameExit()
     {
+        UniTask.Void(OnGameExit);
+    }
+
+    private async UniTaskVoid OnGameExit()
+    {
+        await UniTask.Delay(300);
+
 #if UNITY_EDITOR
         EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+        UnityEngine.Application.Quit();
 #endif
     }
 }

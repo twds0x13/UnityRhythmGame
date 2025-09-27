@@ -45,7 +45,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     [Ext.ReadOnly, Range(0f, 1f), SerializeField]
     private float TypeProcess; // 暂时只用来显示 TypeProcess 进度条
 
-    [Ext.ReadOnlyInGame, Range(1f, 10f), SerializeField]
+    [Ext.ReadOnlyInGame, Range(1f, 30f), SerializeField]
     private float TypeSpeed;
 
     private bool ProtectFlag; // 还是得加上 CancellationToken, 这个只能临时用
@@ -130,7 +130,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
 
                 await UniTask.WaitForSeconds(
                     LocalizationSettings.SelectedLocale.Identifier.Code == "en"
-                        ? 0.2f / TypeSpeed
+                        ? 0.2f / 3f / TypeSpeed
                         : 0.2f / TypeSpeed
                 );
             }

@@ -6,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Ctrl = GameCore.GameController;
 using Game = GameManagerNS.GameManager;
-using Page = UIManagerNS.PageController;
+using Page = UIManagerNS.PageManager;
 
 namespace TrackStateMachine
 {
