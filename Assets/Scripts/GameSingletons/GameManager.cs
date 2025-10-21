@@ -1,6 +1,7 @@
 using Singleton;
 using UnityEngine;
 using Json = JsonLoader.BaseJsonLoader;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 namespace GameManagerNS
 {
@@ -277,10 +278,17 @@ namespace GameManagerNS
         public bool LoadGameSettings(ref GameSettings Object) =>
             Json.TryLoadJsonFromZip("Usersettings.zip", out Object, default);
 
-        public void ResetGame()
+        public void StartGame()
+        {
+            Pool.Inst.GetTracksDynamic();
+        }
+
+        public void FinishGame()
         {
             Score.MaxScore = 0f;
             Score.Score = 0f;
+
+            Pool.Inst.FinishCurrentGame();
         }
     }
 }

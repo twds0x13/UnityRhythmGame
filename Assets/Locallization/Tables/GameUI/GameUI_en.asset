@@ -1,0 +1,100 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: GameUI_en
+  m_EditorClassIdentifier: 
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: 60009ce294940704bad003e22c33f832, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 7208816640
+    m_Localized: Start Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 275040292864
+    m_Localized: Return
+    m_Metadata:
+      m_Items: []
+  - m_Id: 449489784832
+    m_Localized: 'Choose :'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 898657800192
+    m_Localized: ChimoAi
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1101842468864
+    m_Localized: Story
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1224198705152
+    m_Localized: English
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1360190623744
+    m_Localized: Exit Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2455738634240
+    m_Localized: 'Accuracy : {0} %'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2731447013376
+    m_Localized: 'Timescale : {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2941728444416
+    m_Localized: "Press to hit notes: \r\n[{0}] [{1}] [{2}] [{3}]\r\nPress Space
+      to pause game"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3882162704384
+    m_Localized: 'Score : {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4040220856320
+    m_Localized: 'Max Score : {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4400016642048
+    m_Localized: Start Game
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9276037648384
+    m_Localized: 'Speaker :'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9574051336192
+    m_Localized: ' '
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9888217288704
+    m_Localized: 'Chapter : {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10056828309504
+    m_Localized: 'Episode : {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10190123290624
+    m_Localized: 'Line : {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13881140170752
+    m_Localized: Test Background
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

@@ -7,12 +7,64 @@ namespace ECS
 {
     public partial class StoryTreeManager
     {
+        /// <summary>
+        /// 获取指定实体的所有兄弟节点（按Order排序）
+        /// </summary>
+        public List<Entity> GetSiblingsOrdered(int entityId)
+        {
+            var entity = _ecsFramework.GetEntitySafe(entityId);
+            if (entity == null)
+                return new List<Entity>();
+
+            var parent = entity.Parent();
+            if (parent == null || !parent.HasComponent<Comp.Children>())
+                return new List<Entity>();
+
+            var siblings = parent
+                .GetComponent<Comp.Children>()
+                .ChildrenEntities.OrderBy(sibling => GetEntityOrder(sibling))
+                .ToList();
+
+            return siblings;
+        }
+
+        /// <summary>
+        /// 获取实体的Order值
+        /// </summary>
+        public int GetEntityOrder(Entity entity)
+        {
+            if (entity.HasComponent<Comp.Order>())
+            {
+                return entity.GetComponent<Comp.Order>().Number;
+            }
+            return entity.Id; // 如果没有Order组件，使用ID作为后备
+        }
+
         public int GetNextOrderNumber(Entity parent)
         {
             if (parent == null)
                 throw new ArgumentNullException(nameof(parent));
 
             return GetNextOrderNumber(parent.Id);
+        }
+
+        /// <summary>
+        /// 按Order顺序获取第一个子节点
+        /// </summary>
+        private Entity GetFirstChildByOrder(Entity parent)
+        {
+            if (parent?.HasComponent<Children>() != true)
+                return null;
+
+            var childrenComp = parent.GetComponent<Children>();
+            if (childrenComp.ChildrenEntities.Count == 0)
+                return null;
+
+            // 按Order排序并返回第一个
+            return childrenComp
+                .ChildrenEntities.Where(child => child.HasComponent<Order>())
+                .OrderBy(child => child.GetComponent<Order>().Number)
+                .FirstOrDefault();
         }
 
         /// <summary>
@@ -70,47 +122,5 @@ namespace ECS
                 entity.AddComponent(new Order(orderNumber, label));
             }
         }
-
-        /// <summary>
-        /// 获取实体的序号
-        /// </summary>
-        public int GetEntityOrder(Entity entity)
-        {
-            // 优先使用 Order 组件的序号
-            if (entity.HasComponent<Order>())
-            {
-                return entity.GetComponent<Order>().Number;
-            }
-
-            // 如果没有 Order 组件，使用 Localization 组件的序号
-            if (entity.HasComponent<Localization>())
-            {
-                return entity.GetComponent<Localization>().Number;
-            }
-
-            // 如果都没有，返回0
-            return 0;
-        }
-
-        /// <summary>
-        /// 获取同级实体，按序号排序
-        /// </summary>
-        public List<Entity> GetSiblingsOrdered(int entityId)
-        {
-            var entity = _ecsFramework.GetEntitySafe(entityId);
-            if (entity == null || !entity.HasComponent<Parent>())
-                return new List<Entity>();
-
-            var parentComp = entity.GetComponent<Parent>();
-            if (!parentComp.ParentId.HasValue)
-                return new List<Entity>();
-
-            var siblings = _ecsFramework.GetChildren(parentComp.ParentId.Value);
-
-            // 按序号排序
-            return siblings.OrderBy(e => GetEntityOrder(e)).ToList();
-        }
-
-        // ... 其他代码 ...
     }
 }

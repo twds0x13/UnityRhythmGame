@@ -6,7 +6,7 @@ using StateMachine;
 using UnityEngine;
 using Game = GameManagerNS.GameManager;
 using Judge = NoteJudgeNS.NoteJudge;
-using Page = UIManagerNS.PageController;
+using Page = UIManagerNS.PageManager;
 
 namespace NoteStateMachine
 {
@@ -16,9 +16,9 @@ namespace NoteStateMachine
 
         protected AnimeMachine AnimeMachine;
 
-        protected StateMachine<NoteBehaviour> StateMachine;
+        protected LinearStateMachine<NoteBehaviour> StateMachine;
 
-        public NoteState(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public NoteState(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
         {
             this.Note = Note;
 
@@ -36,7 +36,10 @@ namespace NoteStateMachine
 
     public class StateBeforeJudgeNote : NoteState
     {
-        public StateBeforeJudgeNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateBeforeJudgeNote(
+            NoteBehaviour Note,
+            LinearStateMachine<NoteBehaviour> StateMachine
+        )
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -66,7 +69,7 @@ namespace NoteStateMachine
 
     public class StateOnJudgeNote : NoteState
     {
-        public StateOnJudgeNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateOnJudgeNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -111,7 +114,10 @@ namespace NoteStateMachine
 
     public class StateAfterJudgeNote : NoteState
     {
-        public StateAfterJudgeNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateAfterJudgeNote(
+            NoteBehaviour Note,
+            LinearStateMachine<NoteBehaviour> StateMachine
+        )
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -134,7 +140,7 @@ namespace NoteStateMachine
 
     public class StateInitNote : NoteState
     {
-        public StateInitNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateInitNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -177,7 +183,7 @@ namespace NoteStateMachine
 
     public class StateAnimeNote : NoteState
     {
-        public StateAnimeNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateAnimeNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -241,7 +247,10 @@ namespace NoteStateMachine
 
     public class StateJudgeAnimeNote : NoteState
     {
-        public StateJudgeAnimeNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateJudgeAnimeNote(
+            NoteBehaviour Note,
+            LinearStateMachine<NoteBehaviour> StateMachine
+        )
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -295,7 +304,10 @@ namespace NoteStateMachine
 
     public class StateDisappearNote : NoteState
     {
-        public StateDisappearNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateDisappearNote(
+            NoteBehaviour Note,
+            LinearStateMachine<NoteBehaviour> StateMachine
+        )
             : base(Note, StateMachine) { }
 
         public override void Enter()
@@ -327,8 +339,11 @@ namespace NoteStateMachine
                 / AnimeMachine.DisappearTimeSpan;
 
             Note.Inst.transform.position =
-                new Vector3(0f, -0.25f * Page.Inst.GetPageRect().height * AnimeMachine.CurT, 0f)
-                + AnimeMachine.DisappearingPosCache;
+                new Vector3(
+                    0f,
+                    -0.25f * ResizeDetector.Inst.Rect.rect.height * AnimeMachine.CurT,
+                    0f
+                ) + AnimeMachine.DisappearingPosCache;
 
             Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.3f - 0.3f * AnimeMachine.CurT);
 
@@ -338,7 +353,7 @@ namespace NoteStateMachine
 
     public class StateDestroyNote : NoteState
     {
-        public StateDestroyNote(NoteBehaviour Note, StateMachine<NoteBehaviour> StateMachine)
+        public StateDestroyNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
             : base(Note, StateMachine) { }
 
         public override void Enter()

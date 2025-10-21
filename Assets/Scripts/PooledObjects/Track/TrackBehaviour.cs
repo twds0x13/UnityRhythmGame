@@ -1,18 +1,21 @@
 using System.Collections.Generic;
 using Anime;
+using AudioNS;
+using AudioRegistry;
 using NoteNS;
 using PageNS;
 using PooledObjectNS;
 using StateMachine;
 using TrackStateMachine;
 using UnityEngine.InputSystem;
+using Audio = AudioNS.AudioManager;
 using Game = GameManagerNS.GameManager;
 
 namespace TrackNS
 {
     public class TrackBehaviour : PooledObjectBehaviour
     {
-        private StateMachine<TrackBehaviour> StateMachine; // 动画状态机
+        private LinearStateMachine<TrackBehaviour> StateMachine; // 动画状态机
 
         public StateInitTrack InitTrack; // 从动画状态开始更新
 
@@ -22,7 +25,7 @@ namespace TrackNS
 
         public StateDestroyTrack DestroyTrack; // 摧毁该物体
 
-        private StateMachine<TrackBehaviour> JudgeMachine; // 负责管理 Note 判定
+        private LinearStateMachine<TrackBehaviour> JudgeMachine; // 负责管理 Note 判定
 
         public StateInitJudgeTrack InitJudge; // 初始化判定逻辑，暂时只有注册 Input 判定
 
@@ -89,6 +92,24 @@ namespace TrackNS
                 if (JudgeList.Count > 0)
                 {
                     JudgeList[0].OnJudge();
+
+                    // 这里处理的是 key 音，也就是成功击打才会触发的音效。
+
+                    switch (TrackNumber)
+                    {
+                        case 0:
+                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track0);
+                            break;
+                        case 1:
+                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track1);
+                            break;
+                        case 2:
+                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track2);
+                            break;
+                        case 3:
+                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track3);
+                            break;
+                    }
                 }
             }
         }

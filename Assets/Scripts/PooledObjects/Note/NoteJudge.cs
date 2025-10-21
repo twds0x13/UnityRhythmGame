@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom;
 using NoteNS;
 using Game = GameManagerNS.GameManager;
 
@@ -35,47 +36,26 @@ namespace NoteJudgeNS
             NotEntered, // 代表尚未进入判定区间
         }
 
-        public static NoteJudgeEnum GetJudgeEnum(NoteBehaviour Note) // 非 Miss
-        {
-            var Tmp = Math.Abs(Game.Inst.GetGameTime() - Note.JudgeTime);
+        public static NoteJudgeEnum GetJudgeEnum(NoteBehaviour Note) =>
+            MathF.Abs(Note.JudgeTime - Game.Inst.GetGameTime()) switch
+            {
+                < NoteJudgeTime.CriticalPerfect => NoteJudgeEnum.CriticalPerfect,
+                < NoteJudgeTime.Perfect => NoteJudgeEnum.Prefect,
+                < NoteJudgeTime.Great => NoteJudgeEnum.Great,
+                < NoteJudgeTime.Miss => NoteJudgeEnum.Miss,
+                > NoteJudgeTime.Miss => NoteJudgeEnum.NotEntered,
+                _ => throw new ArgumentOutOfRangeException(),
+            };
 
-            if (Tmp < NoteJudgeTime.CriticalPerfect)
+        public static float GetJudgeScore(NoteJudgeEnum Enum) =>
+            Enum switch
             {
-                return NoteJudgeEnum.CriticalPerfect;
-            }
-            if (Tmp < NoteJudgeTime.Perfect)
-            {
-                return NoteJudgeEnum.Prefect;
-            }
-            if (Tmp < NoteJudgeTime.Great)
-            {
-                return NoteJudgeEnum.Great;
-            }
-            if (Tmp < NoteJudgeTime.Miss)
-            {
-                return NoteJudgeEnum.Miss;
-            }
-
-            return NoteJudgeEnum.NotEntered;
-        }
-
-        public static float GetJudgeScore(NoteJudgeEnum Enum)
-        {
-            switch (Enum)
-            {
-                case NoteJudgeEnum.CriticalPerfect:
-                    return NoteJudgeScore.CriticalPerfect;
-                case NoteJudgeEnum.Prefect:
-                    return NoteJudgeScore.Perfect;
-                case NoteJudgeEnum.Great:
-                    return NoteJudgeScore.Great;
-                case NoteJudgeEnum.Miss:
-                    return NoteJudgeScore.Miss;
-                case NoteJudgeEnum.NotEntered: // This should not happen.
-                    return NoteJudgeScore.Miss;
-            }
-
-            throw new ArgumentOutOfRangeException();
-        }
+                NoteJudgeEnum.CriticalPerfect => NoteJudgeScore.CriticalPerfect,
+                NoteJudgeEnum.Prefect => NoteJudgeScore.Perfect,
+                NoteJudgeEnum.Great => NoteJudgeScore.Great,
+                NoteJudgeEnum.Miss => NoteJudgeScore.Miss,
+                NoteJudgeEnum.NotEntered => throw new ArgumentNullException(),
+                _ => throw new ArgumentOutOfRangeException(),
+            };
     }
 }

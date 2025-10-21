@@ -12,7 +12,7 @@ namespace Singleton
     public abstract class Singleton<T> : MonoBehaviour
         where T : MonoBehaviour
     {
-#if UNITY_EDITOR
+        // #if UNITY_EDITOR
         // 在编辑器中，我们不使用 Lazy<T>，而是使用简单的静态字段
         private static T _instance;
 
@@ -34,8 +34,13 @@ namespace Singleton
         {
             _instance = null;
         }
+
+        // #endif
+
         // 如果发布版本出了问题，就来这里改
+        /*
 #else
+
 
         private static Lazy<T> _inst = new(
             FindOrCreateInstance,
@@ -50,7 +55,13 @@ namespace Singleton
             _inst = new(FindOrCreateInstance, LazyThreadSafetyMode.ExecutionAndPublication);
         }
 #endif
+        */
 
+        /// <summary>
+        /// 正常来讲，游戏应该能获取到场景中的 <see cref="GameSingletons"/> 对应物体 暂时不用管新建组件
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
         private static T FindOrCreateInstance()
         {
             var existingInstance = FindObjectOfType<T>();
@@ -82,7 +93,7 @@ namespace Singleton
 
         private void Awake()
         {
-#if UNITY_EDITOR
+            // #if UNITY_EDITOR
             if (_instance != null && _instance != this)
             {
                 Destroy(gameObject);
@@ -90,25 +101,31 @@ namespace Singleton
             }
 
             _instance = this as T;
-#else
-            if (_inst.IsValueCreated && _inst.Value != null && _inst.Value != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-#endif
+
+            /*
+                            #else
+                        if (_inst.IsValueCreated && _inst.Value != null && _inst.Value != this)
+                        {
+                            Destroy(gameObject);
+                            return;
+                        }
+            #endif
+            */
 
             SingletonAwake();
         }
 
         protected virtual void OnDestroy()
         {
-#if UNITY_EDITOR
+            SingletonDestroy();
+
+            // #if UNITY_EDITOR
             if (_instance == this)
             {
                 _instance = null;
                 // LogManager.Info($"自动销毁 {typeof(T).Name} 实例", nameof(GameSingletons));
             }
+            /*
 #else
             if (_inst.IsValueCreated && _inst.Value == this)
             {
@@ -117,11 +134,17 @@ namespace Singleton
                 );
             }
 #endif
+            */
         }
 
         /// <summary>
         /// 子类必须实现 Awake 方法
         /// </summary>
         protected abstract void SingletonAwake();
+
+        /// <summary>
+        /// 不强制要求
+        /// </summary>
+        protected virtual void SingletonDestroy() { }
     }
 }

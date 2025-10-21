@@ -8,7 +8,7 @@ using UIEventSystemNS;
 using UIManagerNS;
 using UnityEngine;
 using UnityEngine.UI;
-using PageController = UIManagerNS.PageController;
+using PageManager = UIManagerNS.PageManager;
 
 namespace PageNS
 {
@@ -19,7 +19,7 @@ namespace PageNS
     ]
     public abstract class BaseUIPage : MonoBehaviour
     {
-        protected PageController Manager { get; private set; } // 好文明
+        protected PageManager Manager { get; private set; } // 好文明
 
         [Ext.ReadOnlyInGame, SerializeField]
         protected BaseUIEventSystem EventSystem;
@@ -69,15 +69,6 @@ namespace PageNS
             }
         }
 
-        /// <summary>
-        /// 点击运行时自动检测并删除空引用，但是在发布版本中不应该留下空引用
-        /// </summary>
-        private void OnValidate()
-        {
-            DisplayTexts = DisplayTexts.Where(x => x != null).ToList();
-            DisplaySelectables = DisplaySelectables.Where(x => x != null).ToList();
-        }
-
         public void SetResizeDetector(ResizeDetector Detector)
         {
             ResizeDetector = Detector;
@@ -91,7 +82,7 @@ namespace PageNS
 
         public virtual void OnAwake()
         {
-            Manager = PageController.Inst;
+            Manager = PageManager.Inst;
 
             RegisterEventSystem();
 
@@ -147,6 +138,13 @@ namespace PageNS
             }
         }
 
+        public void SelectFirstAfterOneFrame() => EventSystem.SelectFirstAfterOneFrame().Forget();
+
+        public Image GetDisplayImage(int num) => DisplayImages[num];
+
+        public Image FindDisplayImage(string name) =>
+            DisplayImages.Find(image => image.name == name);
+
         public virtual void OnOpenPage()
         {
             gameObject.SetActive(true);
@@ -156,7 +154,7 @@ namespace PageNS
 
         private async UniTaskVoid DelayedOpen() // 如果之后也用不到再删除，如果用到了就加变量控制
         {
-            await UniTask.WaitForSeconds(0f);
+            await UniTask.Yield();
 
             if (ControlledObjects.Count > 0)
             {

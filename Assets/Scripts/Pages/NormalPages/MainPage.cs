@@ -1,7 +1,6 @@
+using Cysharp.Threading.Tasks;
 using PageNS;
 using UnityEditor;
-using UnityEngine;
-using UnityEngine.Localization;
 using UnityEngine.Localization.Settings;
 
 public class MainPage : BaseUIPage
@@ -39,7 +38,7 @@ public class MainPage : BaseUIPage
 
     public void SwitchLanguage()
     {
-        if (LocalizationSettings.SelectedLocale.Identifier.Code == "zh-Hans")
+        if (LocalizationSettings.SelectedLocale.Identifier.Code == "zh")
         {
             LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.GetLocale(
                 "en"
@@ -48,17 +47,24 @@ public class MainPage : BaseUIPage
         else
         {
             LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.GetLocale(
-                "zh-Hans"
+                "zh"
             );
         }
     }
 
     public void GameExit()
     {
+        UniTask.Void(OnGameExit);
+    }
+
+    private async UniTaskVoid OnGameExit()
+    {
+        await UniTask.Delay(300);
+
 #if UNITY_EDITOR
         EditorApplication.isPlaying = false;
 #else
-        Application.Quit();
+        UnityEngine.Application.Quit();
 #endif
     }
 }

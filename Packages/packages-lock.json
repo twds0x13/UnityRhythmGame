@@ -22,7 +22,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.burst": {
-      "version": "1.8.24",
+      "version": "1.8.25",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -108,7 +108,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.localization": {
-      "version": "1.5.7",
+      "version": "1.5.8",
       "depth": 0,
       "source": "registry",
       "dependencies": {

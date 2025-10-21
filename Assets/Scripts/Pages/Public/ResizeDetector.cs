@@ -27,7 +27,10 @@ public class ResizeDetector : Singleton<ResizeDetector>
         {
             if (Mathf.Abs(Rect.rect.height - 1080f) < 1f) // 在一些特定情况下（设置为 Free, 16:9 和 16:10），Unity 自动调整的屏幕高度和 1080f 并非 Pixel Perfect （为啥？）
             {
-                Debug.Log($"Resize Detected: {Rect.rect.width} x {Rect.rect.height}");
+                LogManager.Info(
+                    $"Resize Detected: {Rect.rect.width} x {Rect.rect.height}",
+                    nameof(ResizeDetector)
+                );
 
                 ResizeEvent.Invoke();
             }

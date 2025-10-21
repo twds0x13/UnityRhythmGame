@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using AudioNS;
+using AudioRegistry;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using PageNS;
@@ -7,6 +9,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
+using Audio = AudioNS.AudioManager;
 
 namespace UIEventSystemNS
 {
@@ -158,6 +161,23 @@ namespace UIEventSystemNS
             };
             PointerExit.callback.AddListener(OnPointerExit);
             Trigger.triggers.Add(PointerExit);
+
+            // 光标点击事件
+
+            EventTrigger.Entry PointerClick = new EventTrigger.Entry
+            {
+                eventID = EventTriggerType.PointerClick,
+            };
+            PointerClick.callback.AddListener(OnPointerClick);
+            Trigger.triggers.Add(PointerClick);
+
+            // 添加Submit事件（用于键盘/手柄确认）
+            EventTrigger.Entry submitEntry = new EventTrigger.Entry
+            {
+                eventID = EventTriggerType.Submit,
+            };
+            submitEntry.callback.AddListener(OnSubmitEvent);
+            Trigger.triggers.Add(submitEntry);
         }
 
         public async UniTaskVoid SelectFirstAfterOneFrame()
@@ -167,35 +187,35 @@ namespace UIEventSystemNS
             EventSystem.current.SetSelectedGameObject(FirstSelected.gameObject);
         }
 
-        public void OnSelect(BaseEventData EventData)
+        public void OnSelect(BaseEventData eventData)
         {
-            LastSelected = EventData.selectedObject.GetComponent<Selectable>();
+            LastSelected = eventData.selectedObject.GetComponent<Selectable>();
 
             if (!IsScaleEnabled)
                 return;
 
             Vector3 NewScale = SelectableScales[LastSelected] * AnimeScale;
 
-            SelectTween = EventData
+            SelectTween = eventData
                 .selectedObject.transform.DOScale(NewScale, SelectScaleDuration)
                 .SetEase(Ease.OutQuad);
         }
 
-        public void OnDeselect(BaseEventData EventData)
+        public void OnDeselect(BaseEventData eventData)
         {
-            Selectable Object = EventData.selectedObject.GetComponent<Selectable>();
+            Selectable Object = eventData.selectedObject.GetComponent<Selectable>();
 
             if (!IsScaleEnabled)
                 return;
 
-            DeselectTween = EventData
+            DeselectTween = eventData
                 .selectedObject.transform.DOScale(SelectableScales[Object], SelectScaleDuration)
                 .SetEase(Ease.OutQuad);
         }
 
-        public void OnPointerEnter(BaseEventData EventData)
+        public void OnPointerEnter(BaseEventData eventData)
         {
-            PointerEventData PointerEventData = EventData as PointerEventData;
+            PointerEventData PointerEventData = eventData as PointerEventData;
 
             if (PointerEventData != null)
             {
@@ -211,14 +231,29 @@ namespace UIEventSystemNS
             }
         }
 
-        public void OnPointerExit(BaseEventData EventData)
+        public void OnPointerExit(BaseEventData eventData)
         {
-            PointerEventData PointerEventData = EventData as PointerEventData;
+            PointerEventData PointerEventData = eventData as PointerEventData;
 
             if (PointerEventData != null)
             {
                 PointerEventData.selectedObject = null;
             }
+        }
+
+        private void ButtonClickSound()
+        {
+            Audio.Inst.LoadAudioClip(SFX.Key3, Source.UI);
+        }
+
+        public void OnPointerClick(BaseEventData eventData)
+        {
+            ButtonClickSound();
+        }
+
+        public void OnSubmitEvent(BaseEventData eventData)
+        {
+            ButtonClickSound();
         }
 
         protected virtual void OnNavigate(InputAction.CallbackContext Ctx)

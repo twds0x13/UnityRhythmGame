@@ -319,7 +319,7 @@ public static class LogManager
     }
 
     // 写入日志
-    public static void Log(LogLevel level, string message, string caller = null)
+    private static void Log(LogLevel level, string message, string caller = null)
     {
         // 检查日志级别
         if (!Enum.IsDefined(typeof(LogLevel), level))
@@ -391,12 +391,6 @@ public static class LogManager
             Log(LogLevel.Error, message, caller);
     }
 
-    public static void Critical(string message, string context = null, bool output = true)
-    {
-        if (output)
-            Log(LogLevel.Critical, message, context);
-    }
-
     // 记录异常
     public static void Exception(Exception ex, string context = null, bool output = true)
     {
@@ -405,6 +399,12 @@ public static class LogManager
             string message = $"{ex.GetType().Name}: {ex.Message}\nStackTrace: {ex.StackTrace}";
             Critical(message, context);
         }
+    }
+
+    private static void Critical(string message, string context = null, bool output = true)
+    {
+        if (output)
+            Log(LogLevel.Critical, message, context);
     }
 
     // 获取日志文件路径

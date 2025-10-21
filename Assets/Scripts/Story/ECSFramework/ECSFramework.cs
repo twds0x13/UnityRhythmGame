@@ -184,6 +184,68 @@ namespace ECS
         }
 
         /// <summary>
+        /// 获取实体的完整路径
+        /// </summary>
+        public string GetEntityPath(Entity entity)
+        {
+            if (entity == null)
+                return string.Empty;
+
+            var path = new List<string>();
+            var current = entity;
+
+            while (current != null)
+            {
+                if (current.HasComponent<Comp.Localization>())
+                {
+                    var loc = current.GetComponent<Comp.Localization>();
+                    path.Insert(0, $"{loc.Type}_{loc.Number}");
+                }
+                else
+                {
+                    path.Insert(0, $"Entity_{current.Id}");
+                }
+
+                if (current.HasComponent<Comp.Parent>())
+                {
+                    var parentComp = current.GetComponent<Comp.Parent>();
+                    current = parentComp.ParentId.HasValue
+                        ? GetEntitySafe(parentComp.ParentId.Value)
+                        : null;
+                }
+                else
+                {
+                    current = null;
+                }
+            }
+
+            return string.Join("/", path);
+        }
+
+        /// <summary>
+        /// 检查实体是否是指定实体的后代
+        /// </summary>
+        public bool IsDescendantOf(Entity entity, Entity potentialAncestor)
+        {
+            if (entity == null || potentialAncestor == null)
+                return false;
+
+            var current = entity;
+            while (current != null && current.HasComponent<Comp.Parent>())
+            {
+                var parentComp = current.GetComponent<Comp.Parent>();
+                if (parentComp.ParentId == potentialAncestor.Id)
+                    return true;
+
+                current = parentComp.ParentId.HasValue
+                    ? GetEntitySafe(parentComp.ParentId.Value)
+                    : null;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// 从指定节点开始从深到浅遍历实体树，并返回实体列表
         /// </summary>
         /// <typeparam name="T">返回类型</typeparam>
@@ -271,6 +333,67 @@ namespace ECS
             {
                 TraverseDepthFirst(entity, action);
             }
+        }
+
+        /// <summary>
+        /// 从指定节点深度向上查找所有父节点，直到根节点
+        /// </summary>
+        /// <param name="startEntity">起始节点</param>
+        /// <returns>父节点列表（从直接父节点到根节点，不包括起始节点）</returns>
+        public List<Entity> GetPathToRoot(Entity startEntity)
+        {
+            var path = new List<Entity>();
+
+            if (startEntity == null)
+                return path;
+
+            var current = startEntity;
+
+            while (current != null)
+            {
+                // 检查当前节点是否有父节点
+                if (!current.HasComponent<Comp.Parent>())
+                    break;
+
+                var parentComp = current.GetComponent<Comp.Parent>();
+                if (!parentComp.ParentId.HasValue)
+                    break;
+
+                // 获取父节点
+                var parent = GetEntitySafe(parentComp.ParentId.Value);
+                if (parent == null)
+                    break;
+
+                // 添加到路径
+                path.Add(parent);
+
+                // 如果到达根节点，停止遍历
+                if (parent.HasComponent<Comp.Root>())
+                    break;
+
+                current = parent;
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        /// 获取从当前节点到根节点的完整路径（包括起始节点）
+        /// </summary>
+        public List<Entity> GetFullPathFromRoot(Entity startEntity)
+        {
+            var path = GetPathToRoot(startEntity);
+
+            // 反转路径，使其从根节点到当前节点的父节点
+            path.Reverse();
+
+            // 添加起始节点
+            if (startEntity != null)
+            {
+                path.Add(startEntity);
+            }
+
+            return path;
         }
 
         /// <summary>
@@ -655,6 +778,68 @@ namespace ECS
                                 $"实体 {entity.Id} 的 ChildrenIds 和 ChildrenEntities 数量不一致"
                             );
                         }
+                    }
+
+                    // 重建 Choice 组件的目标实体引用
+                    if (entity.HasComponent<Comp.Choice>())
+                    {
+                        var choiceComp = entity.GetComponent<Comp.Choice>();
+
+                        // 确保 Options 不为 null
+                        if (choiceComp.Options == null)
+                        {
+                            choiceComp.Options = new List<Comp.ChoiceOption>();
+                            errors.Add(
+                                $"实体 {entity.Id} 的 Choice.Options 为 null，已初始化为空列表"
+                            );
+                            continue;
+                        }
+
+                        LogManager.Log(
+                            $"实体 {entity.Id} 有 {choiceComp.Options.Count} 个选择选项",
+                            nameof(ECSFramework),
+                            output
+                        );
+
+                        // 重建每个选项的目标实体引用
+                        foreach (var option in choiceComp.Options)
+                        {
+                            if (option.TargetId <= 0)
+                            {
+                                errors.Add(
+                                    $"实体 {entity.Id} 的选择选项有无效的目标ID: {option.TargetId}"
+                                );
+                                continue;
+                            }
+
+                            var targetEntity = GetEntitySafe(option.TargetId);
+                            if (targetEntity != null)
+                            {
+                                option.TargetEntity = targetEntity;
+
+                                // 如果没有显示文本，使用目标实体的默认文本
+                                if (
+                                    string.IsNullOrEmpty(option.DisplayText)
+                                    && targetEntity.HasComponent<Comp.Localization>()
+                                )
+                                {
+                                    var targetLoc = targetEntity.GetComponent<Comp.Localization>();
+                                    option.DisplayText = targetLoc.DefaultText;
+                                }
+                            }
+                            else
+                            {
+                                errors.Add(
+                                    $"实体 {entity.Id} 的选择选项目标实体 {option.TargetId} 不存在"
+                                );
+                            }
+                        }
+
+                        LogManager.Log(
+                            $"重建实体 {entity.Id} 的选择选项引用，共处理 {choiceComp.Options.Count} 个选项",
+                            nameof(ECSFramework),
+                            output
+                        );
                     }
                 }
                 catch (Exception ex)

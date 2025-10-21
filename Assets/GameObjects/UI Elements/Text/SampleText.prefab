@@ -100,7 +100,14 @@ MonoBehaviour:
   LocalizeStringEvent: {fileID: 2421008744416193996}
   ParentPage: {fileID: 0}
   TypeWriterEffect: 0
+  StartWithAnime: 0
+  AnimeOffset: 0
   SelfTextMesh: {fileID: 4279902608331261851}
+  TypeProcess: 0
+  TypeSpeed: 0
+  TypeWriterEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &8010649692336710691
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -212,9 +219,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_StringReference:
     m_TableReference:
-      m_TableCollectionName: GUID:2f4247aecf1ebcf47b389725d439d571
+      m_TableCollectionName: GUID:60009ce294940704bad003e22c33f832
     m_TableEntryReference:
-      m_KeyId: 3025365562675200
+      m_KeyId: 0
       m_Key: 
     m_FallbackState: 0
     m_WaitForCompletion: 0

@@ -7,14 +7,14 @@ using TrackNS;
 using UnityEngine;
 using UnityEngine.Pool;
 using Game = GameManagerNS.GameManager;
-using Page = UIManagerNS.PageController;
+using Page = UIManagerNS.PageManager;
 
 namespace PooledObjectNS
 {
     /// <summary>
     /// 在游戏过程中动态生成所需的 <see cref="PooledObjectBehaviour"/> 对象，需要读取谱面文件作为需求列表。
     /// TODO : 实现读取文件和结构化存储Note信息
-    /// TODO ?: 适配.mcz
+    /// TODO ?: 适配 .mcz 文件读取
     /// </summary>
     public class PooledObjectManager : Singleton<PooledObjectManager>
     {
@@ -130,6 +130,13 @@ namespace PooledObjectNS
             return Note;
         }
 
+        /// <summary>
+        /// 获取一个 <see cref="NoteBehaviour"/> 对象，保证在 <paramref name="StartTime"/> + <paramref name="Duration"/> 时间点落在对应轨道上
+        /// </summary>
+        /// <param name="StartTime"></param>
+        /// <param name="Vertical"></param>
+        /// <param name="TrackNum"></param>
+        /// <param name="Duration"></param>
         public void GetNotesDynamic(float StartTime, float Vertical, int TrackNum, float Duration)
         {
             if (!Game.Inst.IsGamePaused())
@@ -162,11 +169,14 @@ namespace PooledObjectNS
             }
         }
 
+        /// <summary>
+        /// 按照默认情况同时生成四个 <see cref="TrackBehaviour"/> 对象。
+        /// </summary>
         public void GetTracksDynamic()
         {
             Queue<AnimeClip> Tmp;
             Vector3 VecTmp;
-            Rect Rect = Page.Inst.CurPage.GetRect();
+            Rect Rect = new Rect();
             Rect.width = 1080f;
             Rect.height = 1080f;
 

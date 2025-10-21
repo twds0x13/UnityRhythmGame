@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Anime;
 using NoteStateMachine;
 using PooledObjectNS;
@@ -10,7 +11,7 @@ namespace NoteNS
 {
     public class NoteBehaviour : PooledObjectBehaviour
     {
-        private StateMachine<NoteBehaviour> StateMachine; // 动画状态机
+        private LinearStateMachine<NoteBehaviour> StateMachine; // 动画状态机
 
         public StateInitNote InitNote; // 从动画状态开始更新
 
@@ -22,7 +23,7 @@ namespace NoteNS
 
         public StateDestroyNote DestroyNoteAnime; // 击中或消失之后要删除note
 
-        private StateMachine<NoteBehaviour> JudgeMachine; // 判定状态机
+        private LinearStateMachine<NoteBehaviour> JudgeMachine; // 判定状态机
 
         public StateBeforeJudgeNote BeforeJudge; // 进入判定区之前
 
@@ -37,19 +38,29 @@ namespace NoteNS
         public void InitStateMachine(NoteBehaviour Note)
         {
             StateMachine = new();
+
             InitNote = new(Note, StateMachine);
             AnimeNote = new(Note, StateMachine);
             JudgeNoteAnime = new(Note, StateMachine);
             DisappearNoteAnime = new(Note, StateMachine);
             DestroyNoteAnime = new(Note, StateMachine);
 
+            // 正常的状态跳转用的都是 SwitchState
+            // 如果想从前面临时插一段进去就用 LinearStateMachine 的方法调用 NextState 函数
+            // 通用状态机写起来太麻烦了 小修小补可以
+
+            var AnimeList = new List<IState<NoteBehaviour>> { InitNote };
+
             JudgeMachine = new();
             BeforeJudge = new(Note, JudgeMachine);
             ProcessJudge = new(Note, JudgeMachine);
             AfterJudge = new(Note, JudgeMachine);
 
-            JudgeMachine.InitState(BeforeJudge);
-            StateMachine.InitState(InitNote);
+            var JudgeList = new List<IState<NoteBehaviour>> { BeforeJudge };
+
+            StateMachine.InitLinear(AnimeList);
+
+            JudgeMachine.InitLinear(JudgeList);
         }
 
         private void Update() // 两个状态机

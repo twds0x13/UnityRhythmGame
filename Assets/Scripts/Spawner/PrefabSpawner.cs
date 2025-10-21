@@ -17,6 +17,12 @@ namespace PrefabSpawner
 
         static string ButtonPath = "Assets/GameObjects/UI Elements/Button/SampleButton.prefab";
 
+        enum PageType
+        {
+            Normal,
+            Hover,
+        }
+
         /// <summary>
         /// 因为每个页面都应该继承自不同的类，所以记得要手动更换脚本
         /// </summary>
@@ -25,7 +31,19 @@ namespace PrefabSpawner
         {
             CreateObjectFromPath(PagePath)
                 .SetParent(GameObject.FindGameObjectWithTag("PageContainer"))
-                .RegisterNum()
+                .RegisterNum(PageType.Normal)
+                .Select();
+        }
+
+        /// <summary>
+        /// 因为每个页面都应该继承自不同的类，所以记得要手动更换脚本
+        /// </summary>
+        [MenuItem("Quick Spawn/Sample Hover Page")]
+        private static void CreateSampleHoverPage()
+        {
+            CreateObjectFromPath(PagePath)
+                .SetParent(GameObject.FindGameObjectWithTag("HoverPageContainer"))
+                .RegisterNum(PageType.Hover)
                 .Select();
         }
 
@@ -163,7 +181,7 @@ namespace PrefabSpawner
             return Object;
         }
 
-        private static GameObject RegisterNum(this GameObject Object)
+        private static GameObject RegisterNum(this GameObject Object, PageType type)
         {
             if (Object.HasComponent<BaseUIPage>())
             {
@@ -177,10 +195,21 @@ namespace PrefabSpawner
                             .GetComponent<ResizeDetector>()
                     );
 
-                GameObject
-                    .FindGameObjectWithTag("GameSingletons")
-                    .GetComponent<PageController>()
-                    .AddPageObject(Object.GetComponent<BaseUIPage>());
+                switch (type)
+                {
+                    case PageType.Normal:
+                        GameObject
+                            .FindGameObjectWithTag("PageSingletons")
+                            .GetComponent<PageManager>()
+                            .AddPageObject(Object.GetComponent<BaseUIPage>());
+                        break;
+                    case PageType.Hover:
+                        GameObject
+                            .FindGameObjectWithTag("PageSingletons")
+                            .GetComponent<PageManager>()
+                            .AddHoverPageObject(Object.GetComponent<BaseUIPage>());
+                        break;
+                }
             }
 
             return Object;

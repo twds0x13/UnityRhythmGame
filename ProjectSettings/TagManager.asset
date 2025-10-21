@@ -4,12 +4,13 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - DevInterface
-  - PooledObject
   - Page
   - PageContainer
   - ResizeDetector
   - GameSingletons
+  - PageSingletons
+  - StorySingletons
+  - HoverPageContainer
   layers:
   - Default
   - TransparentFX

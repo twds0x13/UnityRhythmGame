@@ -74,7 +74,7 @@
                 {
                     "name": "",
                     "id": "c03e30f8-b75e-4b19-8c71-385616d04417",
-                    "path": "<Keyboard>/z",
+                    "path": "<Keyboard>/d",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -85,7 +85,7 @@
                 {
                     "name": "",
                     "id": "cdea50d9-e074-4eab-845c-088fec94d0ce",
-                    "path": "<Keyboard>/x",
+                    "path": "<Keyboard>/f",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -96,7 +96,7 @@
                 {
                     "name": "",
                     "id": "78335eec-3310-423f-a73f-54713eabf886",
-                    "path": "<Keyboard>/period",
+                    "path": "<Keyboard>/j",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -107,7 +107,7 @@
                 {
                     "name": "",
                     "id": "181d5ed2-8452-44c5-81c5-3b69bfb9119a",
-                    "path": "<Keyboard>/slash",
+                    "path": "<Keyboard>/k",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -123,6 +123,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause & Resume Game",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b54d5113-00f2-4036-aebe-b707a6f377f9",
+                    "path": "<Keyboard>/q",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Add Note",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

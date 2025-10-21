@@ -1,4 +1,7 @@
-using System;
+using System.Linq;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Singleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -7,7 +10,7 @@ using Pool = PooledObjectNS.PooledObjectManager;
 
 /// <summary>
 /// 负责管理游戏核心逻辑的类
-/// 包括场景切换，单例类管理等，用游戏全局状态机驱动
+/// 已被架空，暂时用来处理和游戏输入有关的东西和游戏测试
 /// </summary>
 namespace GameCore
 {
@@ -17,53 +20,55 @@ namespace GameCore
     {
         public PlayerInput UserInput;
 
-        // 测试用临时变量
+        private CancellationTokenSource _cancellationTokenSource;
 
-        bool _flag;
+        private int[] availableTracks = { 0, 1, 2, 3 };
 
-        System.Random Rand = new();
-
-        protected override void SingletonAwake() { }
-
-        // 仅供测试使用
-        #region WUT R U DOEN?
-        void Update()
+        private async UniTaskVoid StartNoteGeneration()
         {
-            var Time = Game.Inst.GetGameTime();
+            _cancellationTokenSource = new CancellationTokenSource();
+            var token = _cancellationTokenSource.Token;
 
-            var Vertical = 1.00f;
+            // 130 BPM下的8分音符间隔
+            float interval = 60f / 130f / 2f;
 
-            if (Math.Ceiling(Time * 10f) % 2 == 0 && _flag)
+            while (!token.IsCancellationRequested)
             {
-                var FirstNum = Rand.Next(0, 4);
-
-                Pool.Inst.GetNotesDynamic(Time, Vertical, FirstNum, 0.8f);
-
-                if (Pool.Inst.TrackUIDIterator > 1) // 假装在打大叠
+                if (!Game.Inst.IsGamePaused())
                 {
-                    var SecondNum = Rand.Next(0, 4);
+                    float currentTime = Game.Inst.GetGameTime();
 
-                    while (SecondNum == FirstNum)
-                    {
-                        SecondNum = Rand.Next(0, 4);
-                    }
+                    // 随机选择两个不同的轨道
+                    int[] randomTracks = GetTwoRandomTracks();
 
-                    Pool.Inst.GetNotesDynamic(Time, Vertical, SecondNum, 0.8f);
+                    // 生成两个不同轨道的音符
+                    GenerateSimpleNote(currentTime, randomTracks[0]);
+                    GenerateSimpleNote(currentTime, randomTracks[1]);
                 }
 
-                _flag = false;
-            }
-
-            if (Math.Ceiling(Time * 10f) % 2 == 1)
-            {
-                _flag = true;
+                await UniTask.Delay((int)(interval * 1000), cancellationToken: token);
             }
         }
-        #endregion
+
+        private int[] GetTwoRandomTracks()
+        {
+            // 随机打乱轨道数组并取前两个
+            return availableTracks.OrderBy(x => Random.Range(0, 100)).Take(2).ToArray();
+        }
+
+        private void GenerateSimpleNote(float startTime, int trackNum)
+        {
+            // 使用您原有的GetNotesDynamic方法
+            Pool.Inst.GetNotesDynamic(startTime, 1f, trackNum, 1f);
+        }
+
+        protected override void SingletonAwake()
+        {
+            UniTask.Void(StartNoteGeneration);
+        }
 
         public void RebindInput(InputActionReference Ref)
         {
-            // Debug.Log("Iz Thiz Jvav?");
             UserInput.SwitchCurrentActionMap("UserRebinding");
             Ref.action.PerformInteractiveRebinding()
                 .WithControlsExcluding("Mouse")
@@ -85,7 +90,9 @@ namespace GameCore
         public void GetNote(InputAction.CallbackContext Ctx)
         {
             if (Ctx.performed)
-                Pool.Inst.GetNotesDynamic(Game.Inst.GetGameTime(), 1f, Rand.Next(0, 4), 1f);
+            {
+                Pool.Inst.GetNotesDynamic(Game.Inst.GetGameTime(), 1f, 1, 1f);
+            }
         }
 
         public void GetTrack(InputAction.CallbackContext Ctx)
@@ -106,7 +113,7 @@ namespace GameCore
 
         public void TestIgnorePause(InputAction.CallbackContext Ctx)
         {
-            //Game.Inst.LockTimeScale(2f);
+            // Game.Inst.LockTimeScale(2f);
         }
 
         public void PauseResumeGame(InputAction.CallbackContext Ctx)
@@ -117,9 +124,13 @@ namespace GameCore
 
         #endregion
 
-        public float RandFloat(float Min, float Max)
+        protected override void SingletonDestroy()
         {
-            return Min + (float)Rand.NextDouble() * (Max - Min);
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource?.Dispose();
+
+            DOTween.KillAll();
+            DOTween.Clear(true);
         }
     }
 

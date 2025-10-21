@@ -1,6 +1,4 @@
-using DG.Tweening;
 using PageNS;
-using UnityEngine;
 using Game = GameManagerNS.GameManager;
 using Pool = PooledObjectNS.PooledObjectManager;
 
@@ -26,16 +24,14 @@ public class GamePage : BaseUIPage
     {
         base.OnOpenPage();
 
-        Pool.Inst.GetTracksDynamic();
+        Game.Inst.StartGame();
     }
 
     public override void OnClosePage()
     {
         base.OnClosePage();
 
-        Pool.Inst.FinishCurrentGame();
-
-        Game.Inst.ResetGame();
+        Game.Inst.FinishGame();
     }
 
     public void OnExitToMenu()

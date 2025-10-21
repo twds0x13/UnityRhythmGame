@@ -1,131 +1,187 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using AudioRegistry;
 using Cysharp.Threading.Tasks;
 using Singleton;
 using UnityEngine;
-using BGM = AudioRegistry.BGM;
 
 namespace AudioNS
 {
+    public readonly struct Source : ISource
+    {
+        public string Value { get; }
+
+        private Source(string value) => Value = value;
+
+        // Music
+        public static Source BGM = new Source("BackGroundMusic");
+
+        // Fx
+        public static Source Track0 = new Source("Track0Fx");
+        public static Source Track1 = new Source("Track1Fx");
+        public static Source Track2 = new Source("Track2Fx");
+        public static Source Track3 = new Source("Track3Fx");
+
+        public static Source UI = new Source("UIFx");
+
+        public static implicit operator string(Source source) => source.Value;
+    }
+
     public class AudioManager : Singleton<AudioManager>
     {
-        [Ext.ReadOnlyInGame, SerializeField]
+        private class AudioSourceState
+        {
+            public AudioClip CurrentClip { get; set; } = null;
+            public float Volume { get; set; } = 0.8f;
+            public bool IsWarmedUp { get; set; } = false;
+            public AudioClip WarmedUpClip { get; set; } = null;
+            public CancellationTokenSource RewarmToken { get; set; } = new();
+            public bool IsProcessing { get; set; } = false;
+            public string PendingClipName { get; set; } = null;
+        }
+
+        [SerializeField]
         List<AudioSource> AudioSources;
 
-        [Ext.ReadOnlyInGame, SerializeField]
+        [SerializeField]
         List<AudioClip> AudioClips;
 
-        private Dictionary<string, AudioClip> RegisteredAudioClips;
+        [SerializeField]
+        List<AudioClip> SFXClips;
 
-        private Dictionary<string, AudioSource> RegisteredAudioSources;
+        private readonly Dictionary<string, AudioClip> _registeredAudioClips = new();
+        private readonly Dictionary<string, AudioSource> _registeredAudioSources = new();
+        private readonly Dictionary<string, AudioSourceState> _sourceStates = new();
 
         protected override void SingletonAwake()
         {
             RegisterAudioClips();
             RegisterAudioSources();
-            UniTask.Void(Test);
-        }
-
-        private async UniTaskVoid Test()
-        {
-            await UniTask.Delay(5000);
-            // Debug.Log("AudioManager Test");
-            // LoadAudioClip(BGM.Zephyrs, "BackGroundMusic");
+            UniTask.Void(PrewarmAllAudioSources);
         }
 
         private void RegisterAudioClips()
         {
-            RegisteredAudioClips = new();
-            foreach (AudioClip AudioClip in AudioClips)
+            foreach (AudioClip audioClip in AudioClips)
             {
-                RegisteredAudioClips.Add(AudioClip.name, AudioClip);
+                _registeredAudioClips.Add(audioClip.name, audioClip);
+            }
+
+            foreach (AudioClip audioClip in SFXClips)
+            {
+                _registeredAudioClips.Add(audioClip.name, audioClip);
             }
         }
 
         private void RegisterAudioSources()
         {
-            RegisteredAudioSources = new();
-            foreach (AudioSource AudioSource in AudioSources)
+            foreach (AudioSource audioSource in AudioSources)
             {
-                RegisteredAudioSources.Add(AudioSource.name, AudioSource);
+                _registeredAudioSources.Add(audioSource.name, audioSource);
+                _sourceStates.Add(audioSource.name, new AudioSourceState());
             }
         }
 
-        public void CloseAudioSource(AudioSource Source)
+        private async UniTaskVoid PrewarmAllAudioSources()
         {
-            if (Source is not null)
+            foreach (var sourcePair in _registeredAudioSources)
             {
-                Source.enabled = false;
-            }
-        }
+                string sourceName = sourcePair.Key;
+                AudioSource source = sourcePair.Value;
 
-        public void CloseAudioSource(string closedSource)
-        {
-            if (closedSource is not null)
-            {
-                if (RegisteredAudioSources.TryGetValue(closedSource, out AudioSource closedRef))
+                if (SFXClips.Count > 2)
                 {
-                    closedRef.enabled = false;
+                    AudioClip dummyClip = SFXClips[2];
+                    var state = _sourceStates[sourceName];
+
+                    source.clip = dummyClip;
+                    source.volume = 0f;
+                    source.Play();
+                    source.Pause();
+
+                    state.IsWarmedUp = true;
+                    state.WarmedUpClip = dummyClip;
+                    state.RewarmToken = new CancellationTokenSource();
+
+                    LogManager.Log(
+                        $"加载时预热源 {source.name} , 预热片段 {dummyClip.name}",
+                        nameof(AudioManager),
+                        false
+                    );
                 }
-                else
-                {
-                    Debug.LogWarning($"Audio source '{closedSource}' not found.");
-                }
+            }
+
+            await UniTask.WaitForSeconds(0);
+        }
+
+        private void CloseAudioSource(AudioSource source)
+        {
+            if (source != null)
+            {
+                source.enabled = false;
             }
         }
 
-        public void CloseAudioSource(string[] closedSources)
+        public void CloseAudioSource(Source closedSource)
         {
-            if (closedSources is not null)
+            if (_registeredAudioSources.TryGetValue(closedSource, out AudioSource closedRef))
             {
-                foreach (string Source in closedSources)
+                closedRef.enabled = false;
+            }
+            else
+            {
+                LogManager.Warning($"Audio source '{closedSource}' not found.");
+            }
+        }
+
+        public void CloseAudioSource(Source[] closedSources)
+        {
+            if (closedSources != null)
+            {
+                foreach (Source source in closedSources)
                 {
-                    CloseAudioSource(Source);
+                    CloseAudioSource(source);
                 }
             }
         }
 
         public void CloseAllAudioSource()
         {
-            foreach (AudioSource Source in RegisteredAudioSources.Values)
+            foreach (AudioSource source in _registeredAudioSources.Values)
             {
-                CloseAudioSource(Source);
+                CloseAudioSource(source);
             }
         }
 
-        public AudioSource RequireAudioSource(string requiredSource)
+        public AudioSource RequireAudioSource(ISource requiredSource)
         {
-            if (requiredSource is not null)
-            {
-                if (RegisteredAudioSources.TryGetValue(requiredSource, out AudioSource requiredRef))
-                {
-                    requiredRef.enabled = true;
-
-                    return requiredRef;
-                }
-                else
-                {
-                    Debug.LogWarning($"Audio source '{requiredSource}' not found.");
-
-                    throw new ArgumentNullException();
-                }
-            }
-
-            throw new ArgumentNullException("RequiredSource String Null");
+            return RequireAudioSource(requiredSource.Value);
         }
 
-        public List<AudioSource> RequireAudioSource(string[] requiredSources)
+        private AudioSource RequireAudioSource(string requiredSource)
+        {
+            if (_registeredAudioSources.TryGetValue(requiredSource, out AudioSource requiredRef))
+            {
+                requiredRef.enabled = true;
+                return requiredRef;
+            }
+            else
+            {
+                LogManager.Warning($"Audio source '{requiredSource}' not found.");
+                throw new ArgumentNullException();
+            }
+        }
+
+        public List<AudioSource> RequireAudioSource(ISource[] requiredSources)
         {
             List<AudioSource> returnSources = new();
 
-            if (requiredSources is not null)
+            if (requiredSources != null)
             {
-                foreach (string source in requiredSources)
+                foreach (Source source in requiredSources)
                 {
-                    if (source is null)
-                    {
-                        returnSources.Add(RequireAudioSource(source));
-                    }
+                    returnSources.Add(RequireAudioSource(source.Value));
                 }
 
                 return returnSources;
@@ -134,17 +190,17 @@ namespace AudioNS
             throw new ArgumentNullException();
         }
 
-        public AudioClip RequireAudioClip(string requiredClip)
+        private AudioClip RequireAudioClip(string requiredClip)
         {
-            if (requiredClip is not null)
+            if (requiredClip != null)
             {
-                if (RegisteredAudioClips.TryGetValue(requiredClip, out AudioClip returnedRef))
+                if (_registeredAudioClips.TryGetValue(requiredClip, out AudioClip returnedRef))
                 {
                     return returnedRef;
                 }
                 else
                 {
-                    Debug.LogWarning($"Audio clip '{requiredClip}' not found.");
+                    LogManager.Warning($"Audio clip '{requiredClip}' not found.");
                     throw new ArgumentNullException();
                 }
             }
@@ -152,20 +208,251 @@ namespace AudioNS
             throw new ArgumentNullException("RequiredClip String Null");
         }
 
-        /// <summary>
-        /// 安全的加载音频片段
-        /// </summary>
-        /// <param name="clipName"></param>
-        /// <param name="sourceName"></param>
-        public void LoadAudioClip(string clipName, string sourceName)
+        public void LoadAudioClip<T1, T2>(T1 clipEnum, T2 sourceEnum)
+            where T1 : IAudio
+            where T2 : ISource
         {
-            AudioSource source = RequireAudioSource(sourceName);
+            LoadAudioClip(clipEnum.Value, sourceEnum.Value);
+        }
 
-            AudioClip clip = RequireAudioClip(clipName);
+        private async void LoadAudioClip(string clipName, string sourceEnum, bool output = false)
+        {
+            if (!_sourceStates.ContainsKey(sourceEnum))
+            {
+                _sourceStates[sourceEnum] = new AudioSourceState();
+            }
 
-            source.clip = clip;
+            AudioSourceState state = _sourceStates[sourceEnum];
+            AudioSource source = RequireAudioSource(sourceEnum);
+            AudioClip newClip = RequireAudioClip(clipName);
 
+            if (state.IsProcessing)
+            {
+                state.PendingClipName = clipName;
+                LogManager.Log($"音频源忙，请求加入队列: {clipName}", nameof(AudioManager), output);
+                return;
+            }
+
+            state.IsProcessing = true;
+
+            try
+            {
+                await ProcessAudioLoad(clipName, sourceEnum, newClip, source, state, output);
+
+                if (state.PendingClipName != null)
+                {
+                    string pendingClip = state.PendingClipName;
+                    state.PendingClipName = null;
+                    await UniTask.DelayFrame(1);
+                    LoadAudioClip(pendingClip, sourceEnum, output);
+                }
+            }
+            finally
+            {
+                state.IsProcessing = false;
+            }
+        }
+
+        private async UniTask ProcessAudioLoad(
+            string clipName,
+            string sourceEnum,
+            AudioClip newClip,
+            AudioSource source,
+            AudioSourceState state,
+            bool output
+        )
+        {
+            CancelRewarmTask(sourceEnum);
+            await UniTask.Yield();
+
+            if (source.isPlaying && state.CurrentClip == newClip)
+            {
+                source.time = 0f;
+                LogManager.Log($"重置已播放音频时间: {clipName}", nameof(AudioManager), output);
+                return;
+            }
+
+            if (source.isPlaying)
+            {
+                source.Stop();
+                await UniTask.DelayFrame(1);
+            }
+
+            bool needWarmup = !state.IsWarmedUp || state.WarmedUpClip != newClip;
+
+            if (needWarmup)
+            {
+                if (source.isPlaying)
+                {
+                    source.Stop();
+                    await UniTask.DelayFrame(1);
+                }
+
+                source.clip = newClip;
+                source.volume = 0f;
+                source.Play();
+                source.Pause();
+
+                state.IsWarmedUp = true;
+                state.WarmedUpClip = newClip;
+
+                LogManager.Log($"预热新片段: {newClip.name}", nameof(AudioManager), output);
+            }
+
+            if (source.isPlaying)
+            {
+                source.Stop();
+                await UniTask.DelayFrame(1);
+            }
+
+            source.time = 0f;
+            source.volume = state.Volume;
             source.Play();
+
+            state.CurrentClip = newClip;
+
+            _ = RewarmAfterPlayAsync(source, sourceEnum, state.Volume);
+
+            LogManager.Log($"播放音频 {clipName}, 源: {sourceEnum}", nameof(AudioManager), output);
+        }
+
+        private async UniTaskVoid RewarmAfterPlayAsync(
+            AudioSource source,
+            string sourceEnum,
+            float targetVolume
+        )
+        {
+            if (!_sourceStates.TryGetValue(sourceEnum, out var state))
+                return;
+
+            var cancellationToken = state.RewarmToken.Token;
+
+            try
+            {
+                if (!source.isPlaying || source.clip == null)
+                {
+                    LogManager.Warning(
+                        $"音频源未播放，跳过重预热: {sourceEnum}",
+                        nameof(AudioManager)
+                    );
+                    return;
+                }
+
+                float clipLength = source.clip.length - source.time;
+
+                float elapsed = 0f;
+                while (elapsed < clipLength && !cancellationToken.IsCancellationRequested)
+                {
+                    if (!source.isPlaying || state.CurrentClip != source.clip)
+                        return;
+
+                    await UniTask.DelayFrame(1, cancellationToken: cancellationToken);
+                    elapsed += Time.deltaTime;
+                }
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+
+                if (state.CurrentClip == source.clip && !cancellationToken.IsCancellationRequested)
+                {
+                    source.volume = 0f;
+                    source.time = 0f;
+                    source.Play();
+                    source.Pause();
+
+                    LogManager.Log($"重预热音频 {source.clip.name}", nameof(AudioManager), false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 任务被取消是正常情况
+            }
+        }
+
+        public void LoadAudioClips<T1, T2>(List<(T1, T2)> clipPacks)
+            where T1 : IAudio
+            where T2 : ISource
+        {
+            foreach (var clipPack in clipPacks)
+            {
+                LoadAudioClip(clipPack.Item1, clipPack.Item2);
+            }
+        }
+
+        public void StopAudioSource<T>(T sourceEnum, bool output = false)
+            where T : ISource
+        {
+            if (_sourceStates.TryGetValue(sourceEnum.Value, out var state))
+            {
+                if (_registeredAudioSources.TryGetValue(sourceEnum.Value, out var source))
+                {
+                    CancelRewarmTask(sourceEnum.Value);
+
+                    if (source.isPlaying)
+                    {
+                        source.Stop();
+                    }
+
+                    state.PendingClipName = null;
+
+                    if (state.WarmedUpClip != null)
+                    {
+                        source.clip = state.WarmedUpClip;
+                        source.volume = 0f;
+                        source.time = 0f;
+                        source.Play();
+                        source.Pause();
+
+                        LogManager.Log(
+                            $"停止并重预热: {sourceEnum.Value}",
+                            nameof(AudioManager),
+                            output
+                        );
+                    }
+                }
+            }
+        }
+
+        public bool IsAudioSourcePlaying<T>(T sourceEnum)
+            where T : ISource
+        {
+            if (_registeredAudioSources.TryGetValue(sourceEnum.Value, out var source))
+            {
+                return source.isPlaying;
+            }
+            return false;
+        }
+
+        public AudioClip GetCurrentClip<T>(T sourceEnum)
+            where T : ISource
+        {
+            if (_sourceStates.TryGetValue(sourceEnum.Value, out var state))
+            {
+                return state.CurrentClip;
+            }
+            return null;
+        }
+
+        public async UniTask WaitForAudioReady<T>(T sourceEnum)
+            where T : ISource
+        {
+            if (_sourceStates.TryGetValue(sourceEnum.Value, out var state))
+            {
+                while (state.IsProcessing)
+                {
+                    await UniTask.DelayFrame(1);
+                }
+            }
+        }
+
+        private void CancelRewarmTask(string sourceEnum)
+        {
+            if (_sourceStates.TryGetValue(sourceEnum, out var state))
+            {
+                state.RewarmToken.Cancel();
+                state.RewarmToken.Dispose();
+                state.RewarmToken = new CancellationTokenSource();
+            }
         }
     }
 }

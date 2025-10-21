@@ -75,10 +75,10 @@ namespace NavigatorNS
         private DisappearTypeEnum DisappearType;
 
         [SerializeField]
-        private Ease AppendEase;
+        private Ease AppendEase = Ease.OutSine;
 
         [SerializeField]
-        private Ease DisappearEase;
+        private Ease DisappearEase = Ease.OutSine;
 
         [Ext.ReadOnly, SerializeField]
         private BaseUIPage ParentPage;

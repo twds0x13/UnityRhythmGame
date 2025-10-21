@@ -1,9 +1,4 @@
-using System;
 using System.Collections.Generic;
-using Anime;
-using NoteNS;
-using PooledObjectNS;
-using UnityEngine.Windows.Speech;
 
 namespace StateMachine
 {
@@ -22,13 +17,13 @@ namespace StateMachine
     {
         public IState<T> CurState { get; private set; }
 
-        public void InitState(IState<T> State)
+        public virtual void InitState(IState<T> State)
         {
             CurState = State;
             CurState?.Enter();
         }
 
-        public void SwitchState(IState<T> State)
+        public virtual void SwitchState(IState<T> State)
         {
             if (CurState != State)
             {
@@ -37,6 +32,54 @@ namespace StateMachine
                 CurState?.Enter();
             }
         }
+    }
+
+    public class LinearStateMachine<T> : StateMachine<T>
+    {
+        public List<IState<T>> States { get; private set; }
+
+        private int curStateIndex = -1;
+
+        /// <summary>
+        /// 使用状态列表初始化线性状态机
+        /// </summary>
+        /// <param name="states">状态列表，最后一个状态应包含销毁逻辑</param>
+        public void InitLinear(List<IState<T>> states)
+        {
+            States = states;
+            if (States != null && States.Count > 0)
+            {
+                curStateIndex = 0;
+                InitState(States[0]);
+            }
+        }
+
+        /// <summary>
+        /// 安全地进入下一个状态
+        /// </summary>
+        /// <returns>是否成功切换到下一个状态</returns>
+        public bool NextState()
+        {
+            if (States == null || curStateIndex < 0 || curStateIndex >= States.Count - 1)
+            {
+                // 已处于最后一个状态或状态列表无效
+                return false;
+            }
+
+            curStateIndex++;
+            SwitchState(States[curStateIndex]);
+            return true;
+        }
+
+        /// <summary>
+        /// 获取当前状态的索引
+        /// </summary>
+        public int Index => curStateIndex;
+
+        /// <summary>
+        /// 检查是否处于最后一个状态
+        /// </summary>
+        public bool IsLastState => curStateIndex == States.Count - 1;
     }
 
     /// <summary>
