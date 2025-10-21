@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using ECS;
 using UnityEditor;
 using UnityEngine;
@@ -401,7 +402,15 @@ public class ECSTreeEditorWindow : EditorWindow
             if (GUILayout.Button("添加章节"))
             {
                 // 使用Story.Inst创建章节
-                var newChapter = Story.Inst.CreateChapter("新章节");
+                var newChapter = Story.Inst.CreateChapter("第一章");
+
+                // 自动生成localization key并设置speaker key
+                if (newChapter.HasComponent<Comp.Localization>())
+                {
+                    var locComp = newChapter.GetComponent<Comp.Localization>();
+                    locComp.SpeakerKey = "MAIN"; // 设置初始speaker key为Main
+                    locComp.GenerateLocalizationKey(newChapter, ECSFramework.Inst).Forget();
+                }
 
                 // 确保根节点展开
                 expandedNodes[selectedEntity.Id] = true;
@@ -415,7 +424,18 @@ public class ECSTreeEditorWindow : EditorWindow
             if (GUILayout.Button("批量添加章节"))
             {
                 // 使用Story.Inst批量创建章节
-                var newChapters = Story.Inst.CreateChapters("章节1", "章节2", "章节3");
+                var newChapters = Story.Inst.CreateChapters("第一章", "第二章", "第三章");
+
+                // 为每个新创建的章节生成localization key并设置speaker key
+                foreach (var chapter in newChapters)
+                {
+                    if (chapter.HasComponent<Comp.Localization>())
+                    {
+                        var locComp = chapter.GetComponent<Comp.Localization>();
+                        locComp.SpeakerKey = "MAIN"; // 设置初始speaker key为Main
+                        _ = locComp.GenerateLocalizationKey(chapter, ECSFramework.Inst);
+                    }
+                }
 
                 // 确保根节点展开
                 expandedNodes[selectedEntity.Id] = true;
@@ -480,7 +500,7 @@ public class ECSTreeEditorWindow : EditorWindow
                     if (child.HasComponent<Comp.Localization>())
                     {
                         var locComp = child.GetComponent<Comp.Localization>();
-                        locComp.GenerateLocalizationKey(child, ECSFramework.Inst);
+                        locComp.GenerateLocalizationKey(child, ECSFramework.Inst).Forget();
                     }
                 }
                 RefreshTree();
@@ -543,11 +563,58 @@ public class ECSTreeEditorWindow : EditorWindow
         }
     }
 
-    // 删除章节及其所有子节点
+    // 添加重新排序和更新本地化的方法
+    private void ReorderAndUpdateLocalization(Entity parent)
+    {
+        if (parent == null || !parent.HasComponent<Comp.Children>())
+            return;
+
+        var children = parent.GetComponent<Comp.Children>().ChildrenEntities;
+
+        // 按当前Order排序（因为可能有些子节点已经被删除了，需要重新编号）
+        var sortedChildren = children
+            .OrderBy(child =>
+            {
+                if (child.HasComponent<Comp.Order>())
+                {
+                    return child.GetComponent<Comp.Order>().Number;
+                }
+                return child.Id;
+            })
+            .ToList();
+
+        // 重新编号并更新本地化
+        for (int i = 0; i < sortedChildren.Count; i++)
+        {
+            var child = sortedChildren[i];
+            int newOrder = i + 1;
+
+            // 更新Order组件
+            if (child.HasComponent<Comp.Order>())
+            {
+                child.GetComponent<Comp.Order>().Number = newOrder;
+            }
+
+            // 更新Localization组件
+            if (child.HasComponent<Comp.Localization>())
+            {
+                var locComp = child.GetComponent<Comp.Localization>();
+                locComp.Number = newOrder;
+
+                // 重新生成本地化键（这会更新ContextKey和本地化条目）
+                locComp.GenerateLocalizationKey(child, ECSFramework.Inst).Forget();
+            }
+        }
+    }
+
+    // 修改DeleteChapter方法，在删除后重新排序
     private void DeleteChapter(Entity chapter)
     {
         try
         {
+            // 获取父节点（根节点）
+            var parent = chapter.Parent();
+
             // 获取所有子节点（包括孙子节点等）
             var allDescendants = ECSFramework.Inst.GetAllDescendants(chapter);
 
@@ -559,6 +626,12 @@ public class ECSTreeEditorWindow : EditorWindow
 
             // 然后删除章节本身
             ECSFramework.Inst.RemoveEntity(chapter.Id);
+
+            // 重新排序父节点的所有子节点并更新本地化
+            if (parent != null)
+            {
+                ReorderAndUpdateLocalization(parent);
+            }
 
             Debug.Log($"已删除章节 ID: {chapter.Id} 及其所有子节点");
         }
@@ -576,7 +649,15 @@ public class ECSTreeEditorWindow : EditorWindow
             if (GUILayout.Button("添加小节"))
             {
                 // 使用Story.Inst创建小节
-                var newEpisode = Story.Inst.CreateEpisode(selectedEntity, "新小节");
+                var newEpisode = Story.Inst.CreateEpisode(selectedEntity, "第一节");
+
+                // 自动生成localization key并设置speaker key
+                if (newEpisode.HasComponent<Comp.Localization>())
+                {
+                    var locComp = newEpisode.GetComponent<Comp.Localization>();
+                    locComp.SpeakerKey = "MAIN"; // 设置初始speaker key为Main
+                    locComp.GenerateLocalizationKey(newEpisode, ECSFramework.Inst).Forget();
+                }
 
                 // 确保父节点展开
                 expandedNodes[selectedEntity.Id] = true;
@@ -590,7 +671,25 @@ public class ECSTreeEditorWindow : EditorWindow
             if (GUILayout.Button("批量添加小节"))
             {
                 // 使用Story.Inst批量创建小节
-                var episodes = Story.Inst.CreateEpisodes(selectedEntity, "小节1", "小节2", "小节3");
+                var episodes = Story.Inst.CreateEpisodes(
+                    selectedEntity,
+                    "第一节",
+                    "第二节",
+                    "第三节",
+                    "第四节",
+                    "第五节"
+                );
+
+                // 为每个新创建的小节生成localization key并设置speaker key
+                foreach (var episode in episodes)
+                {
+                    if (episode.HasComponent<Comp.Localization>())
+                    {
+                        var locComp = episode.GetComponent<Comp.Localization>();
+                        locComp.SpeakerKey = "MAIN"; // 设置初始speaker key为Main
+                        locComp.GenerateLocalizationKey(episode, ECSFramework.Inst).Forget();
+                    }
+                }
 
                 // 确保父节点展开
                 expandedNodes[selectedEntity.Id] = true;
@@ -636,7 +735,7 @@ public class ECSTreeEditorWindow : EditorWindow
                     if (child.HasComponent<Comp.Localization>())
                     {
                         var locComp = child.GetComponent<Comp.Localization>();
-                        locComp.GenerateLocalizationKey(child, ECSFramework.Inst);
+                        locComp.GenerateLocalizationKey(child, ECSFramework.Inst).Forget();
                     }
                 }
                 RefreshTree();
@@ -694,7 +793,15 @@ public class ECSTreeEditorWindow : EditorWindow
             if (GUILayout.Button("添加对话行"))
             {
                 // 使用Story.Inst创建对话行
-                var newLine = Story.Inst.CreateLine(selectedEntity, "新对话");
+                var newLine = Story.Inst.CreateLine(selectedEntity, "第一行");
+
+                // 自动生成localization key并设置speaker key
+                if (newLine.HasComponent<Comp.Localization>())
+                {
+                    var locComp = newLine.GetComponent<Comp.Localization>();
+                    locComp.SpeakerKey = "MAIN"; // 设置初始speaker key为Main
+                    locComp.GenerateLocalizationKey(newLine, ECSFramework.Inst).Forget();
+                }
 
                 // 确保父节点展开
                 expandedNodes[selectedEntity.Id] = true;
@@ -708,7 +815,25 @@ public class ECSTreeEditorWindow : EditorWindow
             if (GUILayout.Button("批量添加对话行"))
             {
                 // 使用Story.Inst批量创建对话行
-                var lines = Story.Inst.CreateLines(selectedEntity, "对话1", "对话2", "对话3");
+                var lines = Story.Inst.CreateLines(
+                    selectedEntity,
+                    "第一行",
+                    "第二行",
+                    "第三行",
+                    "第四行",
+                    "第五行"
+                );
+
+                // 为每个新创建的对话行生成localization key并设置speaker key
+                foreach (var line in lines)
+                {
+                    if (line.HasComponent<Comp.Localization>())
+                    {
+                        var locComp = line.GetComponent<Comp.Localization>();
+                        locComp.SpeakerKey = "MAIN"; // 设置初始speaker key为Main
+                        locComp.GenerateLocalizationKey(line, ECSFramework.Inst).Forget();
+                    }
+                }
 
                 // 确保父节点展开
                 expandedNodes[selectedEntity.Id] = true;
@@ -816,7 +941,7 @@ public class ECSTreeEditorWindow : EditorWindow
                     if (child.HasComponent<Comp.Localization>())
                     {
                         var locComp = child.GetComponent<Comp.Localization>();
-                        locComp.GenerateLocalizationKey(child, ECSFramework.Inst);
+                        locComp.GenerateLocalizationKey(child, ECSFramework.Inst).Forget();
                     }
                 }
                 RefreshTree();
@@ -868,7 +993,6 @@ public class ECSTreeEditorWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
     }
 
-    // 为对话行节点绘制操作按钮
     private void DrawLineOperations()
     {
         EditorGUILayout.BeginHorizontal();
@@ -929,70 +1053,84 @@ public class ECSTreeEditorWindow : EditorWindow
                 }
             }
         }
+        EditorGUILayout.EndHorizontal();
 
-        if (GUILayout.Button("复制"))
+        EditorGUILayout.BeginHorizontal();
         {
-            // 复制当前对话行
-            var parent = selectedEntity.Parent();
-
-            if (parent != null)
+            if (GUILayout.Button("复制"))
             {
-                int nextOrder = Story.Inst.GetNextOrderNumber(parent.Id);
+                // 复制当前对话行
+                var parent = selectedEntity.Parent();
 
-                if (selectedEntity.HasComponent<Comp.Localization>())
+                if (parent != null)
                 {
-                    var locComp = selectedEntity.GetComponent<Comp.Localization>();
-                    var newLine = Story.Inst.CreateLine(
-                        parent,
-                        nextOrder,
-                        locComp.DefaultText,
-                        locComp.SpeakerKey
-                    );
+                    int nextOrder = Story.Inst.GetNextOrderNumber(parent.Id);
+
+                    if (selectedEntity.HasComponent<Comp.Localization>())
+                    {
+                        var locComp = selectedEntity.GetComponent<Comp.Localization>();
+                        var newLine = Story.Inst.CreateLine(
+                            parent,
+                            nextOrder,
+                            locComp.DefaultText,
+                            locComp.SpeakerKey
+                        );
+
+                        // 保持父节点展开状态
+                        expandedNodes[parent.Id] = true;
+
+                        // 对于新创建的实体，展开它自己
+                        expandedNodes[newLine.Id] = true;
+
+                        RefreshTree();
+                    }
+                }
+            }
+
+            // 添加选择分支按钮
+            if (GUILayout.Button("添加选择分支"))
+            {
+                AddChoiceComponentToLine();
+            }
+        }
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
+        {
+            if (GUILayout.Button("删除"))
+            {
+                // 删除当前对话行
+                if (
+                    EditorUtility.DisplayDialog(
+                        "确认删除",
+                        $"确定要删除对话行 '{GetEntityDisplayName(selectedEntity)}' 吗？",
+                        "删除",
+                        "取消"
+                    )
+                )
+                {
+                    // 获取父节点ID以便保持展开状态
+                    int? parentId = null;
+                    if (selectedEntity.HasComponent<Comp.Parent>())
+                    {
+                        var parentComp = selectedEntity.GetComponent<Comp.Parent>();
+                        parentId = parentComp.ParentId;
+                    }
+
+                    // 删除对话行
+                    DeleteEntityRecursive(selectedEntity);
 
                     // 保持父节点展开状态
-                    expandedNodes[parent.Id] = true;
+                    if (parentId.HasValue)
+                    {
+                        expandedNodes[parentId.Value] = true;
+                    }
 
-                    // 对于新创建的实体，展开它自己
-                    expandedNodes[newLine.Id] = true;
+                    // 清除选择
+                    selectedEntity = null;
 
                     RefreshTree();
                 }
-            }
-        }
-
-        if (GUILayout.Button("删除"))
-        {
-            // 删除当前对话行
-            if (
-                EditorUtility.DisplayDialog(
-                    "确认删除",
-                    $"确定要删除对话行 '{GetEntityDisplayName(selectedEntity)}' 吗？",
-                    "删除",
-                    "取消"
-                )
-            )
-            {
-                // 获取父节点ID以便保持展开状态
-                int? parentId = null;
-                if (selectedEntity.HasComponent<Comp.Parent>())
-                {
-                    var parentComp = selectedEntity.GetComponent<Comp.Parent>();
-                    parentId = parentComp.ParentId;
-                }
-
-                // 删除对话行
-                DeleteEntityRecursive(selectedEntity);
-
-                // 保持父节点展开状态
-                if (parentId.HasValue)
-                {
-                    expandedNodes[parentId.Value] = true;
-                }
-
-                // 清除选择
-                selectedEntity = null;
-
-                RefreshTree();
             }
         }
         EditorGUILayout.EndHorizontal();
@@ -1006,6 +1144,9 @@ public class ECSTreeEditorWindow : EditorWindow
 
         try
         {
+            // 获取父节点
+            var parent = entity.Parent();
+
             // 先获取所有要删除的实体（深度优先顺序）
             var entitiesToDelete = ECSFramework.Inst.TraverseDepthFirst(entity);
 
@@ -1015,11 +1156,84 @@ public class ECSTreeEditorWindow : EditorWindow
                 ECSFramework.Inst.RemoveEntity(entityToDelete.Id);
             }
 
+            // 重新排序父节点的所有子节点并更新本地化
+            if (parent != null)
+            {
+                ReorderAndUpdateLocalization(parent);
+            }
+
             Debug.Log($"已删除实体 ID: {entity.Id} 及其所有子节点");
         }
         catch (Exception ex)
         {
             Debug.LogError($"删除实体时发生错误: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 给当前选中的Line节点添加Choice组件
+    /// </summary>
+    private void AddChoiceComponentToLine()
+    {
+        if (selectedEntity == null)
+        {
+            EditorUtility.DisplayDialog("错误", "请先选择一个对话行节点", "确定");
+            return;
+        }
+
+        // 检查是否已经是Line类型
+        if (!selectedEntity.HasComponent<Comp.Localization>())
+        {
+            EditorUtility.DisplayDialog("错误", "选中的节点没有Localization组件", "确定");
+            return;
+        }
+
+        var locComp = selectedEntity.GetComponent<Comp.Localization>();
+        if (locComp.Type != Comp.Localization.NodeType.Line)
+        {
+            EditorUtility.DisplayDialog("错误", "只能给对话行节点添加选择分支", "确定");
+            return;
+        }
+
+        // 检查是否已经存在Choice组件
+        if (selectedEntity.HasComponent<Comp.Choice>())
+        {
+            if (
+                EditorUtility.DisplayDialog(
+                    "提示",
+                    "该节点已经存在选择分支组件，是否要替换？",
+                    "替换",
+                    "取消"
+                )
+            )
+            {
+                // 移除现有的Choice组件
+                selectedEntity.RemoveComponent<Comp.Choice>();
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        try
+        {
+            // 创建新的Choice组件并添加到实体
+            var choiceComponent = new Comp.Choice(Comp.SelectionType.Custom);
+            selectedEntity.AddComponent(choiceComponent);
+
+            // 刷新界面
+            RefreshTree();
+
+            // 自动选择新添加的Choice组件以便编辑
+            selectedComponentType = typeof(Comp.Choice);
+
+            Debug.Log($"已为对话行 ID: {selectedEntity.Id} 添加选择分支组件");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"添加Choice组件时发生错误: {ex.Message}");
+            EditorUtility.DisplayDialog("错误", $"添加选择分支失败: {ex.Message}", "确定");
         }
     }
 
@@ -1076,6 +1290,11 @@ public class ECSTreeEditorWindow : EditorWindow
                     entity1.HasComponent<Comp.Order>()
                         ? entity1.GetComponent<Comp.Order>().Number
                         : 0;
+                // 重新生成localization key
+                entity1
+                    .GetComponent<Comp.Localization>()
+                    .GenerateLocalizationKey(entity1, ECSFramework.Inst)
+                    .Forget();
             }
 
             if (entity2.HasComponent<Comp.Localization>())
@@ -1084,6 +1303,11 @@ public class ECSTreeEditorWindow : EditorWindow
                     entity2.HasComponent<Comp.Order>()
                         ? entity2.GetComponent<Comp.Order>().Number
                         : 0;
+                // 重新生成localization key
+                entity2
+                    .GetComponent<Comp.Localization>()
+                    .GenerateLocalizationKey(entity2, ECSFramework.Inst)
+                    .Forget();
             }
 
             return true;
@@ -1261,25 +1485,6 @@ public class ECSTreeEditorWindow : EditorWindow
                 "Formatted Label: " + order.FormattedLabel,
                 EditorStyles.helpBox
             );
-
-            // 添加预设按钮
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Set as Chapter"))
-            {
-                order.Number = order.Number;
-                order.Label = $"第{order.Number}章";
-            }
-            if (GUILayout.Button("Set as Episode"))
-            {
-                order.Number = order.Number;
-                order.Label = $"第{order.Number}节";
-            }
-            if (GUILayout.Button("Set as Line"))
-            {
-                order.Number = order.Number;
-                order.Label = $"{order.Number}.";
-            }
-            EditorGUILayout.EndHorizontal();
         }
         else if (component is Comp.Localization localization)
         {
@@ -1299,7 +1504,7 @@ public class ECSTreeEditorWindow : EditorWindow
             EditorGUILayout.Space();
             if (GUILayout.Button("Generate Localization Key"))
             {
-                localization.GenerateLocalizationKey(selectedEntity, ECSFramework.Inst);
+                localization.GenerateLocalizationKey(selectedEntity, ECSFramework.Inst).Forget();
             }
 
             EditorGUILayout.LabelField(
@@ -1312,6 +1517,151 @@ public class ECSTreeEditorWindow : EditorWindow
             EditorGUILayout.Space();
             root.RootName = EditorGUILayout.TextField("Root Name", root.RootName);
         }
+        else if (component is Comp.Choice choice)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Choice Component Editor", EditorStyles.boldLabel);
+
+            // 选择类型
+            choice.Type = (Comp.SelectionType)
+                EditorGUILayout.EnumPopup("Selection Type", choice.Type);
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Choice Options", EditorStyles.boldLabel);
+
+            // 显示当前选项列表
+            if (choice.Options.Count == 0)
+            {
+                EditorGUILayout.HelpBox("No choice options added", MessageType.Info);
+            }
+            else
+            {
+                for (int i = 0; i < choice.Options.Count; i++)
+                {
+                    var option = choice.Options[i];
+                    EditorGUILayout.BeginVertical("box");
+                    {
+                        EditorGUILayout.LabelField($"Option {i + 1}", EditorStyles.boldLabel);
+
+                        var targetEntity = ECSFramework.Inst.GetEntitySafe(option.TargetId);
+                        string targetDisplay =
+                            targetEntity != null
+                                ? GetEntityDisplayName(targetEntity)
+                                : $"ID: {option.TargetId} (Missing)";
+
+                        EditorGUILayout.LabelField("Target:", targetDisplay);
+
+                        // 显示文本编辑
+                        option.DisplayText = EditorGUILayout.TextField(
+                            "Display Text",
+                            option.DisplayText
+                        );
+
+                        // 本地化键编辑
+                        EditorGUILayout.BeginHorizontal();
+                        {
+                            option.LocalizationKey = EditorGUILayout.TextField(
+                                "Localization Key",
+                                option.LocalizationKey
+                            );
+
+                            if (GUILayout.Button("Auto", GUILayout.Width(50)))
+                            {
+                                // 自动生成本地化键
+                                if (
+                                    selectedEntity != null
+                                    && selectedEntity.HasComponent<Comp.Localization>()
+                                )
+                                {
+                                    var currentLoc =
+                                        selectedEntity.GetComponent<Comp.Localization>();
+                                    option.LocalizationKey = $"{currentLoc.ContextKey}_C{i + 1}";
+                                }
+                            }
+                        }
+                        EditorGUILayout.EndHorizontal();
+
+                        // 操作按钮
+                        EditorGUILayout.BeginHorizontal();
+                        {
+                            if (GUILayout.Button("Select Target"))
+                            {
+                                if (targetEntity != null)
+                                {
+                                    SelectEntity(targetEntity);
+                                }
+                            }
+
+                            if (GUILayout.Button("Use Target Text"))
+                            {
+                                if (
+                                    targetEntity != null
+                                    && targetEntity.HasComponent<Comp.Localization>()
+                                )
+                                {
+                                    var targetLoc = targetEntity.GetComponent<Comp.Localization>();
+                                    option.DisplayText = targetLoc.DefaultText;
+                                }
+                            }
+
+                            if (GUILayout.Button("Remove"))
+                            {
+                                choice.Options.RemoveAt(i);
+                                i--; // 调整索引
+                                GUI.changed = true;
+                            }
+                        }
+                        EditorGUILayout.EndHorizontal();
+                    }
+                    EditorGUILayout.EndVertical();
+                    EditorGUILayout.Space();
+                }
+            }
+
+            EditorGUILayout.Space();
+
+            // 添加选项的按钮
+            if (GUILayout.Button("Add Choice Option"))
+            {
+                ShowAddChoiceOptionDialog(choice);
+            }
+
+            // 批量添加兄弟节点作为选项
+            if (GUILayout.Button("Add All Siblings as Options"))
+            {
+                AddAllSiblingsAsOptions(choice);
+            }
+
+            // 自动生成本地化键
+            if (GUILayout.Button("Auto Generate Localization Keys"))
+            {
+                choice.GenerateLocalizationKeysForOptions(selectedEntity, ECSFramework.Inst);
+                GUI.changed = true;
+            }
+
+            // 清空所有选项
+            if (choice.Options.Count > 0 && GUILayout.Button("Clear All Options"))
+            {
+                if (
+                    EditorUtility.DisplayDialog(
+                        "Confirm Clear",
+                        "Clear all choice options?",
+                        "Yes",
+                        "No"
+                    )
+                )
+                {
+                    choice.Options.Clear();
+                    GUI.changed = true;
+                }
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(
+                $"Total Options: {choice.Options.Count}",
+                EditorStyles.helpBox
+            );
+        }
         else
         {
             EditorGUILayout.HelpBox(
@@ -1319,6 +1669,158 @@ public class ECSTreeEditorWindow : EditorWindow
                 MessageType.Info
             );
         }
+    }
+
+    /// <summary>
+    /// 显示添加选择选项的对话框
+    /// </summary>
+    private void ShowAddChoiceOptionDialog(Comp.Choice choice)
+    {
+        var availableEntities = Story.Inst.GetAvailableTargetEntities(selectedEntity);
+
+        if (availableEntities.Count == 0)
+        {
+            EditorUtility.DisplayDialog("Info", "No available target entities", "OK");
+            return;
+        }
+
+        GenericMenu menu = new GenericMenu();
+
+        foreach (var entity in availableEntities)
+        {
+            string menuText = GetEntityDisplayName(entity);
+            menu.AddItem(
+                new GUIContent(menuText),
+                false,
+                () =>
+                {
+                    // 获取目标实体的默认文本作为显示文本
+                    string displayText = string.Empty;
+                    if (entity.HasComponent<Comp.Localization>())
+                    {
+                        displayText = entity.GetComponent<Comp.Localization>().DefaultText;
+                    }
+
+                    choice.AddOption(entity.Id, displayText);
+                    GUI.changed = true;
+                    Debug.Log($"Added choice option: {menuText}");
+                }
+            );
+        }
+
+        menu.ShowAsContext();
+    }
+
+    /// <summary>
+    /// 添加所有兄弟节点作为选项
+    /// </summary>
+    private void AddAllSiblingsAsOptions(Comp.Choice choice)
+    {
+        if (selectedEntity == null)
+            return;
+
+        var siblings = Story
+            .Inst.GetSiblingsOrdered(selectedEntity.Id)
+            .Where(sibling => sibling.Id != selectedEntity.Id)
+            .ToList();
+
+        if (siblings.Count == 0)
+        {
+            EditorUtility.DisplayDialog("Info", "No siblings found", "OK");
+            return;
+        }
+
+        int addedCount = 0;
+        foreach (var sibling in siblings)
+        {
+            if (!choice.Options.Any(o => o.TargetId == sibling.Id))
+            {
+                string displayText = string.Empty;
+                if (sibling.HasComponent<Comp.Localization>())
+                {
+                    displayText = sibling.GetComponent<Comp.Localization>().DefaultText;
+                }
+
+                choice.AddOption(sibling.Id, displayText);
+                addedCount++;
+            }
+        }
+
+        // 自动生成本地化键
+        choice.GenerateLocalizationKeysForOptions(selectedEntity, ECSFramework.Inst);
+
+        GUI.changed = true;
+        Debug.Log($"Added {addedCount} siblings as options");
+    }
+
+    /// <summary>
+    /// 显示添加目标实体的对话框
+    /// </summary>
+    private void ShowAddTargetEntityDialog(Comp.Choice choice)
+    {
+        // 获取所有可用的实体（排除当前实体）
+        var allEntities = ECSFramework.Inst.GetAllEntities().ToList();
+
+        if (allEntities.Count == 0)
+        {
+            EditorUtility.DisplayDialog("Info", "No available entities to add", "OK");
+            return;
+        }
+
+        GenericMenu menu = new GenericMenu();
+
+        foreach (var entity in allEntities)
+        {
+            string menuText = GetEntityDisplayName(entity);
+            menu.AddItem(
+                new GUIContent(menuText),
+                false,
+                () =>
+                {
+                    if (!choice.TargetIds.Contains(entity.Id))
+                    {
+                        choice.TargetIds.Add(entity.Id);
+                        GUI.changed = true;
+                        Debug.Log($"Added target entity: {menuText}");
+                    }
+                }
+            );
+        }
+
+        menu.ShowAsContext();
+    }
+
+    /// <summary>
+    /// 添加所有兄弟节点作为目标
+    /// </summary>
+    private void AddAllSiblingsAsTargets(Comp.Choice choice)
+    {
+        if (selectedEntity == null)
+            return;
+
+        var siblings = Story
+            .Inst.GetSiblingsOrdered(selectedEntity.Id)
+            .Where(sibling => sibling.Id != selectedEntity.Id)
+            .ToList();
+
+        if (siblings.Count == 0)
+        {
+            EditorUtility.DisplayDialog("Info", "No siblings found", "OK");
+            return;
+        }
+
+        int addedCount = 0;
+        foreach (var sibling in siblings)
+        {
+            if (!choice.TargetIds.Contains(sibling.Id))
+            {
+                choice.TargetIds.Add(sibling.Id);
+                addedCount++;
+            }
+        }
+
+        GUI.changed = true;
+        Debug.Log($"Added {addedCount} siblings as targets");
     }
 
     private void DrawSplitters()

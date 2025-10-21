@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using Singleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -127,6 +128,9 @@ namespace GameCore
         {
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource?.Dispose();
+
+            DOTween.KillAll();
+            DOTween.Clear(true);
         }
     }
 

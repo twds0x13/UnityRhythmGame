@@ -17,17 +17,19 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 215e5b4d3a49a04488bed7c41d27634c
   m_SerializeEntries:
-  - m_GUID: 1349636b6b16051439ccd0cd98ef2913
+  - m_GUID: 109c37460a58ad047a1b969566ce829e
     m_Address: GameStory_en
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
+    - Preload
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 91d9607db6bc5f645b4cfa0c4e4c397f
-    m_Address: GameUserInterface_en
+  - m_GUID: c1adfd0bef7b5da4fb53541df9166615
+    m_Address: GameUI_en
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
+    - Preload
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 1
   m_Settings: {fileID: 11400000, guid: b3d816e51e3734c4ebb0ba369e1f70cc, type: 2}

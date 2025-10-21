@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 
 namespace ECS
 {
@@ -82,98 +85,158 @@ namespace ECS
         }
 
         /// <summary>
-        /// 跳转组件，定义节点间的跳转关系
+        /// 剧情选择组件，允许从当前节点跳转到多个目标节点之一
         /// </summary>
         [JsonObject(MemberSerialization.OptIn)]
-        public class Jump : IComponent
+        public class Choice : IComponent
         {
             [JsonProperty]
-            public List<int> AllowedTargetIds { get; set; } = new();
+            public List<ChoiceOption> Options { get; set; } = new();
 
             [JsonProperty]
-            public JumpCondition Condition { get; set; } = JumpCondition.Always;
-
-            [JsonProperty]
-            public string ConditionKey { get; set; } = "";
-
-            [JsonProperty]
-            public JumpType Type { get; set; } = JumpType.Custom;
+            public SelectionType Type { get; set; } = SelectionType.Custom;
 
             /// <summary>
-            /// 添加可跳转的目标
+            /// 获取所有目标ID的列表（兼容旧代码）
             /// </summary>
-            public void AddTarget(int targetId)
+            [JsonIgnore]
+            public List<int> TargetIds => Options.Select(o => o.TargetId).ToList();
+
+            /// <summary>
+            /// 添加选择选项
+            /// </summary>
+            public void AddOption(
+                int targetId,
+                string displayText = null,
+                string localizationKey = null
+            )
             {
-                if (!AllowedTargetIds.Contains(targetId))
+                var option = new ChoiceOption
                 {
-                    AllowedTargetIds.Add(targetId);
-                }
+                    TargetId = targetId,
+                    DisplayText = displayText,
+                    LocalizationKey = localizationKey,
+                };
+
+                Options.Add(option);
             }
 
             /// <summary>
-            /// 移除跳转目标
+            /// 移除选择选项
             /// </summary>
-            public void RemoveTarget(int targetId)
-            {
-                AllowedTargetIds.Remove(targetId);
-            }
+            public void RemoveOption(int targetId) =>
+                Options.RemoveAll(o => o.TargetId == targetId);
 
             /// <summary>
             /// 检查是否可以跳转到指定目标
             /// </summary>
-            public bool CanJumpTo(int targetId)
+            public bool CanJumpTo(int targetId) => Options.Any(o => o.TargetId == targetId);
+
+            /// <summary>
+            /// 获取选项的显示文本（优先使用本地化键）
+            /// </summary>
+            public string GetOptionDisplayText(int targetId, ECSFramework ecsManager)
             {
-                return AllowedTargetIds.Contains(targetId);
+                var option = Options.FirstOrDefault(o => o.TargetId == targetId);
+                if (option == null)
+                    return null;
+
+                // 优先使用本地化键
+                if (!string.IsNullOrEmpty(option.LocalizationKey))
+                {
+                    // 这里可以调用本地化系统获取翻译
+                    return option.LocalizationKey;
+                }
+
+                // 其次使用自定义显示文本
+                if (!string.IsNullOrEmpty(option.DisplayText))
+                {
+                    return option.DisplayText;
+                }
+
+                // 最后使用目标实体的默认文本
+                var targetEntity = ecsManager.GetEntitySafe(targetId);
+                if (targetEntity != null && targetEntity.HasComponent<Localization>())
+                {
+                    return targetEntity.GetComponent<Localization>().DefaultText;
+                }
+
+                return $"Option {targetId}";
+            }
+
+            /// <summary>
+            /// 自动为所有选项生成本地化键
+            /// </summary>
+            public void GenerateLocalizationKeysForOptions(
+                Entity currentEntity,
+                ECSFramework ecsManager
+            )
+            {
+                if (currentEntity == null || !currentEntity.HasComponent<Localization>())
+                    return;
+
+                var currentLoc = currentEntity.GetComponent<Localization>();
+
+                for (int i = 0; i < Options.Count; i++)
+                {
+                    var option = Options[i];
+                    var targetEntity = ecsManager.GetEntitySafe(option.TargetId);
+
+                    if (targetEntity != null && targetEntity.HasComponent<Localization>())
+                    {
+                        var targetLoc = targetEntity.GetComponent<Localization>();
+
+                        // 生成格式为 Cx_Ex_Lx_Cy 的本地化键
+                        option.LocalizationKey = $"{currentLoc.ContextKey}_C{i + 1}";
+                    }
+                }
             }
 
             [JsonConstructor]
-            private Jump() { }
+            private Choice() { }
 
-            public Jump(
-                JumpCondition condition = JumpCondition.Always,
-                JumpType type = JumpType.Custom
-            )
+            public Choice(SelectionType type = SelectionType.Custom)
             {
-                Condition = condition;
                 Type = type;
             }
 
-            /// <summary>
-            /// 创建默认顺序跳转（自动跳转到下一个兄弟节点）
-            /// </summary>
-            public static Jump CreateDefaultOrderJump()
+            public static Choice CreateChoice(List<int> targetIds)
             {
-                return new Jump(JumpCondition.Always, JumpType.DefaultOrder);
-            }
-
-            /// <summary>
-            /// 创建episode间跳转
-            /// </summary>
-            public static Jump CreateEpisodeJump()
-            {
-                return new Jump(JumpCondition.Always, JumpType.EpisodeTransition);
+                var choice = new Choice(SelectionType.Custom);
+                foreach (var targetId in targetIds)
+                {
+                    choice.AddOption(targetId);
+                }
+                return choice;
             }
         }
 
         /// <summary>
-        /// 跳转条件枚举
+        /// 选择选项
         /// </summary>
-        public enum JumpCondition
+        [JsonObject(MemberSerialization.OptIn)]
+        public class ChoiceOption
         {
-            Always, // 总是允许
-            Conditional, // 有条件跳转
-            Once, // 只能跳转一次
-            Locked, // 锁定状态，不能跳转
+            [JsonProperty]
+            public int TargetId { get; set; }
+
+            [JsonProperty]
+            public string DisplayText { get; set; }
+
+            [JsonProperty]
+            public string LocalizationKey { get; set; }
+
+            [JsonIgnore]
+            public Entity TargetEntity { get; set; }
         }
 
         /// <summary>
         /// 跳转类型枚举
         /// </summary>
-        public enum JumpType
+        public enum SelectionType
         {
-            Custom, // 自定义跳转
-            DefaultOrder, // 默认顺序跳转（按Order排序）
-            EpisodeTransition, // Episode间跳转
+            Null,
+            Custom, // 剧情分支
         }
 
         [JsonObject(MemberSerialization.OptIn)]
@@ -275,10 +338,14 @@ namespace ECS
         }
 
         [JsonObject(MemberSerialization.OptIn)]
-        public class Localization : IComponent
+        public class Localization : IComponent, IDisposable
         {
+            [JsonIgnore]
+            private CancellationTokenSource _cancellationTokenSource;
+
             public enum NodeType
             {
+                Null,
                 Chapter,
                 Episode,
                 Line,
@@ -287,7 +354,6 @@ namespace ECS
             [JsonProperty]
             public NodeType Type { get; set; }
 
-            // 仅供测试使用。你在过剧情的时候不应该看见 "请输入文宇..."
             [JsonProperty]
             public string DefaultText { get; set; } = "";
 
@@ -300,27 +366,30 @@ namespace ECS
             [JsonProperty]
             public string ContextKey { get; private set; } = "";
 
-            // 添加对 Order 组件的引用
-            [JsonIgnore]
-            public int OrderNumber
-            {
-                get { return Number; }
-            }
-
-            // 仅供开发者模式使用
-            public void GenerateLocalizationKey(Entity entity, ECSFramework ecsManager)
+            public async UniTask GenerateLocalizationKey(
+                Entity entity,
+                ECSFramework ecsManager,
+                CancellationToken cancellationToken = default
+            )
             {
                 if (entity == null || ecsManager == null)
                     return;
 
+                string previousContextKey = ContextKey;
+
+                // 取消之前的操作（如果有）
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(
+                    cancellationToken
+                );
+
                 switch (Type)
                 {
                     case NodeType.Chapter:
-                        ContextKey = $"C{OrderNumber}";
+                        ContextKey = $"C{Number}";
                         break;
 
                     case NodeType.Episode:
-                        // 获取父章节
                         if (entity.HasComponent<Parent>())
                         {
                             var parentComp = entity.GetComponent<Parent>();
@@ -330,14 +399,13 @@ namespace ECS
                                 if (parent != null && parent.HasComponent<Localization>())
                                 {
                                     var parentLoc = parent.GetComponent<Localization>();
-                                    ContextKey = $"{parentLoc.ContextKey}_E{OrderNumber}";
+                                    ContextKey = $"{parentLoc.ContextKey}_E{Number}";
                                 }
                             }
                         }
                         break;
 
                     case NodeType.Line:
-                        // 获取父小节
                         if (entity.HasComponent<Parent>())
                         {
                             var parentComp = entity.GetComponent<Parent>();
@@ -347,12 +415,61 @@ namespace ECS
                                 if (parent != null && parent.HasComponent<Localization>())
                                 {
                                     var parentLoc = parent.GetComponent<Localization>();
-                                    ContextKey = $"{parentLoc.ContextKey}_L{OrderNumber}";
+                                    ContextKey = $"{parentLoc.ContextKey}_L{Number}";
                                 }
                             }
                         }
                         break;
                 }
+
+#if UNITY_EDITOR
+                // 自动创建 Localization Table Entry
+                if (!string.IsNullOrEmpty(ContextKey) && ContextKey != previousContextKey)
+                {
+                    await CreateLocalizationEntryUniTaskAsync(
+                        ContextKey,
+                        _cancellationTokenSource.Token
+                    );
+                }
+#endif
+            }
+
+            /// <summary>
+            /// 使用 UniTask 在 GameStory 表中自动创建本地化条目
+            /// </summary>
+            private async UniTask<bool> CreateLocalizationEntryUniTaskAsync(
+                string key,
+                CancellationToken cancellationToken = default
+            )
+            {
+                try
+                {
+                    // 等待 Localization 系统初始化完成
+                    await LocalizationSettings.InitializationOperation.Task;
+
+                    Debug.LogWarning("自动创建本地化条目功能仅在编辑器模式下可用");
+                    return false;
+                }
+                catch (OperationCanceledException)
+                {
+                    Debug.Log($"创建本地化条目操作被取消: {key}");
+                    return false;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"创建本地化条目失败: {e.Message}");
+                    return false;
+                }
+            }
+
+            /// <summary>
+            /// 清理资源
+            /// </summary>
+            public void Dispose()
+            {
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource?.Dispose();
+                _cancellationTokenSource = null;
             }
 
             public static Localization CreateChapter(int number = 0, string defaultText = "")

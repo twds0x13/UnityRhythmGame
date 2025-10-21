@@ -1,0 +1,24 @@
+Key,Id,Shared Comments,Chinese (Simplified)(zh),Chinese (Simplified)(zh) Comments,English(en),English(en) Comments
+"BT_EXIT_GAME",1360190623744,"","退出游戏","","Exit Game",""
+"BT_JUMP_TO_GAME",4400016642048,"","开始游戏","","Start Game",""
+"BT_RETURN",275040292864,"","返回","","Return",""
+"BT_START_GAME",7208816640,"","开始游戏","","Start Game",""
+"BT_STORY",1101842468864,"","故事","","Story",""
+"BT_SWITCH_LANG",1224198705152,"","简体中文","","English",""
+"UI_GAME_ACCURACY",2455738634240,"","准确率 : {0} %","","Accuracy : {0} %",""
+"UI_GAME_MAX_SCORE",4040220856320,"","最大分数 : {0}","","Max Score : {0}",""
+"UI_GAME_SCORE",3882162704384,"","分数 : {0}","","Score : {0}",""
+"UI_GAME_TIMESCALE",2731447013376,"","时间流速 : {0} ","","Timescale : {0}",""
+"UI_MAIN_TITLE",898657800192,"","ChimoAi","","ChimoAi",""
+"UI_SELECT_MUSIC",449489784832,"","选择 :","","Choose :",""
+"UI_USER_GUIDE",2941728444416,"","按下按键打击音符 : 
+[{0}] [{1}] [{2}] [{3}]
+按下空格暂停游戏","","Press to hit notes: 
+[{0}] [{1}] [{2}] [{3}]
+Press Space to pause game",""
+"UI_SPEAKER",9276037648384,""," ","","Speaker :",""
+"UI_STORY",9574051336192,""," ",""," ",""
+"UI_CHAPTER",9888217288704,"","章节数 : {0}","","Chapter : {0}",""
+"UI_EPISODE",10056828309504,"","集数 : {0}","","Episode : {0}",""
+"UI_LINE",10190123290624,"","行数 : {0}","","Line : {0}",""
+"UI_NEXT_BG",13881140170752,"","测试背景","","Test Background",""

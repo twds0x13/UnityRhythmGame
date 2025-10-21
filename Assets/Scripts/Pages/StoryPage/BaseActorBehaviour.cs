@@ -6,9 +6,20 @@ using UnityEngine;
 public class BaseActorBehaviour : MonoBehaviour
 {
     [Ext.ReadOnlyInGame]
-    List<Sprite> Sprites;
+    public List<Sprite> Sprites;
 
-    protected enum Array { }
+    private readonly Dictionary<string, Sprite> _registeredSprites = new();
 
-    private Dictionary<string, Sprite> _registeredSprites;
+    public void Awake() { }
+
+    private void RegisterSprites()
+    {
+        foreach (var sprite in Sprites)
+        {
+            if (sprite != null && !_registeredSprites.ContainsKey(sprite.name))
+            {
+                _registeredSprites.Add(sprite.name, sprite);
+            }
+        }
+    }
 }

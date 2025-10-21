@@ -339,8 +339,11 @@ namespace NoteStateMachine
                 / AnimeMachine.DisappearTimeSpan;
 
             Note.Inst.transform.position =
-                new Vector3(0f, -0.25f * Page.Inst.GetPageRect().height * AnimeMachine.CurT, 0f)
-                + AnimeMachine.DisappearingPosCache;
+                new Vector3(
+                    0f,
+                    -0.25f * ResizeDetector.Inst.Rect.rect.height * AnimeMachine.CurT,
+                    0f
+                ) + AnimeMachine.DisappearingPosCache;
 
             Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.3f - 0.3f * AnimeMachine.CurT);
 

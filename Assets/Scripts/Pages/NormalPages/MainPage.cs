@@ -38,7 +38,7 @@ public class MainPage : BaseUIPage
 
     public void SwitchLanguage()
     {
-        if (LocalizationSettings.SelectedLocale.Identifier.Code == "zh-Hans")
+        if (LocalizationSettings.SelectedLocale.Identifier.Code == "zh")
         {
             LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.GetLocale(
                 "en"
@@ -47,7 +47,7 @@ public class MainPage : BaseUIPage
         else
         {
             LocalizationSettings.SelectedLocale = LocalizationSettings.AvailableLocales.GetLocale(
-                "zh-Hans"
+                "zh"
             );
         }
     }

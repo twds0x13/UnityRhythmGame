@@ -25,6 +25,8 @@ public class StoryPage : BaseUIPage
 
         CurrentBackGround = FindDisplayImage("StoryBackGround");
 
+        CurrentBackGround.sprite = StoryBackGrounds[0];
+
         // LogManager.Info(StoryBackGround.name, nameof(StoryPage));
     }
 

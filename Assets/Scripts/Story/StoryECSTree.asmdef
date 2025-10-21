@@ -4,7 +4,11 @@
     "references": [
         "Logger",
         "UniTask",
-        "Unifie"
+        "Unifie",
+        "Unity.Localization",
+        "Unity.ResourceManager",
+        "Unity.Localization.Editor",
+        "Unity.Addressables"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

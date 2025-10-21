@@ -1,238 +1,111 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
+using UnityEngine.Localization.Settings;
+using UnityEngine.Localization.Tables;
 
 namespace ECS
 {
     public partial class StoryTreeManager
     {
+        /// <summary>
+        /// 常量：本地化表名称
+        /// </summary>
+        public const string LOCALIZATION_TABLE = "GameStory";
+
+        /// <summary>
+        /// 常量：默认本地化上下文
+        /// </summary>
+        public const string LOCALIZATION_DEFAULT = "DEFAULT";
+
         // 获取所有章节
         public List<Entity> GetChapters()
         {
             return GetOrCreateRoot()
                 .Children()
-                .Where(e =>
-                    e.HasComponent<Comp.Localization>()
-                    && e.GetComponent<Comp.Localization>().Type
-                        == Comp.Localization.NodeType.Chapter
-                )
+                .Where(e => e.HasComponent<Comp.Localization>())
                 .ToList();
         }
 
-        // 获取该章节的所有小节
+        // 获取章节的所有小节
         public List<Entity> GetEpisodes(Entity chapter)
         {
-            if (chapter == null || !chapter.HasComponent<Comp.Localization>())
+            if (chapter == null)
                 return new List<Entity>();
-
-            return chapter
-                .Children()
-                .Where(e =>
-                    e.HasComponent<Comp.Localization>()
-                    && e.GetComponent<Comp.Localization>().Type
-                        == Comp.Localization.NodeType.Episode
-                )
-                .ToList();
+            return chapter.Children().Where(e => e.HasComponent<Comp.Localization>()).ToList();
         }
 
-        // 获取该小节的所有对话行
+        // 获取小节的所有对话行
         public List<Entity> GetLines(Entity episode)
         {
-            if (episode == null || !episode.HasComponent<Comp.Localization>())
+            if (episode == null)
                 return new List<Entity>();
-
-            return episode
-                .Children()
-                .Where(e =>
-                    e.HasComponent<Comp.Localization>()
-                    && e.GetComponent<Comp.Localization>().Type == Comp.Localization.NodeType.Line
-                )
-                .ToList();
+            return episode.Children().Where(e => e.HasComponent<Comp.Localization>()).ToList();
         }
 
-        /// <summary>
-        /// 批量创建章节，使用Order系统分配序号
-        /// </summary>
-        /// <param name="titles">章节标题数组</param>
-        /// <returns>创建的章节实体列表</returns>
+        // 批量创建章节
         public List<Entity> CreateChapters(params string[] titles)
         {
             var root = GetOrCreateRoot();
-            if (root == null)
-                throw new InvalidOperationException("无法创建章节，因为根节点不存在");
-
             var chapters = new List<Entity>();
-
-            // 获取起始序号
             int startOrder = GetNextOrderNumber(root);
 
             for (int i = 0; i < titles.Length; i++)
             {
-                // 使用自动分配的序号
-                var chapter = CreateChapter(startOrder + i, titles[i]);
-                chapters.Add(chapter);
+                chapters.Add(CreateChapter(startOrder + i, titles[i]));
             }
-
             return chapters;
         }
 
-        /// <summary>
-        /// 从当前最大序号开始批量创建小节，按顺序分配序号
-        /// </summary>
-        /// <param name="chapter">父章节实体</param>
-        /// <param name="titles">小节标题数组</param>
-        /// <returns>创建的小节实体列表</returns>
+        // 批量创建小节
         public List<Entity> CreateEpisodes(Entity chapter, params string[] titles)
         {
-            if (chapter == null)
-                throw new ArgumentException("必须提供有效的章节实体");
-
             var episodes = new List<Entity>();
-
-            // 获取起始序号 - 使用新的重载方法
             int startOrder = GetNextOrderNumber(chapter);
 
             for (int i = 0; i < titles.Length; i++)
             {
-                // 使用自动分配的序号
-                var episode = CreateEpisode(chapter, startOrder + i, titles[i]);
-                episodes.Add(episode);
+                episodes.Add(CreateEpisode(chapter, startOrder + i, titles[i]));
             }
-
             return episodes;
         }
 
-        /// <summary>
-        /// 从当前最大序号开始批量创建对话行，按顺序分配序号
-        /// </summary>
-        /// <param name="episode">父小节实体</param>
-        /// <param name="dialogues">对话内容数组</param>
-        /// <returns>创建的对话行实体列表</returns>
+        // 批量创建对话行
         public List<Entity> CreateLines(Entity episode, params string[] dialogues)
         {
-            if (episode == null)
-                throw new ArgumentException("必须提供有效的小节实体");
-
             var lines = new List<Entity>();
-
-            // 获取起始序号 - 使用新的重载方法
             int startOrder = GetNextOrderNumber(episode);
 
             for (int i = 0; i < dialogues.Length; i++)
             {
-                // 使用自动分配的序号
-                var line = CreateLine(episode, startOrder + i, dialogues[i]);
-                lines.Add(line);
+                lines.Add(CreateLine(episode, startOrder + i, dialogues[i]));
             }
-
             return lines;
         }
 
-        // 根据序号查找章节
-        public Entity FindChapterByNumber(int number)
+        // 根据序号查找实体
+        public Entity FindEntityByNumber(Entity parent, int number)
         {
-            foreach (var chapter in GetOrCreateRoot().Children())
-            {
-                int chapterNumber = GetEntityOrder(chapter);
-                if (chapterNumber == number)
-                {
-                    return chapter;
-                }
-            }
-
-            return null;
+            return parent.Children().FirstOrDefault(e => GetEntityOrder(e) == number);
         }
 
-        // 根据序号查找小节
-        public Entity FindEpisodeByNumber(Entity chapter, int number)
-        {
-            if (chapter == null)
-                return null;
-
-            var episodes = GetChildren(chapter.Id);
-
-            foreach (var episode in episodes)
-            {
-                int episodeNumber = GetEntityOrder(episode);
-                if (episodeNumber == number)
-                {
-                    return episode;
-                }
-            }
-
-            return null;
-        }
-
-        // 根据序号查找对白行
-        public Entity FindLineByNumber(Entity episode, int number)
-        {
-            if (episode == null)
-                return null;
-
-            var lines = GetChildren(episode.Id);
-
-            foreach (var line in lines)
-            {
-                int lineNumber = GetEntityOrder(line);
-                if (lineNumber == number)
-                {
-                    return line;
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// 注意！<paramref name="overwrite"/> 只在手动指定 <paramref name="number"/> 章节序号时才会生效。
-        /// 在启用 <paramref name="overwrite"/> 时，会强制要求 <paramref name="number"/> 不为 0。
-        /// </summary>
-        /// <param name="number"></param>
-        /// <param name="title"></param>
-        /// <param name="overwrite"></param>
-        /// <returns></returns>
+        // 创建章节
         public Entity CreateChapter(int number = 0, string title = null, bool overwrite = false)
         {
-            // 检查是否已存在相同序号的章节
-            var existingChapter = FindChapterByNumber(number);
-            if (existingChapter != null && !overwrite && number > 0)
-            {
-                LogManager.Log($"已存在序号为 {number} 的章节，跳过创建");
-                return existingChapter;
-            }
-
-            // 如果存在且允许覆盖，先删除现有章节
-            if (existingChapter != null && overwrite && number > 0)
-            {
-                LogManager.Log($"覆盖序号为 {number} 的现有章节");
-                _ecsFramework.RemoveEntity(existingChapter.Id);
-            }
-
-            if (number <= 0 && overwrite)
-            {
-                throw new ArgumentOutOfRangeException("启用覆盖时，章节序号必须大于 0");
-            }
+            var existing = FindEntityByNumber(GetOrCreateRoot(), number);
+            if (existing != null && !overwrite)
+                return existing;
+            if (existing != null && overwrite)
+                _ecsFramework.RemoveEntity(existing.Id);
 
             var chapter = _ecsFramework.CreateEntity();
-
-            // 添加 Localization 组件
-            var locComp = Comp.Localization.CreateChapter(number, title);
-            chapter.AddComponent(locComp);
-
-            // 添加 Order 组件
-            var orderComp = Comp.Order.CreateChapterOrder(number);
-            chapter.AddComponent(orderComp);
-
+            chapter.AddComponent(Comp.Localization.CreateChapter(number, title));
+            chapter.AddComponent(Comp.Order.CreateChapterOrder(number));
             _ecsFramework.SetParent(chapter, GetOrCreateRoot());
-
-            // 生成本地化键
-            locComp.GenerateLocalizationKey(chapter, _ecsFramework);
-
             return chapter;
         }
 
-        // 创建小节节点（添加重复检查和覆盖功能）
+        // 创建小节
         public Entity CreateEpisode(
             Entity chapter,
             int number = 0,
@@ -240,47 +113,20 @@ namespace ECS
             bool overwrite = false
         )
         {
-            if (chapter == null)
-                throw new ArgumentException("必须提供有效的章节实体");
-
-            // 检查章节是否有 Localization 组件
-            if (!chapter.HasComponent<Comp.Localization>())
-                throw new ArgumentException("章节实体未拥有本地化标签");
-
-            // 检查是否已存在相同序号的小节
-            var existingEpisode = FindEpisodeByNumber(chapter, number);
-            if (existingEpisode != null && !overwrite)
-            {
-                LogManager.Log($"在章节 {chapter.Id} 中已存在序号为 {number} 的小节，跳过创建");
-                return existingEpisode;
-            }
-
-            // 如果存在且允许覆盖，先删除现有小节
-            if (existingEpisode != null && overwrite)
-            {
-                LogManager.Log($"覆盖章节 {chapter.Id} 中序号为 {number} 的现有小节");
-                _ecsFramework.RemoveEntity(existingEpisode.Id);
-            }
+            var existing = FindEntityByNumber(chapter, number);
+            if (existing != null && !overwrite)
+                return existing;
+            if (existing != null && overwrite)
+                _ecsFramework.RemoveEntity(existing.Id);
 
             var episode = _ecsFramework.CreateEntity();
-
-            // 添加 Localization 组件
-            var locComp = Comp.Localization.CreateEpisode(number, title);
-            episode.AddComponent(locComp);
-
-            // 添加 Order 组件
-            var orderComp = Comp.Order.CreateEpisodeOrder(number);
-            episode.AddComponent(orderComp);
-
+            episode.AddComponent(Comp.Localization.CreateEpisode(number, title));
+            episode.AddComponent(Comp.Order.CreateEpisodeOrder(number));
             _ecsFramework.SetParent(episode, chapter);
-
-            // 生成本地化键
-            locComp.GenerateLocalizationKey(episode, _ecsFramework);
-
             return episode;
         }
 
-        // 创建对话行节点（添加重复检查和覆盖功能）
+        // 创建对话行
         public Entity CreateLine(
             Entity episode,
             int number = 0,
@@ -289,112 +135,156 @@ namespace ECS
             bool overwrite = false
         )
         {
-            if (episode == null)
-                throw new ArgumentException("必须提供有效的小节实体");
-
-            if (!episode.HasComponent<Comp.Localization>())
-                throw new ArgumentException("小节实体未拥有本地化标签");
-
-            // 检查是否已存在相同序号的对白行
-            var existingLine = FindLineByNumber(episode, number);
-            if (existingLine != null && !overwrite)
-            {
-                LogManager.Log($"在小节 {episode.Id} 中已存在序号为 {number} 的对白行，跳过创建");
-                return existingLine;
-            }
-
-            // 如果存在且允许覆盖，先删除现有对白行
-            if (existingLine != null && overwrite)
-            {
-                LogManager.Log($"覆盖小节 {episode.Id} 中序号为 {number} 的现有对白行");
-                _ecsFramework.RemoveEntity(existingLine.Id);
-            }
+            var existing = FindEntityByNumber(episode, number);
+            if (existing != null && !overwrite)
+                return existing;
+            if (existing != null && overwrite)
+                _ecsFramework.RemoveEntity(existing.Id);
 
             var line = _ecsFramework.CreateEntity();
-            var locComp = Comp.Localization.CreateLine(number, dialogue, speaker);
-            line.AddComponent(locComp);
-
-            // 添加 Order 组件
-            var orderComp = Comp.Order.CreateLineOrder(number);
-            line.AddComponent(orderComp);
-
+            line.AddComponent(Comp.Localization.CreateLine(number, dialogue, speaker));
+            line.AddComponent(Comp.Order.CreateLineOrder(number));
             _ecsFramework.SetParent(line, episode);
-
-            // 生成本地化键
-            locComp.GenerateLocalizationKey(line, _ecsFramework);
-
             return line;
         }
 
-        /// <summary>
-        /// 自动分配章节序号时不会进行重复检查和覆盖。
-        /// </summary>
-        /// <param name="title"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        // 创建章节节点（自动分配序号）
-        public Entity CreateChapter(string title = "")
+        // 自动序号创建方法
+        public Entity CreateChapter(string title = "") =>
+            CreateChapter(GetNextOrderNumber(GetOrCreateRoot()), title);
+
+        public Entity CreateEpisode(Entity chapter, string title = "") =>
+            CreateEpisode(chapter, GetNextOrderNumber(chapter), title);
+
+        public Entity CreateLine(Entity episode, string dialogue = "", string speaker = "") =>
+            CreateLine(episode, GetNextOrderNumber(episode), dialogue, speaker);
+
+        // 获取本地化文本
+        public string GetLocalizedText(Entity entity, bool fallbackToDefault = true)
         {
-            var root = GetOrCreateRoot();
-
-            if (root == null)
-                throw new InvalidOperationException("无法创建章节，因为根节点不存在");
-
-            int nextNumber = GetNextOrderNumber(root.Id);
-            return CreateChapter(nextNumber, title);
-        }
-
-        // 创建小节节点（自动分配序号）
-        public Entity CreateEpisode(Entity chapter, string title = "")
-        {
-            if (chapter == null)
-                throw new ArgumentException("必须提供有效的章节实体");
-
-            int nextNumber = GetNextOrderNumber(chapter.Id);
-            return CreateEpisode(chapter, nextNumber, title);
-        }
-
-        // 创建对话行节点（自动分配序号）
-        public Entity CreateLine(Entity episode, string dialogue = "", string speaker = "")
-        {
-            if (episode == null)
-                throw new ArgumentException("必须提供有效的小节实体");
-
-            int nextNumber = GetNextOrderNumber(episode.Id);
-            return CreateLine(episode, nextNumber, dialogue, speaker);
-        }
-
-        // 获取节点的本地化键
-        public string GetLocalizationKey(Entity entity)
-        {
-            if (entity == null || !entity.HasComponent<Comp.Localization>())
+            if (entity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
                 return "";
 
-            var locComp = entity.GetComponent<Comp.Localization>();
-            return locComp.ContextKey;
+            string text = QueryLocalizationTable(loc.ContextKey);
+            return !string.IsNullOrEmpty(text)
+                ? text
+                : (fallbackToDefault ? loc.DefaultText ?? "" : "");
         }
 
-        // 更新节点后重新生成本地化键（仅在开发者模式下）
-        public void UpdateLocalizationKey(Entity entity)
+        // 获取格式化对话
+        public string GetFormattedDialogue(Entity lineEntity)
         {
-            if (entity == null || !entity.HasComponent<Comp.Localization>())
-                return;
+            if (lineEntity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
+                return "";
 
-            var locComp = entity.GetComponent<Comp.Localization>();
-            locComp.GenerateLocalizationKey(entity, _ecsFramework);
+            string speaker = GetSpeakerText(lineEntity, false);
+            string dialogue = GetLocalizedText(lineEntity);
+            return string.IsNullOrEmpty(speaker) ? dialogue : $"{speaker}: {dialogue}";
         }
 
-        // 更新所有本地化键
-        public void UpdateAllLocalizationKeys(Action<Entity, Comp.Localization> updateAction = null)
+        // 获取说话者文本
+        public string GetSpeakerText(Entity entity, bool fallbackToDefault = true)
         {
-            foreach (var entity in _ecsFramework.GetAllEntities())
+            if (entity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
+                return "";
+
+            string speaker = QueryLocalizationTable(loc.SpeakerKey);
+            return !string.IsNullOrEmpty(speaker)
+                ? speaker
+                : (fallbackToDefault ? loc.SpeakerKey ?? "" : "");
+        }
+
+        // 修复的本地化查询方法
+        private string QueryLocalizationTable(string key)
+        {
+            if (string.IsNullOrEmpty(key) || LocalizationSettings.StringDatabase == null)
+                return null;
+
+            try
             {
-                if (entity.HasComponent<Comp.Localization>())
-                {
-                    var locComp = entity.GetComponent<Comp.Localization>();
-                    updateAction?.Invoke(entity, locComp);
-                }
+                // 使用正确的参数调用GetLocalizedString
+                return LocalizationSettings.StringDatabase.GetLocalizedString(
+                    LOCALIZATION_TABLE,
+                    key
+                );
+            }
+            catch (Exception ex)
+            {
+                LogManager.Warning($"查询本地化键 '{key}' 时出错: {ex.Message}");
+                return null;
             }
         }
+
+        // 批量获取文本
+        public Dictionary<int, string> GetLocalizedTexts(
+            List<Entity> entities,
+            bool fallbackToDefault = true
+        )
+        {
+            return entities
+                .Where(e => e != null)
+                .ToDictionary(e => e.Id, e => GetLocalizedText(e, fallbackToDefault));
+        }
+
+        // 获取实体对应的 Localization Entry
+        public StringTableEntry GetLocalizationEntry(Entity entity)
+        {
+            if (entity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
+                return null;
+
+            return GetLocalizationEntry(loc.ContextKey);
+        }
+
+        public string GetContextKey(Entity entity)
+        {
+            if (entity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
+                return null;
+
+            return loc.ContextKey;
+        }
+
+        // 获取实体的 SpeakerKey
+        public string GetSpeakerKey(Entity entity)
+        {
+            if (entity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
+                return null;
+
+            return loc.SpeakerKey;
+        }
+
+        // 根据键获取 Localization Entry
+        public StringTableEntry GetLocalizationEntry(string key)
+        {
+            if (string.IsNullOrEmpty(key) || LocalizationSettings.StringDatabase == null)
+                return null;
+
+            try
+            {
+                // 获取 GameStory 表的 Entry
+                return LocalizationSettings
+                    .StringDatabase.GetTableEntry(LOCALIZATION_TABLE, key)
+                    .Entry;
+            }
+            catch (Exception ex)
+            {
+                LogManager.Warning($"获取本地化条目 '{key}' 时出错: {ex.Message}");
+                return null;
+            }
+        }
+
+        // 获取说话者对应的 Localization Entry
+        public StringTableEntry GetSpeakerEntry(Entity entity)
+        {
+            if (entity?.GetComponent<Comp.Localization>() is not Comp.Localization loc)
+                return null;
+
+            if (string.IsNullOrEmpty(loc.SpeakerKey))
+                return null;
+
+            return GetLocalizationEntry(loc.SpeakerKey);
+        }
+
+        // 检查本地化条目是否存在
+        public bool HasLocalizationEntry(string key) =>
+            !string.IsNullOrEmpty(QueryLocalizationTable(key));
     }
 }

@@ -17,14 +17,13 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 05ff82a010ed11548b640c0e4f00a95d
   m_SerializeEntries:
-  - m_GUID: 2f4247aecf1ebcf47b389725d439d571
-    m_Address: Assets/Locallization/Locales/Simplified Chinese/Simplified Chinese
-      Shared Data.asset
+  - m_GUID: 1b773c2c7d134ea468d44075385436a5
+    m_Address: Assets/Locallization/Tables/GameStory/GameStory Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 654cbddf8af8b464a9dd8a57a95c513a
-    m_Address: Assets/Locallization/Tables/Story/Game Story Shared Data.asset
+  - m_GUID: 60009ce294940704bad003e22c33f832
+    m_Address: Assets/Locallization/Tables/GameUI/GameUI Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

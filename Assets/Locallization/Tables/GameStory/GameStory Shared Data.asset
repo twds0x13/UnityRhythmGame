@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: GameStory Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: GameStory
+  m_TableCollectionNameGuidString: 1b773c2c7d134ea468d44075385436a5
+  m_Entries:
+  - m_Id: 977511289573376
+    m_Key: MAIN
+    m_Metadata:
+      m_Items: []
+  - m_Id: 138054324224
+    m_Key: DEFAULT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9603764224
+    m_Key: C1_E1_L1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579602391040
+    m_Key: C1_E1_L2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579602391041
+    m_Key: C1_E1_L3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579606585344
+    m_Key: C1_E1_L4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579606585345
+    m_Key: C1_E1_L5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579606585346
+    m_Key: C1_E1_L6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579606585347
+    m_Key: C1_E1_L7
+    m_Metadata:
+      m_Items: []
+  - m_Id: 3579606585348
+    m_Key: C1_E1_L8
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008192
+    m_Key: C1_E1_L9
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008193
+    m_Key: C1_E1_L10
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008194
+    m_Key: C1_E1_L11
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008195
+    m_Key: C1_E1_L12
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008196
+    m_Key: C1_E1_L13
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008197
+    m_Key: C1_E1_L14
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008198
+    m_Key: C1_E1_L15
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008199
+    m_Key: C1_E1_L16
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008200
+    m_Key: C1_E1_L17
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008201
+    m_Key: C1_E1_L18
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12546240008202
+    m_Key: C1_E1_L19
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13492827312128
+    m_Key: C1_E1_L19_C1
+    m_Metadata:
+      m_Items:
+      - rid: 7457109124536074244
+  - m_Id: 13492827312129
+    m_Key: C1_E1_L19_C2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029606838272
+    m_Key: C1_E2_L1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029632004096
+    m_Key: C1_E2_L2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029632004097
+    m_Key: C1_E2_L3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198400
+    m_Key: C1_E2_L4
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198401
+    m_Key: C1_E2_L5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198402
+    m_Key: C1_E2_L6
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198403
+    m_Key: C1_E2_L7
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198404
+    m_Key: C1_E2_L8
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198405
+    m_Key: C1_E2_L9
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198406
+    m_Key: C1_E2_L10
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198407
+    m_Key: C1_E2_L11
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198408
+    m_Key: C1_E2_L12
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198409
+    m_Key: C1_E2_L13
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198410
+    m_Key: C1_E2_L14
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198411
+    m_Key: C1_E2_L14_C1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1029029636198412
+    m_Key: C1_E2_L14_C2
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 7457109124536074242
+  references:
+    version: 2
+    RefIds:
+    - rid: 7457109124536074242
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1760198025699
+    - rid: 7457109124536074244
+      type: {class: Comment, ns: UnityEngine.Localization.Metadata, asm: Unity.Localization}
+      data:
+        m_CommentText: Choice

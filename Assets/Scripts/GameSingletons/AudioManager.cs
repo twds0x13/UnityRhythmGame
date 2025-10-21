@@ -106,7 +106,8 @@ namespace AudioNS
 
                     LogManager.Log(
                         $"加载时预热源 {source.name} , 预热片段 {dummyClip.name}",
-                        nameof(AudioManager)
+                        nameof(AudioManager),
+                        false
                     );
                 }
             }

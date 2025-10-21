@@ -1,17 +1,145 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static ECS.Comp;
+using static ECS.Comp.Localization;
 
 namespace ECS
 {
+    public partial class StoryTreeManager
+    {
+        /// <summary>
+        /// 获取实体的显示名称（用于日志）
+        /// </summary>
+        private string GetEntityDisplayName(Entity entity)
+        {
+            if (entity == null)
+                return "null";
+
+            var order = entity.GetComponent<Order>();
+            var localization = entity.GetComponent<Localization>();
+
+            if (order != null && !string.IsNullOrEmpty(order.FormattedLabel))
+                return order.FormattedLabel;
+
+            if (localization != null && !string.IsNullOrEmpty(localization.DefaultText))
+                return localization.DefaultText.Length > 20
+                    ? localization.DefaultText.Substring(0, 20) + "..."
+                    : localization.DefaultText;
+
+            return $"实体 {entity.Id}";
+        }
+
+        /// <summary>
+        /// 快速开始剧情 - 创建指针并移动到默认开始位置
+        /// </summary>
+        public StoryPointer StartStory()
+        {
+            var pointer = GetDefaultStartPointer();
+            if (pointer != null && pointer.IsValid)
+            {
+                LogManager.Log($"剧情开始: {pointer.GetFormattedPath()}");
+            }
+            return pointer;
+        }
+
+        public StoryPointer CreatePointer(Entity startEntity = null)
+        {
+            if (_rootEntity == null)
+            {
+                _rootEntity = GetOrCreateRoot();
+            }
+
+            return new StoryPointer(_ecsFramework, startEntity ?? _rootEntity, true);
+        }
+
+        /// <summary>
+        /// 获取默认开始位置（第一章第一小节第一行）
+        /// </summary>
+        /// <returns>指向默认开始位置的指针，如果找不到则返回null</returns>
+        public StoryPointer GetDefaultStartPointer()
+        {
+            try
+            {
+                var root = GetOrCreateRoot();
+                if (root == null || !root.HasComponent<Children>())
+                {
+                    LogManager.Warning("根节点没有子节点，无法找到默认开始位置");
+                    return CreatePointer(root);
+                }
+
+                // 获取第一个章节（按Order排序）
+                var firstChapter = GetFirstChildByOrder(root);
+                if (firstChapter == null)
+                {
+                    LogManager.Warning("没有找到任何章节");
+                    return CreatePointer(root);
+                }
+
+                // 获取第一个小节
+                var firstEpisode = GetFirstChildByOrder(firstChapter);
+                if (firstEpisode == null)
+                {
+                    LogManager.Warning($"章节 {GetEntityDisplayName(firstChapter)} 没有小节");
+                    return CreatePointer(firstChapter);
+                }
+
+                // 获取第一行
+                var firstLine = GetFirstChildByOrder(firstEpisode);
+                if (firstLine == null)
+                {
+                    LogManager.Warning($"小节 {GetEntityDisplayName(firstEpisode)} 没有对话行");
+                    return CreatePointer(firstEpisode);
+                }
+
+                var pointer = CreatePointer(firstLine);
+                LogManager.Log($"默认开始位置: {pointer.GetFormattedPath()}");
+                return pointer;
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"获取默认开始位置时出错: {ex.Message}");
+                return CreatePointer();
+            }
+        }
+    }
+
     /// <summary>
-    /// 剧情遍历指针，提供节点导航和组件扫描功能
+    /// 剧情遍历指针，提供节点导航和组件扫描功能，支持事件回调
     /// </summary>
     public class StoryPointer
     {
         private Entity _currentEntity;
         private readonly ECSFramework _ecsFramework;
         private readonly Stack<Entity> _history = new Stack<Entity>();
+
+        // 位置信息
+        private NodeType _currentNodeType = NodeType.Null;
+        private int _chapterNumber = 0;
+        private int _episodeNumber = 0;
+        private int _lineNumber = 0;
+
+        // 选择系统状态
+        private bool _isChoiceBlocked = false;
+        private Choice _currentChoice = null;
+
+        // 事件回调系统
+        public event Action<NodeType> OnNodeTypeChange; // 暂时没有其他组件使用
+
+        private event Action<int, int, int> _onPositionChange;
+        private event Action _onChoiceEncounter;
+        private event Action _onChoiceSelect;
+
+        #region 公共属性
+
+        public NodeType NodeType
+        {
+            get
+            {
+                var loc = _currentEntity?.GetComponent<Localization>();
+                return loc?.Type ?? NodeType.Null;
+            }
+        }
 
         /// <summary>
         /// 当前指向的实体
@@ -24,48 +152,82 @@ namespace ECS
         public int CurrentId => _currentEntity?.Id ?? -1;
 
         /// <summary>
-        /// 是否有历史记录（可以返回）
+        /// 当前节点类型
         /// </summary>
-        public bool HasHistory => _history.Count > 0;
+        public NodeType CurrentNodeType =>
+            _currentEntity != null ? _currentNodeType : NodeType.Null;
+
+        /// <summary>
+        /// 当前章节编号
+        /// </summary>
+        public int ChapterNumber => _currentEntity != null ? _chapterNumber : 0;
+
+        /// <summary>
+        /// 当前集数编号
+        /// </summary>
+        public int EpisodeNumber => _currentEntity != null ? _episodeNumber : 0;
+
+        /// <summary>
+        /// 当前行数编号
+        /// </summary>
+        public int LineNumber => _currentEntity != null ? _lineNumber : 0;
 
         /// <summary>
         /// 是否指向有效实体
         /// </summary>
         public bool IsValid => _currentEntity != null;
 
-        public StoryPointer(ECSFramework ecsFramework, Entity startEntity = null)
+        /// <summary>
+        /// 当前是否处于选择阻塞状态
+        /// </summary>
+        public bool ChoiceBlocked => _isChoiceBlocked;
+
+        /// <summary>
+        /// 获取当前的选择组件（如果有）
+        /// </summary>
+        public List<ChoiceOption> ChoiceOptions => _currentChoice.Options;
+
+        #endregion
+
+        public StoryPointer(
+            ECSFramework ecsFramework,
+            Entity startEntity = null,
+            bool output = false
+        )
         {
             _ecsFramework = ecsFramework ?? throw new ArgumentNullException(nameof(ecsFramework));
             _currentEntity = startEntity;
+
+            if (startEntity != null)
+            {
+                LogManager.Log(
+                    $"指针初始化，起始实体ID: {startEntity.Id}",
+                    nameof(StoryPointer),
+                    output
+                );
+
+                UpdatePositionInfoAndNotify(output);
+            }
         }
 
-        /// <summary>
-        /// 移动到指定实体
-        /// </summary>
-        public bool MoveTo(int entityId)
-        {
-            var target = _ecsFramework.GetEntitySafe(entityId);
-            if (target != null)
-            {
-                _history.Push(_currentEntity);
-                _currentEntity = target;
-                return true;
-            }
-            return false;
-        }
+        #region 核心导航方法
 
         /// <summary>
-        /// 移动到指定实体（带历史记录）
+        /// 智能下一步 - 自动处理跳转逻辑和顺序导航
         /// </summary>
-        public bool MoveToWithHistory(Entity entity)
+        public bool Next()
         {
-            if (entity != null)
+            if (_currentEntity == null)
+                return false;
+
+            // 如果处于选择阻塞状态，不允许自动前进
+            if (_isChoiceBlocked)
             {
-                _history.Push(_currentEntity);
-                _currentEntity = entity;
-                return true;
+                LogManager.Warning("当前处于选择阻塞状态，请先做出选择");
+                return false;
             }
-            return false;
+
+            return TryNavigateByOrder();
         }
 
         /// <summary>
@@ -76,10 +238,289 @@ namespace ECS
             if (_history.Count > 0)
             {
                 _currentEntity = _history.Pop();
+
+                ClearChoiceState();
+                UpdatePositionInfoAndNotify();
                 return true;
             }
             return false;
         }
+
+        /// <summary>
+        /// 移动到指定实体
+        /// </summary>
+        public bool MoveTo(int entityId, bool output = true)
+        {
+            var target = _ecsFramework.GetEntitySafe(entityId);
+            if (target != null)
+            {
+                _history.Push(_currentEntity);
+                _currentEntity = target;
+                ClearChoiceState();
+                UpdatePositionInfoAndNotify(output);
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+
+        #region 选择系统
+
+        /// <summary>
+        /// 做出选择并跳转到目标节点
+        /// </summary>
+        /// <param name="option">选择的选项</param>
+        /// <returns>是否成功跳转</returns>
+        public bool Choice(ChoiceOption option)
+        {
+            if (option == null)
+            {
+                LogManager.Error("选择选项不能为null");
+                return false;
+            }
+
+            if (!_isChoiceBlocked || _currentChoice == null)
+            {
+                LogManager.Warning("当前不在选择状态，无法做出选择");
+                return false;
+            }
+
+            // 验证选项是否有效
+            if (!_currentChoice.CanJumpTo(option.TargetId))
+            {
+                LogManager.Error($"无效的选择选项，目标ID {option.TargetId} 不在选项中");
+                return false;
+            }
+
+            // 获取目标实体
+            var targetEntity = _ecsFramework.GetEntitySafe(option.TargetId);
+            if (targetEntity == null)
+            {
+                LogManager.Error($"选择的目标实体不存在: {option.TargetId}");
+                return false;
+            }
+
+            LogManager.Log($"做出选择: {option.DisplayText} -> 目标 {option.TargetId}");
+
+            // 触发选择完成事件
+            TriggerChoiceSelected();
+
+            // 跳转到目标节点
+            bool success = MoveToWithHistory(targetEntity);
+            if (success)
+            {
+                // 清除选择状态
+                ClearChoiceState();
+            }
+
+            return success;
+        }
+
+        /// <summary>
+        /// 通过选项索引做出选择
+        /// </summary>
+        /// <param name="optionIndex">选项索引（从0开始）</param>
+        /// <returns>是否成功跳转</returns>
+        public bool Choice(int optionIndex)
+        {
+            if (!_isChoiceBlocked || _currentChoice == null)
+            {
+                LogManager.Warning("当前不在选择状态，无法做出选择");
+                return false;
+            }
+
+            if (optionIndex < 0 || optionIndex >= _currentChoice.Options.Count)
+            {
+                LogManager.Error(
+                    $"选项索引越界: {optionIndex}，有效范围 [0, {_currentChoice.Options.Count - 1}]"
+                );
+                return false;
+            }
+
+            var option = _currentChoice.Options[optionIndex];
+            return Choice(option);
+        }
+
+        /// <summary>
+        /// 通过目标ID做出选择
+        /// </summary>
+        /// <param name="targetId">目标实体ID</param>
+        /// <returns>是否成功跳转</returns>
+        public bool ChoiceByTargetId(int targetId)
+        {
+            if (!_isChoiceBlocked || _currentChoice == null)
+            {
+                LogManager.Warning("当前不在选择状态，无法做出选择");
+                return false;
+            }
+
+            var option = _currentChoice.Options.FirstOrDefault(o => o.TargetId == targetId);
+            if (option == null)
+            {
+                LogManager.Error($"未找到目标ID为 {targetId} 的选项");
+                return false;
+            }
+
+            return Choice(option);
+        }
+
+        /// <summary>
+        /// 自动选择第一个选项（用于测试或默认行为）
+        /// </summary>
+        /// <returns>是否成功跳转</returns>
+        public bool AutoChoiceFirst()
+        {
+            if (!_isChoiceBlocked || _currentChoice == null)
+            {
+                LogManager.Warning("当前不在选择状态，无法自动选择");
+                return false;
+            }
+
+            if (_currentChoice.Options.Count == 0)
+            {
+                LogManager.Error("没有可用的选项");
+                return false;
+            }
+
+            LogManager.Log("自动选择第一个选项");
+            return Choice(0);
+        }
+
+        /// <summary>
+        /// 清除选择状态
+        /// </summary>
+        private void ClearChoiceState()
+        {
+            _isChoiceBlocked = false;
+            _currentChoice = null;
+        }
+
+        /// <summary>
+        /// 检查并设置选择状态
+        /// </summary>
+        private void CheckAndSetChoiceState()
+        {
+            if (_currentEntity?.HasComponent<Choice>() == true)
+            {
+                var choice = _currentEntity.GetComponent<Choice>();
+                if (choice != null && choice.Options.Count > 0)
+                {
+                    _isChoiceBlocked = true;
+                    _currentChoice = choice;
+                    LogManager.Log($"进入选择阻塞状态，选项数量: {choice.Options.Count}");
+
+                    // 触发选择遇到事件
+                    TriggerChoiceEncountered(choice);
+                }
+            }
+            else
+            {
+                ClearChoiceState();
+            }
+        }
+
+        #endregion
+
+        #region 事件管理系统
+
+        /// <summary>
+        /// 触发位置变化事件
+        /// </summary>
+        private void TriggerPositionChanged()
+        {
+            try
+            {
+                _onPositionChange?.Invoke(_chapterNumber, _episodeNumber, _lineNumber);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"触发位置变化事件时出错: {ex.Message}", nameof(StoryPointer));
+            }
+        }
+
+        /// <summary>
+        /// 触发选择组件事件
+        /// </summary>
+        private void TriggerChoiceEncountered(Choice choice)
+        {
+            _onChoiceEncounter?.Invoke();
+            LogManager.Info($"检测到选择组件", nameof(StoryPointer));
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        private void TriggerChoiceSelected()
+        {
+            _onChoiceSelect?.Invoke();
+            LogManager.Info($"选择已完成", nameof(StoryPointer));
+        }
+
+        /// <summary>
+        /// 触发节点类型变化事件
+        /// </summary>
+        private void TriggerNodeTypeChanged()
+        {
+            try
+            {
+                OnNodeTypeChange?.Invoke(_currentNodeType);
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"触发节点类型变化事件时出错: {ex.Message}", nameof(StoryPointer));
+            }
+        }
+
+        /// <summary>
+        /// 手动触发当前位置事件（用于外部强制更新）
+        /// </summary>
+        public void TriggerCurrentEvents()
+        {
+            UpdatePositionInfoAndNotify();
+        }
+
+        /// <summary>
+        /// 安全地添加位置变化监听器（避免重复订阅）
+        /// </summary>
+        public void PositionChange(Action<int, int, int> handler)
+        {
+            _onPositionChange -= handler;
+            _onPositionChange += handler;
+        }
+
+        /// <summary>
+        /// 安全地添加选择组件监听器（避免重复订阅）
+        /// </summary>
+        public void ChoiceEncounter(Action handler)
+        {
+            _onChoiceEncounter -= handler;
+            _onChoiceEncounter += handler;
+        }
+
+        /// <summary>
+        /// 安全地添加选择完成监听器（避免重复订阅）
+        /// </summary>
+        public void ChoiceSelect(Action handler)
+        {
+            _onChoiceSelect -= handler;
+            _onChoiceSelect += handler;
+        }
+
+        /// <summary>
+        /// 清除所有事件订阅
+        /// </summary>
+        public void ClearAllEvents()
+        {
+            _onPositionChange = null;
+            _onChoiceEncounter = null;
+            _onChoiceSelect = null;
+            OnNodeTypeChange = null;
+        }
+
+        #endregion
+
+        #region 实用方法
 
         /// <summary>
         /// 清空历史记录
@@ -87,19 +528,6 @@ namespace ECS
         public void ClearHistory()
         {
             _history.Clear();
-        }
-
-        /// <summary>
-        /// 快速移动到默认开始位置（第一章第一小节第一行）
-        /// </summary>
-        public bool MoveToDefaultStart()
-        {
-            var defaultStart = StoryTreeManager.Inst.GetDefaultStartPointer();
-            if (defaultStart != null && defaultStart.IsValid)
-            {
-                return MoveToWithHistory(defaultStart.Current);
-            }
-            return false;
         }
 
         /// <summary>
@@ -112,6 +540,7 @@ namespace ECS
             {
                 ClearHistory();
                 _currentEntity = defaultStart.Current;
+                UpdatePositionInfoAndNotify();
                 LogManager.Log($"已重置到默认开始位置: {GetFormattedPath()}");
             }
         }
@@ -125,288 +554,12 @@ namespace ECS
             ClearHistory();
         }
 
-        #region 树状结构导航
-
-        /// <summary>
-        /// 移动到父节点
-        /// </summary>
-        public bool MoveToParent()
-        {
-            if (_currentEntity?.HasComponent<Comp.Parent>() == true)
-            {
-                var parentComp = _currentEntity.GetComponent<Comp.Parent>();
-                if (parentComp.ParentId.HasValue)
-                {
-                    return MoveTo(parentComp.ParentId.Value);
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 移动到第一个子节点
-        /// </summary>
-        public bool MoveToFirstChild()
-        {
-            if (_currentEntity?.HasComponent<Comp.Children>() == true)
-            {
-                var childrenComp = _currentEntity.GetComponent<Comp.Children>();
-                if (childrenComp.ChildrenEntities.Count > 0)
-                {
-                    return MoveTo(childrenComp.ChildrenEntities[0].Id);
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 移动到指定索引的子节点
-        /// </summary>
-        public bool MoveToChildAt(int index)
-        {
-            if (_currentEntity?.HasComponent<Comp.Children>() == true)
-            {
-                var childrenComp = _currentEntity.GetComponent<Comp.Children>();
-                if (index >= 0 && index < childrenComp.ChildrenEntities.Count)
-                {
-                    return MoveTo(childrenComp.ChildrenEntities[index].Id);
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 移动到下一个兄弟节点
-        /// </summary>
-        public bool MoveToNextSibling()
-        {
-            if (_currentEntity == null)
-                return false;
-
-            // 获取父节点
-            if (!MoveToParent())
-                return false;
-
-            var parent = _currentEntity;
-            if (!parent.HasComponent<Comp.Children>())
-                return false;
-
-            var childrenComp = parent.GetComponent<Comp.Children>();
-            var children = childrenComp.ChildrenEntities;
-
-            // 找到当前节点在兄弟中的位置
-            int currentIndex = -1;
-            for (int i = 0; i < children.Count; i++)
-            {
-                if (children[i].Id == _history.Peek()?.Id) // 上一个节点是原来的当前节点
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            if (currentIndex >= 0 && currentIndex < children.Count - 1)
-            {
-                return MoveTo(children[currentIndex + 1].Id);
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 移动到上一个兄弟节点
-        /// </summary>
-        public bool MoveToPreviousSibling()
-        {
-            if (_currentEntity == null)
-                return false;
-
-            // 获取父节点
-            if (!MoveToParent())
-                return false;
-
-            var parent = _currentEntity;
-            if (!parent.HasComponent<Comp.Children>())
-                return false;
-
-            var childrenComp = parent.GetComponent<Comp.Children>();
-            var children = childrenComp.ChildrenEntities;
-
-            // 找到当前节点在兄弟中的位置
-            int currentIndex = -1;
-            for (int i = 0; i < children.Count; i++)
-            {
-                if (children[i].Id == _history.Peek()?.Id)
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
-
-            if (currentIndex > 0)
-            {
-                return MoveTo(children[currentIndex - 1].Id);
-            }
-
-            return false;
-        }
-
-        #endregion
-
-        #region 跳转功能
-
-        /// <summary>
-        /// 检查是否可以跳转到目标节点
-        /// </summary>
-        public bool CanJumpTo(int targetId)
-        {
-            if (_currentEntity?.HasComponent<Comp.Jump>() == true)
-            {
-                var jumpComp = _currentEntity.GetComponent<Comp.Jump>();
-                return jumpComp.CanJumpTo(targetId);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 执行跳转到目标节点
-        /// </summary>
-        public bool JumpTo(int targetId)
-        {
-            if (CanJumpTo(targetId))
-            {
-                return MoveTo(targetId);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 获取所有可跳转的目标
-        /// </summary>
-        public List<Entity> GetJumpTargets()
-        {
-            var targets = new List<Entity>();
-
-            if (_currentEntity?.HasComponent<Comp.Jump>() == true)
-            {
-                var jumpComp = _currentEntity.GetComponent<Comp.Jump>();
-                foreach (var targetId in jumpComp.AllowedTargetIds)
-                {
-                    var target = _ecsFramework.GetEntitySafe(targetId);
-                    if (target != null)
-                    {
-                        targets.Add(target);
-                    }
-                }
-            }
-
-            return targets;
-        }
-
-        #endregion
-
-        #region 组件扫描功能
-
-        /// <summary>
-        /// 扫描当前节点的特定类型组件
-        /// </summary>
-        public T ScanComponent<T>()
-            where T : IComponent
-        {
-            return _currentEntity.GetComponent<T>();
-        }
-
-        /// <summary>
-        /// 扫描当前节点是否包含特定类型组件
-        /// </summary>
-        public bool HasComponent<T>()
-            where T : IComponent
-        {
-            return _currentEntity?.HasComponent<T>() == true;
-        }
-
-        /// <summary>
-        /// 扫描子节点中的特定类型组件
-        /// </summary>
-        public List<T> ScanChildrenComponents<T>()
-            where T : IComponent
-        {
-            var results = new List<T>();
-
-            if (_currentEntity?.HasComponent<Comp.Children>() == true)
-            {
-                var childrenComp = _currentEntity.GetComponent<Comp.Children>();
-                foreach (var child in childrenComp.ChildrenEntities)
-                {
-                    var component = child.GetComponent<T>();
-                    if (component != null)
-                    {
-                        results.Add(component);
-                    }
-                }
-            }
-
-            return results;
-        }
-
-        /// <summary>
-        /// 在子树中扫描特定类型组件（深度优先）
-        /// </summary>
-        public List<T> ScanSubtreeComponents<T>(int maxDepth = 3)
-            where T : IComponent
-        {
-            var results = new List<T>();
-            ScanSubtreeRecursive(_currentEntity, 0, maxDepth, results);
-            return results;
-        }
-
-        private void ScanSubtreeRecursive<T>(
-            Entity entity,
-            int currentDepth,
-            int maxDepth,
-            List<T> results
-        )
-            where T : IComponent
-        {
-            if (entity == null || currentDepth > maxDepth)
-                return;
-
-            // 扫描当前节点的组件
-            var component = entity.GetComponent<T>();
-            if (component != null)
-            {
-                results.Add(component);
-            }
-
-            // 递归扫描子节点
-            if (entity.HasComponent<Comp.Children>() && currentDepth < maxDepth)
-            {
-                var childrenComp = entity.GetComponent<Comp.Children>();
-                foreach (var child in childrenComp.ChildrenEntities)
-                {
-                    ScanSubtreeRecursive(child, currentDepth + 1, maxDepth, results);
-                }
-            }
-        }
-
-        #endregion
-
-        #region 实用方法
-
-        /// <summary>
-        /// 获取当前节点的本地化信息
-        /// </summary>
-        public Comp.Localization GetLocalizationInfo()
-        {
-            return ScanComponent<Comp.Localization>();
-        }
-
         /// <summary>
         /// 获取当前节点的顺序信息
         /// </summary>
         public Comp.Order GetOrderInfo()
         {
-            return ScanComponent<Comp.Order>();
+            return _currentEntity?.GetComponent<Order>();
         }
 
         /// <summary>
@@ -417,7 +570,6 @@ namespace ECS
             var path = new List<string>();
             var tempPointer = new StoryPointer(_ecsFramework, _currentEntity);
 
-            // 向上遍历构建路径
             while (tempPointer.IsValid)
             {
                 var order = tempPointer.GetOrderInfo();
@@ -426,7 +578,7 @@ namespace ECS
                     path.Insert(0, order.FormattedLabel);
                 }
 
-                if (!tempPointer.MoveToParent())
+                if (!tempPointer.MoveToParent(false))
                     break;
             }
 
@@ -434,55 +586,89 @@ namespace ECS
         }
 
         /// <summary>
-        /// 重置指针到根节点
+        /// 检查当前节点是否是episode的最后一个line
         /// </summary>
-        public void ResetToRoot()
+        public bool IsLastLineInEpisode()
         {
-            var root = _ecsFramework
-                .GetAllEntities()
-                .FirstOrDefault(e => e.HasComponent<Comp.Root>());
+            if (_currentEntity?.HasComponent<Parent>() != true)
+                return false;
 
-            if (root != null)
-            {
-                ClearHistory();
-                _currentEntity = root;
-            }
+            var parentComp = _currentEntity.GetComponent<Parent>();
+            if (!parentComp.ParentId.HasValue)
+                return false;
+
+            var parent = _ecsFramework.GetEntitySafe(parentComp.ParentId.Value);
+            if (parent?.HasComponent<Children>() != true)
+                return false;
+
+            var childrenComp = parent.GetComponent<Children>();
+            var sortedChildren = GetSortedChildrenByOrder(childrenComp.ChildrenEntities);
+            return sortedChildren.Count > 0 && sortedChildren[^1].Id == _currentEntity.Id;
         }
 
         #endregion
 
-        #region 默认顺序跳转逻辑
+        #region 内部导航实现
+
+        /// <summary>
+        /// 按顺序导航到下一个节点
+        /// </summary>
+        private bool TryNavigateByOrder()
+        {
+            var nextEntity = GetNextByOrder();
+            if (nextEntity != null)
+            {
+                return MoveToWithHistory(nextEntity);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 移动到指定实体（带历史记录）
+        /// </summary>
+        private bool MoveToWithHistory(Entity entity)
+        {
+            if (entity != null)
+            {
+                _history.Push(_currentEntity);
+                _currentEntity = entity;
+                UpdatePositionInfoAndNotify();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 移动到父节点
+        /// </summary>
+        private bool MoveToParent(bool output = true)
+        {
+            if (_currentEntity?.HasComponent<Parent>() == true)
+            {
+                var parentComp = _currentEntity.GetComponent<Parent>();
+                if (parentComp.ParentId.HasValue)
+                {
+                    return MoveTo(parentComp.ParentId.Value, output);
+                }
+            }
+            return false;
+        }
 
         /// <summary>
         /// 获取当前节点的下一个节点（按Order顺序）
         /// </summary>
-        public Entity GetNextByOrder()
+        private Entity GetNextByOrder()
         {
             if (_currentEntity == null)
                 return null;
-
-            // 如果有跳转组件且不是默认顺序类型，优先使用跳转逻辑
-            if (_currentEntity.HasComponent<Comp.Jump>())
-            {
-                var jumpComp = _currentEntity.GetComponent<Comp.Jump>();
-                if (
-                    jumpComp.Type != Comp.JumpType.DefaultOrder
-                    && jumpComp.AllowedTargetIds.Count > 0
-                )
-                {
-                    var target = _ecsFramework.GetEntitySafe(jumpComp.AllowedTargetIds[0]);
-                    if (target != null)
-                        return target;
-                }
-            }
 
             // 尝试获取下一个兄弟节点
             var nextSibling = GetNextSiblingByOrder();
             if (nextSibling != null)
                 return nextSibling;
 
-            // 如果没有兄弟节点，尝试获取父节点的下一个兄弟节点的第一个子节点
-            return GetNextEpisodeFirstLine();
+            // 在父级层次结构中查找下一个节点
+            return GetNextInParentHierarchy();
         }
 
         /// <summary>
@@ -490,18 +676,18 @@ namespace ECS
         /// </summary>
         private Entity GetNextSiblingByOrder()
         {
-            if (_currentEntity?.HasComponent<Comp.Parent>() != true)
+            if (_currentEntity?.HasComponent<Parent>() != true)
                 return null;
 
-            var parentComp = _currentEntity.GetComponent<Comp.Parent>();
+            var parentComp = _currentEntity.GetComponent<Parent>();
             if (!parentComp.ParentId.HasValue)
                 return null;
 
             var parent = _ecsFramework.GetEntitySafe(parentComp.ParentId.Value);
-            if (parent?.HasComponent<Comp.Children>() != true)
+            if (parent?.HasComponent<Children>() != true)
                 return null;
 
-            var childrenComp = parent.GetComponent<Comp.Children>();
+            var childrenComp = parent.GetComponent<Children>();
             var sortedChildren = GetSortedChildrenByOrder(childrenComp.ChildrenEntities);
 
             int currentIndex = -1;
@@ -523,60 +709,95 @@ namespace ECS
         }
 
         /// <summary>
-        /// 获取下一个episode的第一个line节点
+        /// 在父级层次结构中查找下一个节点
         /// </summary>
-        private Entity GetNextEpisodeFirstLine()
+        private Entity GetNextInParentHierarchy()
         {
-            if (_currentEntity?.HasComponent<Comp.Parent>() != true)
-                return null;
+            var current = _currentEntity;
+            var visited = new HashSet<int> { current.Id };
 
-            // 获取当前line的父episode
-            var lineParentComp = _currentEntity.GetComponent<Comp.Parent>();
-            if (!lineParentComp.ParentId.HasValue)
-                return null;
-
-            var episode = _ecsFramework.GetEntitySafe(lineParentComp.ParentId.Value);
-            if (episode?.HasComponent<Comp.Parent>() != true)
-                return null;
-
-            // 获取episode的父chapter
-            var episodeParentComp = episode.GetComponent<Comp.Parent>();
-            if (!episodeParentComp.ParentId.HasValue)
-                return null;
-
-            var chapter = _ecsFramework.GetEntitySafe(episodeParentComp.ParentId.Value);
-            if (chapter?.HasComponent<Comp.Children>() != true)
-                return null;
-
-            var chapterChildrenComp = chapter.GetComponent<Comp.Children>();
-            var sortedEpisodes = GetSortedChildrenByOrder(chapterChildrenComp.ChildrenEntities);
-
-            // 找到当前episode在chapter中的位置
-            int currentEpisodeIndex = -1;
-            for (int i = 0; i < sortedEpisodes.Count; i++)
+            while (current != null)
             {
-                if (sortedEpisodes[i].Id == episode.Id)
+                if (!current.HasComponent<Parent>())
+                    break;
+
+                var parentComp = current.GetComponent<Parent>();
+                if (!parentComp.ParentId.HasValue)
+                    break;
+
+                var parent = _ecsFramework.GetEntitySafe(parentComp.ParentId.Value);
+                if (parent == null)
+                    break;
+
+                var nextSibling = GetNextSiblingForEntity(parent);
+                if (nextSibling != null && !visited.Contains(nextSibling.Id))
                 {
-                    currentEpisodeIndex = i;
+                    return GetFirstLeafNode(nextSibling);
+                }
+
+                current = parent;
+                visited.Add(current.Id);
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 获取指定实体的下一个兄弟节点
+        /// </summary>
+        private Entity GetNextSiblingForEntity(Entity entity)
+        {
+            if (entity?.HasComponent<Parent>() != true)
+                return null;
+
+            var parentComp = entity.GetComponent<Parent>();
+            if (!parentComp.ParentId.HasValue)
+                return null;
+
+            var parent = _ecsFramework.GetEntitySafe(parentComp.ParentId.Value);
+            if (parent?.HasComponent<Children>() != true)
+                return null;
+
+            var childrenComp = parent.GetComponent<Children>();
+            var sortedChildren = GetSortedChildrenByOrder(childrenComp.ChildrenEntities);
+
+            int currentIndex = -1;
+            for (int i = 0; i < sortedChildren.Count; i++)
+            {
+                if (sortedChildren[i].Id == entity.Id)
+                {
+                    currentIndex = i;
                     break;
                 }
             }
 
-            // 获取下一个episode的第一个line
-            if (currentEpisodeIndex >= 0 && currentEpisodeIndex < sortedEpisodes.Count - 1)
+            if (currentIndex >= 0 && currentIndex < sortedChildren.Count - 1)
             {
-                var nextEpisode = sortedEpisodes[currentEpisodeIndex + 1];
-                if (nextEpisode.HasComponent<Comp.Children>())
-                {
-                    var nextEpisodeChildrenComp = nextEpisode.GetComponent<Comp.Children>();
-                    var sortedLines = GetSortedChildrenByOrder(
-                        nextEpisodeChildrenComp.ChildrenEntities
-                    );
-                    return sortedLines.Count > 0 ? sortedLines[0] : null;
-                }
+                return sortedChildren[currentIndex + 1];
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// 获取指定节点的第一个叶子节点
+        /// </summary>
+        private Entity GetFirstLeafNode(Entity node)
+        {
+            if (node == null)
+                return null;
+
+            var current = node;
+            while (current.HasComponent<Children>())
+            {
+                var childrenComp = current.GetComponent<Children>();
+                var sortedChildren = GetSortedChildrenByOrder(childrenComp.ChildrenEntities);
+                if (sortedChildren.Count == 0)
+                    break;
+                current = sortedChildren[0];
+            }
+
+            return current;
         }
 
         /// <summary>
@@ -585,222 +806,112 @@ namespace ECS
         private List<Entity> GetSortedChildrenByOrder(List<Entity> children)
         {
             return children
-                .Where(child => child.HasComponent<Comp.Order>())
-                .OrderBy(child => child.GetComponent<Comp.Order>().Number)
+                .Where(child => child.HasComponent<Order>())
+                .OrderBy(child => child.GetComponent<Order>().Number)
                 .ToList();
         }
 
         #endregion
 
-        #region 增强的跳转功能
+        #region 位置信息管理
 
         /// <summary>
-        /// 执行下一步（支持默认顺序跳转）
+        /// 更新位置信息并通知所有事件监听器
         /// </summary>
-        public bool Next()
+        private void UpdatePositionInfoAndNotify(bool output = true)
         {
-            var nextEntity = GetNextByOrder();
-            if (nextEntity != null)
+            var oldNodeType = _currentNodeType;
+            var oldChapter = _chapterNumber;
+            var oldEpisode = _episodeNumber;
+            var oldLine = _lineNumber;
+
+            UpdatePositionInfo();
+
+            // 检查是否需要触发事件
+            bool positionChanged =
+                oldChapter != _chapterNumber
+                || oldEpisode != _episodeNumber
+                || oldLine != _lineNumber;
+
+            bool nodeTypeChanged = oldNodeType != _currentNodeType;
+
+            if (positionChanged)
             {
-                return MoveToWithHistory(nextEntity);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 检查当前节点是否是episode的最后一个line
-        /// </summary>
-        public bool IsLastLineInEpisode()
-        {
-            if (_currentEntity?.HasComponent<Comp.Parent>() != true)
-                return false;
-
-            var parentComp = _currentEntity.GetComponent<Comp.Parent>();
-            if (!parentComp.ParentId.HasValue)
-                return false;
-
-            var parent = _ecsFramework.GetEntitySafe(parentComp.ParentId.Value);
-            if (parent?.HasComponent<Comp.Children>() != true)
-                return false;
-
-            var childrenComp = parent.GetComponent<Comp.Children>();
-            var sortedChildren = GetSortedChildrenByOrder(childrenComp.ChildrenEntities);
-
-            if (sortedChildren.Count == 0)
-                return false;
-
-            return sortedChildren[sortedChildren.Count - 1].Id == _currentEntity.Id;
-        }
-
-        /// <summary>
-        /// 获取当前episode的所有可跳转目标（用于最后一个line）
-        /// </summary>
-        public List<Entity> GetEpisodeJumpTargets()
-        {
-            var targets = new List<Entity>();
-
-            if (_currentEntity?.HasComponent<Comp.Parent>() != true)
-                return targets;
-
-            // 获取当前line的父episode
-            var lineParentComp = _currentEntity.GetComponent<Comp.Parent>();
-            if (!lineParentComp.ParentId.HasValue)
-                return targets;
-
-            var currentEpisode = _ecsFramework.GetEntitySafe(lineParentComp.ParentId.Value);
-            if (currentEpisode?.HasComponent<Comp.Parent>() != true)
-                return targets;
-
-            // 获取episode的父chapter
-            var episodeParentComp = currentEpisode.GetComponent<Comp.Parent>();
-            if (!episodeParentComp.ParentId.HasValue)
-                return targets;
-
-            var chapter = _ecsFramework.GetEntitySafe(episodeParentComp.ParentId.Value);
-            if (chapter?.HasComponent<Comp.Children>() != true)
-                return targets;
-
-            var chapterChildrenComp = chapter.GetComponent<Comp.Children>();
-            var sortedEpisodes = GetSortedChildrenByOrder(chapterChildrenComp.ChildrenEntities);
-
-            // 添加所有其他episode作为跳转目标
-            foreach (var episode in sortedEpisodes)
-            {
-                if (episode.Id != currentEpisode.Id)
-                {
-                    targets.Add(episode);
-                }
+                TriggerPositionChanged();
             }
 
-            return targets;
+            if (nodeTypeChanged)
+            {
+                TriggerNodeTypeChanged();
+            }
+
+            // 总是检查选择组件
+            CheckAndSetChoiceState();
+
+            // 记录调试信息
+            if (positionChanged || nodeTypeChanged)
+            {
+                LogManager.Log(
+                    $"指针位置更新: 章节={_chapterNumber}, 集数={_episodeNumber}, 行数={_lineNumber}, 类型={_currentNodeType}",
+                    nameof(StoryPointer),
+                    output
+                );
+            }
         }
 
         /// <summary>
-        /// 为当前节点（最后一个line）自动配置episode跳转
+        /// 更新当前节点的位置信息和类型
         /// </summary>
-        public void ConfigureEpisodeJump(bool includeCurrentChapterOnly = true)
+        private void UpdatePositionInfo()
         {
-            if (!IsLastLineInEpisode())
+            _currentNodeType = NodeType.Null;
+
+            if (_currentEntity == null)
                 return;
 
-            // 移除现有的跳转组件（如果有）
-            if (_currentEntity.HasComponent<Comp.Jump>())
+            // 通过Localization组件确定节点类型
+            if (_currentEntity.HasComponent<Localization>())
             {
-                _currentEntity.RemoveComponent<Comp.Jump>();
+                var loc = _currentEntity.GetComponent<Localization>();
+                _currentNodeType = loc.Type;
             }
 
-            var jumpComp = Comp.Jump.CreateEpisodeJump();
-            var targets = GetEpisodeJumpTargets();
-
-            // 如果限制在当前章节内，需要过滤目标
-            if (includeCurrentChapterOnly)
-            {
-                var currentChapter = GetCurrentChapter();
-                if (currentChapter != null)
-                {
-                    targets = targets
-                        .Where(target =>
-                        {
-                            var targetParent = target.GetComponent<Comp.Parent>();
-                            return targetParent?.ParentId == currentChapter.Id;
-                        })
-                        .ToList();
-                }
-            }
-
-            foreach (var target in targets)
-            {
-                jumpComp.AddTarget(target.Id);
-            }
-
-            _currentEntity.AddComponent(jumpComp);
+            // 获取章节、集数、行数的编号
+            UpdateHierarchyNumbers();
         }
 
         /// <summary>
-        /// 获取当前节点所在的chapter
+        /// 更新层级编号信息
         /// </summary>
-        public Entity GetCurrentChapter()
-        {
-            var entity = _currentEntity;
-            while (entity != null)
-            {
-                if (entity.HasComponent<Comp.Localization>())
-                {
-                    var loc = entity.GetComponent<Comp.Localization>();
-                    if (loc.Type == Comp.Localization.NodeType.Chapter)
-                    {
-                        return entity;
-                    }
-                }
-
-                if (!entity.HasComponent<Comp.Parent>())
-                    break;
-
-                var parentComp = entity.GetComponent<Comp.Parent>();
-                if (!parentComp.ParentId.HasValue)
-                    break;
-
-                entity = _ecsFramework.GetEntitySafe(parentComp.ParentId.Value);
-            }
-            return null;
-        }
-
-        #endregion
-
-        #region 增强的Next方法
-
-        /// <summary>
-        /// 智能下一步 - 自动处理跳转逻辑
-        /// </summary>
-        public bool SmartNext()
+        private void UpdateHierarchyNumbers()
         {
             if (_currentEntity == null)
-                return false;
+                return;
 
-            // 1. 如果有自定义跳转组件，使用跳转逻辑
-            if (_currentEntity.HasComponent<Comp.Jump>())
+            var pathFromRoot = _ecsFramework
+                .GetFullPathFromRoot(_currentEntity)
+                .Where(e => e.Id != 0);
+
+            foreach (var entity in pathFromRoot)
             {
-                var jumpComp = _currentEntity.GetComponent<Comp.Jump>();
-                if (jumpComp.Type == Comp.JumpType.Custom && jumpComp.AllowedTargetIds.Count > 0)
+                if (entity.HasComponent<Localization>())
                 {
-                    return JumpTo(jumpComp.AllowedTargetIds[0]);
-                }
-                // 对于EpisodeTransition类型，需要用户选择，这里使用默认顺序
-            }
+                    var loc = entity.GetComponent<Localization>();
 
-            // 2. 使用默认顺序跳转
-            return Next();
-        }
-
-        /// <summary>
-        /// 获取所有可能的下一步选项（包括默认顺序和跳转目标）
-        /// </summary>
-        public List<Entity> GetAllNextOptions()
-        {
-            var options = new HashSet<Entity>();
-
-            // 添加默认顺序的下一个节点
-            var defaultNext = GetNextByOrder();
-            if (defaultNext != null)
-            {
-                options.Add(defaultNext);
-            }
-
-            // 添加跳转目标
-            if (_currentEntity?.HasComponent<Comp.Jump>() == true)
-            {
-                var jumpComp = _currentEntity.GetComponent<Comp.Jump>();
-                foreach (var targetId in jumpComp.AllowedTargetIds)
-                {
-                    var target = _ecsFramework.GetEntitySafe(targetId);
-                    if (target != null)
+                    switch (loc.Type)
                     {
-                        options.Add(target);
+                        case NodeType.Chapter:
+                            _chapterNumber = loc.Number;
+                            break;
+                        case NodeType.Episode:
+                            _episodeNumber = loc.Number;
+                            break;
+                        case NodeType.Line:
+                            _lineNumber = loc.Number;
+                            break;
                     }
                 }
             }
-
-            return options.ToList();
         }
 
         #endregion

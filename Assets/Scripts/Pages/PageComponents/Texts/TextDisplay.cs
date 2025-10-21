@@ -1,25 +1,23 @@
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using NavigatorNS;
 using PageNS;
 using TMPro;
 using UIManagerNS;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.Settings;
-using Comp = TextManagerNS.PageComponentManager;
-using Story = StoryNS.StoryManager;
+using CompManager = TextManagerNS.PageComponentManager;
 
 [RequireComponent(typeof(LocalizeStringEvent)), RequireComponent(typeof(UINavigator))]
 public class TextDisplay : MonoBehaviour, IPageComponent
 {
     [Header("Display Controller")]
     [SerializeField]
-    private List<Comp.DynamicNum> DynamicEnumList;
+    private List<CompManager.DynamicNum> DynamicEnumList;
 
     [Ext.ReadOnlyInGame, SerializeField]
     private UINavigator Navigator; // 负责控制 ParentRect ( 这个物体的 RectTransform )
@@ -51,6 +49,8 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     private bool ProtectFlag; // 还是得加上 CancellationToken, 这个只能临时用
 
     private CancellationTokenSource CancellationTokenSource; // 取消打字机 UniTask 协程
+
+    public UnityEvent TypeWriterEvent;
 
     public void SetParentPage(BaseUIPage Parent) // 在 OnAwake 之后由 ParentPage 调用一次
     {
@@ -99,7 +99,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         }
     }
 
-    private async UniTaskVoid Offset(CancellationToken Token) // 看起来很棒
+    private async UniTaskVoid Offset(CancellationToken Token) // 看起来能用
     {
         try
         {
@@ -148,9 +148,9 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         }
         else
         {
-            Story.Inst.GetNextLine();
-
             OnTypeWriter();
+
+            TypeWriterEvent?.Invoke();
         }
     }
 
@@ -177,7 +177,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     {
         if (DynamicEnumList.Count > 0)
         {
-            LocalizeStringEvent.StringReference.Arguments = Comp.Inst.GetDynamicNumsFromList(
+            LocalizeStringEvent.StringReference.Arguments = CompManager.Inst.GetDynamicNumsFromList(
                 DynamicEnumList
             );
 

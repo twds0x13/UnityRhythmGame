@@ -17,14 +17,14 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: 0244bbcbaab6b8e4b9af252192f3bd12
   m_SerializeEntries:
-  - m_GUID: 7328d6572acca7f4e8a0b3907b0e1a9a
-    m_Address: English (en)
+  - m_GUID: a4df3b87c104f584483c9321cc9bb374
+    m_Address: Chinese (Simplified) (zh)
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f3bd55f50e61245488f8f54548729d8f
-    m_Address: Chinese (Simplified) (zh-Hans)
+  - m_GUID: a82c1121423aa634f81c9b14828acc1b
+    m_Address: English (en)
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale

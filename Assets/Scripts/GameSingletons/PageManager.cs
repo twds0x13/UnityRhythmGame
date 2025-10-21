@@ -34,26 +34,33 @@ namespace UIManagerNS
     {
         public BaseUIPage CurPage { get; private set; }
 
-        public List<BaseUIPage> HoverPageList { get; private set; }
+        public BaseUIPage HoverPage { get; private set; }
 
-        [SerializeField]
+        [Ext.ReadOnlyInGame, SerializeField]
         Canvas BackGroundCanvas; // 公用背景图层 ( 渲染顺序 -1 ) 在切换到不同页面时操作这个图层内的内容
 
-        [SerializeField]
+        [Ext.ReadOnlyInGame, SerializeField]
         List<BaseUIPage> PageObjects; // 方便在 Inspector 里查看
 
-        [SerializeField]
-        List<BaseUIPage> HoverPageObjects; // 悬浮页面 (弹窗)
+        [Ext.ReadOnlyInGame, SerializeField]
+        public List<BaseUIPage> HoverPageObjects; // 悬浮页面 (弹窗)
 
-        public Dictionary<string, BaseUIPage> AllPages { get; private set; } = new();
+        public readonly Dictionary<string, BaseUIPage> AllPages = new();
 
-        public Dictionary<string, BaseUIPage> AllHoverPages { get; private set; } = new();
+        public readonly Dictionary<string, BaseUIPage> AllHoverPages = new();
 
 #if UNITY_EDITOR
+
+        // 方便在编辑器模式下由代码添加页面
 
         public void AddPageObject(BaseUIPage Page)
         {
             PageObjects.Add(Page);
+        }
+
+        public void AddHoverPageObject(BaseUIPage Page)
+        {
+            HoverPageObjects.Add(Page);
         }
 #endif
 
@@ -85,29 +92,23 @@ namespace UIManagerNS
             }
         }
 
-        public void FinishAllHoverPage()
-        {
-            foreach (var HoverPage in HoverPageList)
-            {
-                HoverPage.OnClosePage();
-                HoverPageList.Remove(HoverPage);
-            }
-        }
-
         public void OpenHoverPage(string Name)
         {
-            AllHoverPages[Name].OnOpenPage();
-
-            HoverPageList.Add(AllHoverPages[Name]);
+            if (AllHoverPages.ContainsKey(Name))
+            {
+                HoverPage = AllHoverPages[Name];
+                HoverPage.OnOpenPage();
+            }
         }
 
         public void CloseHoverPage(string Name)
         {
-            if (HoverPageList.Contains(AllHoverPages[Name]))
+            if (AllHoverPages.ContainsKey(Name) && HoverPage == AllHoverPages[Name])
             {
-                AllHoverPages[Name].OnClosePage();
+                HoverPage.OnClosePage();
+                HoverPage = null;
 
-                HoverPageList.Remove(AllHoverPages[Name]);
+                CurPage.SelectFirstAfterOneFrame();
             }
         }
 
@@ -151,7 +152,9 @@ namespace UIManagerNS
 
             // 巧妙的使用一个中间页面来假装看不到开头卡顿
 
-            // 暂时没用
+            // 暂时废弃了
+
+            // 因为现在开头不卡了 ( 更巧妙的 InitPage )
 
             UniTask.Void(DelayedOpen);
         }
@@ -165,6 +168,16 @@ namespace UIManagerNS
         private void Update()
         {
             CurPage.OnUpdatePage();
+
+            /*
+            if (HoverPageList.Count > 0)
+            {
+                for (int i = 0; i < HoverPageList.Count; i++)
+                {
+                    HoverPageList[i].OnUpdatePage();
+                }
+            }
+            */
         }
 
         public Rect GetPageRect() => CurPage.GetRect();
