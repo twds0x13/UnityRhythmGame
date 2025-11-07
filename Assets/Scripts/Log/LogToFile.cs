@@ -117,12 +117,23 @@ public class AsyncLogger : IDisposable
             sb.AppendLine(logEntry);
         }
 
+        // 空行
+        sb.AppendLine();
+
+        // 构建日志条目
+        string timestamp = DateTime.Now.ToString("[yyyy-MM-dd] HH:mm:ss.ffffff");
+        string levelStr = "INFO".ToString().ToUpper();
+        string contextStr = string.IsNullOrEmpty(_caller) ? "" : $"[{_caller}] ";
+
+        string endLog =
+            $"{timestamp} [{levelStr}] {contextStr}{$"====== 异步线程日志结束 [{_caller}] ======\n"}";
+
+        sb.AppendLine(endLog);
+
         // 输出到主日志系统
         string fullLog = sb.ToString();
-        LogManager.Info(fullLog, _caller, _output);
 
-        // 奇异诡谲 但是能用
-        LogManager.Info($"====== 异步线程日志结束 ======\n", _caller, _output);
+        LogManager.Info(fullLog, _caller, _output);
     }
 
     /// <summary>

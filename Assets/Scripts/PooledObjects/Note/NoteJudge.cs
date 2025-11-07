@@ -3,14 +3,14 @@ using System.CodeDom;
 using NoteNS;
 using Game = GameManagerNS.GameManager;
 
-namespace NoteJudgeNS
+namespace JudgeNS
 {
     public class NoteJudgeTime
     {
         public const float CriticalPerfect = 0.016f;
         public const float Perfect = 0.032f;
         public const float Great = 0.064f;
-        public const float Miss = 0.100f;
+        public const float Miss = 0.128f;
     }
 
     public class NoteJudgeScore

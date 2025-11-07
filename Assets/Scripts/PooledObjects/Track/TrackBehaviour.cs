@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Anime;
 using AudioNS;
 using AudioRegistry;
+using HoldNS;
 using NoteNS;
 using PageNS;
 using PooledObjectNS;
@@ -33,9 +34,9 @@ namespace TrackNS
 
         public StateFinishJudgeTrack FinishJudge; // 注销 Input 判定，等待游戏结束
 
-        private List<NoteBehaviour> AllList = new(); // 遍历删除或其他操作才使用
+        private List<IChartObject> AllList { get; } = new(); // 遍历删除或其他操作才使用
 
-        private List<NoteBehaviour> JudgeList = new(); // 比队列好的一点：可指定删除元素
+        private List<IChartObject> JudgeList = new(); // 比队列好的一点：可指定删除元素
 
         public BaseUIPage ParentPage; // 母页面
 
@@ -85,40 +86,71 @@ namespace TrackNS
         
         */
 
-        public void JudgeNote(InputAction.CallbackContext Ctx)
+        public void OnPress(InputAction.CallbackContext Ctx)
         {
-            if (Ctx.performed && !Game.Inst.IsGamePaused())
+            if (
+                Ctx.started
+                && JudgeList.Count > 0
+                && !Game.Inst.IsGamePaused()
+                && (JudgeList[0] is NoteBehaviour || JudgeList[0] is HoldBehaviour)
+            )
             {
-                if (JudgeList.Count > 0)
+                JudgeList[0].OnPress();
+
+                // 这里处理的是 key 音，也就是成功击打才会触发的音效。
+
+                switch (TrackNumber)
                 {
-                    JudgeList[0].OnJudge();
+                    case 0:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track0);
+                        break;
+                    case 1:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track1);
+                        break;
+                    case 2:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track2);
+                        break;
+                    case 3:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track3);
+                        break;
+                }
+            }
+        }
 
-                    // 这里处理的是 key 音，也就是成功击打才会触发的音效。
+        public void OnRelease(InputAction.CallbackContext Ctx)
+        {
+            if (
+                Ctx.canceled
+                && JudgeList.Count > 0
+                && !Game.Inst.IsGamePaused()
+                && JudgeList[0] is HoldBehaviour hold
+            )
+            {
+                hold.OnRelease();
 
-                    switch (TrackNumber)
-                    {
-                        case 0:
-                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track0);
-                            break;
-                        case 1:
-                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track1);
-                            break;
-                        case 2:
-                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track2);
-                            break;
-                        case 3:
-                            Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track3);
-                            break;
-                    }
+                switch (TrackNumber)
+                {
+                    case 0:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track0);
+                        break;
+                    case 1:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track1);
+                        break;
+                    case 2:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track2);
+                        break;
+                    case 3:
+                        Audio.Inst.LoadAudioClip(SFX.Key3, Source.Track3);
+                        break;
                 }
             }
         }
 
         public override void OnClosePage()
         {
-            foreach (NoteBehaviour Note in AllList)
+            foreach (PooledObjectBehaviour Object in AllList) //
             {
-                Note.OnClosePage();
+                Object.OnClosePage();
             }
 
             JudgeMachine.SwitchState(FinishJudge);
@@ -136,22 +168,22 @@ namespace TrackNS
             return this;
         }
 
-        public void Register(NoteBehaviour Note)
+        public void Register(IChartObject Note)
         {
             AllList.Add(Note);
         }
 
-        public void Unregister(NoteBehaviour Note)
+        public void Unregister(IChartObject Note)
         {
             AllList.Remove(Note);
         }
 
-        public void RegisterJudge(NoteBehaviour Note)
+        public void RegisterJudge(IChartObject Note)
         {
             JudgeList.Add(Note);
         }
 
-        public void UnregisterJudge(NoteBehaviour Note)
+        public void UnregisterJudge(IChartObject Note)
         {
             JudgeList.Remove(Note);
         }

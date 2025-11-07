@@ -1,6 +1,6 @@
 using PageNS;
+using Ctrl = GameCore.GameController;
 using Game = GameManagerNS.GameManager;
-using Pool = PooledObjectNS.PooledObjectManager;
 
 public class GamePage : BaseUIPage
 {
@@ -25,13 +25,17 @@ public class GamePage : BaseUIPage
         base.OnOpenPage();
 
         Game.Inst.StartGame();
+
+        Ctrl.Inst.StartGame();
     }
 
     public override void OnClosePage()
     {
         base.OnClosePage();
 
-        Game.Inst.FinishGame();
+        Game.Inst.ExitGame();
+
+        Ctrl.Inst.ExitGame();
     }
 
     public void OnExitToMenu()

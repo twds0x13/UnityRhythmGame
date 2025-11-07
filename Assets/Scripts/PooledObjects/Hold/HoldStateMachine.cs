@@ -1,30 +1,30 @@
 using Anime;
+using HoldJudgeNS;
+using HoldNS;
 using InterpNS;
-using JudgeNS;
-using NoteNS;
 using StateMachine;
 using UnityEngine;
 using Game = GameManagerNS.GameManager;
-using Judge = JudgeNS.NoteJudge;
+using Judge = HoldJudgeNS.HoldJudge;
 using Page = UIManagerNS.PageManager;
 
-namespace NoteStateMachine
+namespace HoldStateMachine
 {
-    public class NoteState : IState<NoteBehaviour>
+    public class HoldState : IState<HoldBehaviour>
     {
-        protected NoteBehaviour Note;
+        protected HoldBehaviour Hold;
 
         protected AnimeMachine AnimeMachine;
 
-        protected LinearStateMachine<NoteBehaviour> StateMachine;
+        protected LinearStateMachine<HoldBehaviour> StateMachine;
 
-        public NoteState(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
+        public HoldState(HoldBehaviour Hold, LinearStateMachine<HoldBehaviour> StateMachine)
         {
-            this.Note = Note;
+            this.Hold = Hold;
 
             this.StateMachine = StateMachine;
 
-            this.AnimeMachine = Note.Inst.AnimeMachine;
+            this.AnimeMachine = Hold.Inst.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -34,13 +34,13 @@ namespace NoteStateMachine
         public virtual void Exit() { }
     }
 
-    public class StateBeforeJudgeNote : NoteState
+    public class StateBeforeJudgeHold : HoldState
     {
-        public StateBeforeJudgeNote(
-            NoteBehaviour Note,
-            LinearStateMachine<NoteBehaviour> StateMachine
+        public StateBeforeJudgeHold(
+            HoldBehaviour Hold,
+            LinearStateMachine<HoldBehaviour> StateMachine
         )
-            : base(Note, StateMachine) { }
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
@@ -53,7 +53,7 @@ namespace NoteStateMachine
 
             if (StartJudge)
             {
-                StateMachine.SwitchState(Note.ProcessJudge);
+                StateMachine.SwitchState(Hold.ProcessJudge);
             }
         }
 
@@ -63,14 +63,14 @@ namespace NoteStateMachine
         }
 
         private bool StartJudge =>
-            Game.Inst.GetGameTime() < Note.JudgeTime
-            && Judge.GetJudgeEnum(Note) != Judge.NoteJudgeEnum.NotEntered;
+            Game.Inst.GetGameTime() < Hold.JudgeTime
+            && Judge.GetJudgeEnum(Hold) != Judge.HoldJudgeEnum.NotEntered;
     }
 
-    public class StateOnJudgeNote : NoteState
+    public class StateOnJudgeHold : HoldState
     {
-        public StateOnJudgeNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
-            : base(Note, StateMachine) { }
+        public StateOnJudgeHold(HoldBehaviour Hold, LinearStateMachine<HoldBehaviour> StateMachine)
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
@@ -85,46 +85,44 @@ namespace NoteStateMachine
 
             if (ExitJudge)
             {
-                StateMachine.SwitchState(Note.AfterJudge);
+                StateMachine.SwitchState(Hold.AfterJudge);
             }
         }
 
         public override void Exit()
         {
             base.Exit();
-
-            UnregisterJudge();
         }
 
         // 在超过判定时间之后自动移除
         private bool ExitJudge =>
-            Game.Inst.GetGameTime() > Note.JudgeTime
-            && Judge.GetJudgeEnum(Note) == Judge.NoteJudgeEnum.Miss;
+            Game.Inst.GetGameTime() > Hold.JudgeTime
+            && Judge.GetJudgeEnum(Hold) == Judge.HoldJudgeEnum.Miss;
 
         private void RegisterJudge()
         {
-            Note.ParentTrack.RegisterJudge(Note);
+            Hold.ParentTrack.RegisterJudge(Hold);
         }
 
         private void UnregisterJudge()
         {
-            Note.ParentTrack.UnregisterJudge(Note);
+            Hold.ParentTrack.UnregisterJudge(Hold);
         }
     }
 
-    public class StateAfterJudgeNote : NoteState
+    public class StateAfterJudgeHold : HoldState
     {
-        public StateAfterJudgeNote(
-            NoteBehaviour Note,
-            LinearStateMachine<NoteBehaviour> StateMachine
+        public StateAfterJudgeHold(
+            HoldBehaviour Hold,
+            LinearStateMachine<HoldBehaviour> StateMachine
         )
-            : base(Note, StateMachine) { }
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
             base.Enter();
 
-            Game.Inst.Score.MaxScore += NoteJudgeScore.Max;
+            Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
         }
 
         public override void Update()
@@ -138,20 +136,20 @@ namespace NoteStateMachine
         }
     }
 
-    public class StateInitNote : NoteState
+    public class StateInitHold : HoldState
     {
-        public StateInitNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
-            : base(Note, StateMachine) { }
+        public StateInitHold(HoldBehaviour Hold, LinearStateMachine<HoldBehaviour> StateMachine)
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
             base.Enter();
 
-            CombineParent(Note);
+            CombineParent(Hold);
 
-            AnimeInit(Note);
+            AnimeInit(Hold);
 
-            StateMachine.SwitchState(Note.AnimeNote);
+            StateMachine.SwitchState(Hold.AnimeHold);
         }
 
         public override void Update()
@@ -164,38 +162,31 @@ namespace NoteStateMachine
             base.Exit();
         }
 
-        private void CombineParent(NoteBehaviour Note)
+        private void CombineParent(HoldBehaviour Hold)
         {
-            Note.transform.SetParent(Note.ParentTrack.transform, true);
+            Hold.transform.SetParent(Hold.ParentTrack.transform, true);
 
-            Note.ParentTrack.Register(Note);
+            Hold.ParentTrack.Register(Hold);
         }
 
-        private void AnimeInit(NoteBehaviour Note)
+        private void AnimeInit(HoldBehaviour Hold)
         {
-            /*
-            Note.Inst.SpriteRenderer.sprite = Note.GetSprite(
-                Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2
+            Hold.Inst.SpriteRenderer.sprite = Hold.GetSprite(
+                Hold.ParentTrack.TrackNumber < 1 || Hold.ParentTrack.TrackNumber > 2
                     ? "note_l"
                     : "note_color"
             );
-            */
 
-            Note.Inst.SpriteRenderer.sprite = Note.GetSprite("note_color");
+            Hold.SetScale(Vector3.one);
 
-            Note.SetScale(Vector3.one * 0.110f); // 魔法数字
-
-            Note.Inst.SpriteRenderer.color =
-                Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2
-                    ? new Color(0.5f, 1f, 1f, 1f) // 淡蓝色
-                    : new Color(1f, 1f, 1f, 1f); // 正常颜色
+            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
-    public class StateAnimeNote : NoteState
+    public class StateAnimeHold : HoldState
     {
-        public StateAnimeNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
-            : base(Note, StateMachine) { }
+        public StateAnimeHold(HoldBehaviour Hold, LinearStateMachine<HoldBehaviour> StateMachine)
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
@@ -219,7 +210,7 @@ namespace NoteStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
                 / AnimeMachine.CurAnime.TotalTimeElapse();
 
-            Note.transform.position =
+            Hold.transform.position =
                 InterpFunc.VectorHandler(
                     AnimeMachine.CurAnime.StartV,
                     AnimeMachine.CurAnime.EndV,
@@ -227,7 +218,7 @@ namespace NoteStateMachine
                     AxisFunc.Linear,
                     AxisFunc.Linear,
                     AxisFunc.Linear
-                ) + Note.ParentTrack.transform.position;
+                ) + Hold.ParentTrack.transform.position;
             ;
         }
 
@@ -245,30 +236,30 @@ namespace NoteStateMachine
                 {
                     if (AnimeMachine.HasDisappearAnime)
                     {
-                        StateMachine.SwitchState(Note.DisappearNoteAnime);
+                        StateMachine.SwitchState(Hold.DisappearHoldAnime);
                     }
                     else
                     {
-                        StateMachine.SwitchState(Note.DestroyNoteAnime);
+                        StateMachine.SwitchState(Hold.DestroyHoldAnime);
                     }
                 }
             }
         }
     }
 
-    public class StateJudgeAnimeNote : NoteState
+    public class StateJudgeAnimeHold : HoldState
     {
-        public StateJudgeAnimeNote(
-            NoteBehaviour Note,
-            LinearStateMachine<NoteBehaviour> StateMachine
+        public StateJudgeAnimeHold(
+            HoldBehaviour Hold,
+            LinearStateMachine<HoldBehaviour> StateMachine
         )
-            : base(Note, StateMachine) { }
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
             base.Enter();
             AnimeMachine.JudgeTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.JudgePosCache = Note.Inst.transform.position;
+            AnimeMachine.JudgePosCache = Hold.Inst.transform.position;
         }
 
         public override void Update()
@@ -277,7 +268,7 @@ namespace NoteStateMachine
 
             if (JudgeAnime())
             {
-                StateMachine.SwitchState(Note.DestroyNoteAnime);
+                StateMachine.SwitchState(Hold.DestroyHoldAnime);
             }
         }
 
@@ -292,12 +283,12 @@ namespace NoteStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache)
                 / AnimeMachine.JudgeAnimeTimeSpan;
 
-            Note.Inst.transform.position =
+            Hold.Inst.transform.position =
                 new Vector3(0f, 0f * AnimeMachine.CurT, 0f) + AnimeMachine.JudgePosCache;
 
             if (AnimeMachine.HasJudgeAnime)
             {
-                Note.Inst.SpriteRenderer.color = new Color(
+                Hold.Inst.SpriteRenderer.color = new Color(
                     1f,
                     1f,
                     1f - 2f * AnimeMachine.CurT,
@@ -306,26 +297,26 @@ namespace NoteStateMachine
             }
             else
             {
-                StateMachine.SwitchState(Note.DestroyNoteAnime);
+                StateMachine.SwitchState(Hold.DestroyHoldAnime);
             }
 
             return AnimeMachine.CurT - 1f >= 0;
         }
     }
 
-    public class StateDisappearNote : NoteState
+    public class StateDisappearHold : HoldState
     {
-        public StateDisappearNote(
-            NoteBehaviour Note,
-            LinearStateMachine<NoteBehaviour> StateMachine
+        public StateDisappearHold(
+            HoldBehaviour Hold,
+            LinearStateMachine<HoldBehaviour> StateMachine
         )
-            : base(Note, StateMachine) { }
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
             base.Enter();
             AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.DisappearingPosCache = Note.Inst.transform.position;
+            AnimeMachine.DisappearingPosCache = Hold.Inst.transform.position;
         }
 
         public override void Update()
@@ -334,7 +325,7 @@ namespace NoteStateMachine
 
             if (Disappear())
             {
-                StateMachine.SwitchState(Note.DestroyNoteAnime);
+                StateMachine.SwitchState(Hold.DestroyHoldAnime);
             }
         }
 
@@ -349,23 +340,23 @@ namespace NoteStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
                 / AnimeMachine.DisappearTimeSpan;
 
-            Note.Inst.transform.position =
+            Hold.Inst.transform.position =
                 new Vector3(
                     0f,
                     -0.25f * ResizeDetector.Inst.Rect.rect.height * AnimeMachine.CurT,
                     0f
                 ) + AnimeMachine.DisappearingPosCache;
 
-            Note.Inst.SpriteRenderer.SetAlpha(0.3f - 0.3f * AnimeMachine.CurT);
+            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.3f - 0.3f * AnimeMachine.CurT);
 
             return AnimeMachine.CurT - 1f >= 0;
         }
     }
 
-    public class StateDestroyNote : NoteState
+    public class StateDestroyHold : HoldState
     {
-        public StateDestroyNote(NoteBehaviour Note, LinearStateMachine<NoteBehaviour> StateMachine)
-            : base(Note, StateMachine) { }
+        public StateDestroyHold(HoldBehaviour Hold, LinearStateMachine<HoldBehaviour> StateMachine)
+            : base(Hold, StateMachine) { }
 
         public override void Enter()
         {
@@ -375,7 +366,7 @@ namespace NoteStateMachine
 
             ParentExit();
 
-            Note.DestroyEvent?.Invoke();
+            Hold.DestroyEvent?.Invoke();
         }
 
         public override void Update()
@@ -390,14 +381,14 @@ namespace NoteStateMachine
 
         private void ParentExit()
         {
-            Note.ParentTrack.Unregister(Note);
-            Note.ParentTrack.UnregisterJudge(Note);
+            Hold.ParentTrack.Unregister(Hold);
+            Hold.ParentTrack.UnregisterJudge(Hold);
         }
 
         private void AnimeExit()
         {
-            Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
-            Note.Inst.transform.position = new Vector3(0f, 20f, 0f);
+            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Hold.Inst.transform.position = new Vector3(0f, 20f, 0f);
         }
     }
 }
