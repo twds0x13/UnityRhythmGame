@@ -143,9 +143,7 @@ namespace PooledObjectNS
             {
                 Queue<AnimeClip> Tmp = new();
 
-                Rect Rect = Page.Inst.CurPage.GetRect();
-
-                Rect.height = 1080f;
+                Rect Rect = ResizeDetector.Inst.Rect.rect;
 
                 Tmp.Enqueue(
                     new AnimeClip(
@@ -176,16 +174,15 @@ namespace PooledObjectNS
         {
             Queue<AnimeClip> Tmp;
             Vector3 VecTmp;
-            Rect Rect = new Rect();
+            Rect Rect = ResizeDetector.Inst.Rect.rect;
             Rect.width = 1080f;
-            Rect.height = 1080f;
 
             for (int j = 0; j < 4; j++)
             {
                 Tmp = new();
 
                 VecTmp = new Vector3(
-                    -0.3f * Rect.width + 0.2f * Rect.width * TrackUIDIterator,
+                    -0.30f * Rect.width + 0.2f * Rect.width * TrackUIDIterator,
                     -0.35f * Rect.height,
                     0f
                 );

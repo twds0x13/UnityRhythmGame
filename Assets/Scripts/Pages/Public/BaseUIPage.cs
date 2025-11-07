@@ -200,6 +200,8 @@ namespace PageNS
             UniTask.Void(DelayedClose);
         }
 
+        public virtual void OnDestroyPage() { }
+
         public void RegisterObject(IPageControlled Controlled)
         {
             ControlledObjects.Add(Controlled);

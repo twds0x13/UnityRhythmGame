@@ -5,11 +5,11 @@ using PooledObjectNS;
 using StateMachine;
 using TrackNS;
 using Game = GameManagerNS.GameManager;
-using Judge = NoteJudgeNS.NoteJudge;
+using Judge = JudgeNS.NoteJudge;
 
 namespace NoteNS
 {
-    public class NoteBehaviour : PooledObjectBehaviour
+    public class NoteBehaviour : PooledObjectBehaviour, IChartObject
     {
         private LinearStateMachine<NoteBehaviour> StateMachine; // 动画状态机
 
@@ -69,7 +69,7 @@ namespace NoteNS
             StateMachine.CurState?.Update();
         }
 
-        public void OnJudge()
+        public void OnPress()
         {
             if (JudgeMachine.CurState == ProcessJudge)
             {
@@ -79,6 +79,8 @@ namespace NoteNS
                 StateMachine.SwitchState(JudgeNoteAnime);
             }
         }
+
+        public void OnRelease() { }
 
         public NoteBehaviour Init(AnimeMachine Machine, TrackBehaviour Track, float Time) // 在 Objectpool 中调用这个函数作为通用起手，保证每次调用都从这里开始
         {

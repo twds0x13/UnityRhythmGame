@@ -1,3 +1,4 @@
+using JsonLoader;
 using Singleton;
 using UnityEngine;
 using Json = JsonLoader.BaseJsonLoader;
@@ -252,7 +253,7 @@ namespace GameManagerNS
         {
             GameTime.IgnorePause = true;
 
-            //Inst.Settings.SetTimeScale(Speed);
+            // Inst.Settings.SetTimeScale(Speed);
         }
 
         public void UnlockTimeScale() => GameTime.IgnorePause = false; // 解锁强制时间流速设置，恢复到正常状态
@@ -265,25 +266,26 @@ namespace GameManagerNS
 
         public void PauseResumeGame() => GameTime.OnPauseResume();
 
-        public void SaveGameSettings() =>
-            Json.TrySaveJsonToZip(
-                "UserSettings.zip",
-                Inst.Settings,
-                new Newtonsoft.Json.JsonSerializerSettings
-                {
-                    Formatting = Newtonsoft.Json.Formatting.None,
-                }
-            );
+        public void SaveGameSettings() => Json.SaveObject("UserSettings.zip", Inst.Settings);
 
-        public bool LoadGameSettings(ref GameSettings Object) =>
-            Json.TryLoadJsonFromZip("Usersettings.zip", out Object, default);
+        public bool LoadGameSettings(ref GameSettings Object)
+        {
+            var (success, result) = Json.LoadObject<GameSettings>("UserSettings.zip");
+
+            if (success)
+            {
+                Object = result;
+            }
+
+            return success;
+        }
 
         public void StartGame()
         {
             Pool.Inst.GetTracksDynamic();
         }
 
-        public void FinishGame()
+        public void ExitGame()
         {
             Score.MaxScore = 0f;
             Score.Score = 0f;

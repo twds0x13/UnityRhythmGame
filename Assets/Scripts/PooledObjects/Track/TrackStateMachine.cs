@@ -56,15 +56,17 @@ namespace TrackStateMachine
             base.Exit();
         }
 
-        private void RegisterJudgeKey() // 神秘
+        private void RegisterJudgeKey() // 何意味？
         {
             if (Track.TrackNumber < 4)
             {
-                Ctrl
-                    .Inst.UserInput.currentActionMap.FindAction(
-                        "Track " + Track.TrackNumber.ToString()
-                    )
-                    .performed += Track.JudgeNote;
+                var TrackInput = Ctrl.Inst.UserInput.currentActionMap.FindAction(
+                    "Track " + Track.TrackNumber.ToString()
+                );
+
+                TrackInput.started += Track.OnPress;
+
+                TrackInput.canceled += Track.OnRelease;
             }
         }
     }
@@ -125,7 +127,7 @@ namespace TrackStateMachine
                     .Inst.UserInput.currentActionMap.FindAction(
                         "Track " + Track.TrackNumber.ToString()
                     )
-                    .performed -= Track.JudgeNote;
+                    .performed -= Track.OnPress;
             }
         }
     }
@@ -154,7 +156,7 @@ namespace TrackStateMachine
 
         private void InitTrack(TrackBehaviour Track)
         {
-            Track.Inst.SpriteRenderer.sprite = Track.SpriteList[1];
+            Track.Inst.SpriteRenderer.sprite = Track.GetSprite("track_1");
 
             Track.transform.SetParent(Track.ParentPage.transform, false);
 

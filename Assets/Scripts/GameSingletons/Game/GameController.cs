@@ -1,16 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Singleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Game = GameManagerNS.GameManager;
+using Parser = ChartParser.ChartParser;
 using Pool = PooledObjectNS.PooledObjectManager;
 
 /// <summary>
 /// 负责管理游戏核心逻辑的类
-/// 已被架空，暂时用来处理和游戏输入有关的东西和游戏测试
 /// </summary>
 namespace GameCore
 {
@@ -20,51 +22,59 @@ namespace GameCore
     {
         public PlayerInput UserInput;
 
-        private CancellationTokenSource _cancellationTokenSource;
+        public Action ActionOnUpdate;
 
-        private int[] availableTracks = { 0, 1, 2, 3 };
-
-        private async UniTaskVoid StartNoteGeneration()
-        {
-            _cancellationTokenSource = new CancellationTokenSource();
-            var token = _cancellationTokenSource.Token;
-
-            // 130 BPM下的8分音符间隔
-            float interval = 60f / 130f / 2f;
-
-            while (!token.IsCancellationRequested)
-            {
-                if (!Game.Inst.IsGamePaused())
-                {
-                    float currentTime = Game.Inst.GetGameTime();
-
-                    // 随机选择两个不同的轨道
-                    int[] randomTracks = GetTwoRandomTracks();
-
-                    // 生成两个不同轨道的音符
-                    GenerateSimpleNote(currentTime, randomTracks[0]);
-                    GenerateSimpleNote(currentTime, randomTracks[1]);
-                }
-
-                await UniTask.Delay((int)(interval * 1000), cancellationToken: token);
-            }
-        }
-
-        private int[] GetTwoRandomTracks()
-        {
-            // 随机打乱轨道数组并取前两个
-            return availableTracks.OrderBy(x => Random.Range(0, 100)).Take(2).ToArray();
-        }
-
-        private void GenerateSimpleNote(float startTime, int trackNum)
-        {
-            // 使用您原有的GetNotesDynamic方法
-            Pool.Inst.GetNotesDynamic(startTime, 1f, trackNum, 1f);
-        }
+        private Parser chartParser;
 
         protected override void SingletonAwake()
         {
-            UniTask.Void(StartNoteGeneration);
+            // 在初始化时移除旧的 OnUpdate 订阅
+            ActionOnUpdate -= OnUpdate;
+
+            LoadChart();
+        }
+
+        public async void LoadChart()
+        {
+            chartParser = new Parser(Application.persistentDataPath);
+
+            var collection = await chartParser.ScanAsync();
+        }
+
+        public void StartGame()
+        {
+            OnStartGame().Forget();
+        }
+
+        public void ExitGame()
+        {
+            OnExitGame();
+        }
+
+        private async UniTaskVoid OnStartGame()
+        {
+            await UniTask.WaitForSeconds(1.5f);
+
+            ActionOnUpdate += OnUpdate;
+        }
+
+        private void OnExitGame()
+        {
+            ActionOnUpdate -= OnUpdate;
+        }
+
+        private void Update()
+        {
+            ActionOnUpdate?.Invoke();
+        }
+
+        /// <summary>
+        /// 核心游戏循环逻辑。
+        /// </summary>
+        private void OnUpdate()
+        {
+            // 移除所有 ChartReader 相关逻辑
+            // 可以在这里添加其他游戏逻辑
         }
 
         public void RebindInput(InputActionReference Ref)
@@ -126,9 +136,6 @@ namespace GameCore
 
         protected override void SingletonDestroy()
         {
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
-
             DOTween.KillAll();
             DOTween.Clear(true);
         }

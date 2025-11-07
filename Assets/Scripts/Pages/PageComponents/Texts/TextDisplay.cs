@@ -99,7 +99,7 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         }
     }
 
-    private async UniTaskVoid Offset(CancellationToken Token) // 看起来能用
+    private async UniTaskVoid Offset(CancellationToken Token) // 看起来能用就不要改
     {
         try
         {
@@ -148,6 +148,8 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         }
         else
         {
+            TypeProcess = 0f; // 不会因为设置Unitask闪一下
+
             OnTypeWriter();
 
             TypeWriterEvent?.Invoke();

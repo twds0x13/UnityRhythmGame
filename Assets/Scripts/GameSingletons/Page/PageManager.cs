@@ -75,6 +75,16 @@ namespace UIManagerNS
             InitWithPage(nameof(InitPage));
         }
 
+        protected override void SingletonDestroy()
+        {
+            foreach (var (key, page) in AllPages)
+            {
+                page.OnDestroyPage();
+            }
+
+            AllPages.Clear();
+        }
+
         private void RegisterObjectsFromRef()
         {
             for (int i = 0; i < PageObjects.Count; i++)

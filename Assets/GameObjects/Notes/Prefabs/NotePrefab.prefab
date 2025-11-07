@@ -50,6 +50,7 @@ MonoBehaviour:
       m_Calls: []
   SpriteRenderer: {fileID: 1745780204485166271}
   SpriteList:
+  - {fileID: 21300000, guid: 2fda724035f784143a4187173dedae93, type: 3}
   - {fileID: 21300000, guid: c38bb2627fd4a3b4abe917a62a82ffdd, type: 3}
   - {fileID: 21300000, guid: bf9fc9f79d4b3f748babea657079284e, type: 3}
   ParentTrack: {fileID: 0}

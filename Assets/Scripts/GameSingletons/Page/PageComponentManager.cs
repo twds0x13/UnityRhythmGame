@@ -50,7 +50,7 @@ namespace TextManagerNS
                 case DynamicNum.GameMaxScore:
                     return Game.Inst.Score.MaxScore.ToString("F2");
                 case DynamicNum.GameAccuracy:
-                    return Game.Inst.Score.Accuracy.ToString("P2"); // "P" 代表百分数格式，其他同 "F"
+                    return (Game.Inst.Score.Accuracy * 100).ToString("F2"); // "P2" 代表百分数格式，但是暂时不需要百分号
                 case DynamicNum.StoryChapter:
                     return Story.Inst.ChapterNumber().ToString();
                 case DynamicNum.StoryParam:

@@ -1,396 +1,253 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using ECS;
-using ICSharpCode.SharpZipLib.Zip;
+using JsonLoader.JsonLoader;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using UnityEngine;
 
 namespace JsonLoader
 {
     /// <summary>
-    /// 负责解压 <see cref="ZipFile"/> 并从中解析 <see cref="Newtonsoft.Json"/> 文件
+    /// 故事数据管理器 - 负责故事相关的JSON文件操作
     /// </summary>
-    public static class StoryJsonManager
+    public sealed class StoryReader : BaseJsonLoader
     {
-        public static readonly string ZipPath = Application.persistentDataPath;
+        #region 配置常量
 
-        #region Initialization Methods
+        /// <summary>
+        /// 默认故事配置
+        /// </summary>
+        private static LoadConfig DefaultConfig =>
+            new LoadConfig
+            {
+                OutputLog = true,
+                Encoding = JsonEncoding.Unicode,
+                SearchSubdirectories = true,
+                AutoInitialize = true,
+            };
+
+        #endregion
+
+        #region 核心加载方法
+
+        /// <summary>
+        /// 加载故事实体列表
+        /// </summary>
+        public static (bool success, List<Entity> entities) LoadEntities(
+            string fileName,
+            LoadConfig config = null
+        )
+        {
+            config ??= DefaultConfig;
+            return LoadObject<List<Entity>>(fileName, config: config);
+        }
+
+        /// <summary>
+        /// 异步加载故事实体列表
+        /// </summary>
+        public static async UniTask<List<Entity>> LoadEntitiesAsync(
+            string fileName,
+            LoadConfig config = null
+        )
+        {
+            config ??= DefaultConfig;
+            var (success, entities) = await LoadObjectAsync<List<Entity>>(fileName, config: config);
+            return entities ?? new List<Entity>();
+        }
+
+        /// <summary>
+        /// 加载故事数据对象
+        /// </summary>
+        public static (bool success, T storyData) LoadStory<T>(
+            string zipFile,
+            LoadConfig config = null
+        )
+        {
+            config ??= DefaultConfig;
+            return LoadObject<T>(zipFile, config: config);
+        }
+
+        /// <summary>
+        /// 异步加载故事数据对象
+        /// </summary>
+        public static async UniTask<T> LoadStoryAsync<T>(string zipFile, LoadConfig config = null)
+        {
+            config ??= DefaultConfig;
+            var (success, result) = await LoadObjectAsync<T>(zipFile, config: config);
+            return result;
+        }
+
+        #endregion
+
+        #region 保存方法
+
+        /// <summary>
+        /// 保存故事数据
+        /// </summary>
+        public static bool SaveStory<T>(string zipFile, T storyData, LoadConfig config = null)
+        {
+            config ??= DefaultConfig;
+            return SaveObject(zipFile, storyData, config);
+        }
+
+        /// <summary>
+        /// 异步保存故事数据
+        /// </summary>
+        public static async UniTask<bool> SaveStoryAsync<T>(
+            string zipFile,
+            T storyData,
+            LoadConfig config = null
+        )
+        {
+            config ??= DefaultConfig;
+            return await SaveObjectAsync(zipFile, storyData, config);
+        }
+
+        /// <summary>
+        /// 保存故事JSON内容
+        /// </summary>
+        public static bool SaveStoryJson(
+            string zipFile,
+            string jsonContent,
+            LoadConfig config = null
+        )
+        {
+            config ??= DefaultConfig;
+            return SaveObject(zipFile, jsonContent, config);
+        }
+
+        #endregion
+
+        #region 初始化相关
 
         /// <summary>
         /// 确保故事文件已初始化
         /// </summary>
-        public static async UniTask<bool> EnsureStoryFilesInitializedAsync(
-            bool forceReinitialize = false,
-            CancellationToken cancellationToken = default
-        )
+        public static async UniTask<bool> EnsureInitializedAsync(LoadConfig config = null)
         {
-            using (var logger = new AsyncLogger(nameof(StoryJsonManager), true))
+            config ??= DefaultConfig;
+            bool shouldDisposeLogger = config.Logger == null;
+            var logger = config.Logger ?? new AsyncLogger(nameof(StoryReader), config.OutputLog);
+
+            try
             {
-                try
+                logger.Info("开始初始化故事文件...");
+
+                // 使用基类的初始化方法
+                bool initialized = await BaseJsonLoader.EnsureInitializedAsync(
+                    config.CancellationToken,
+                    logger
+                );
+
+                if (initialized)
                 {
-                    logger.Info("开始初始化故事文件...");
-
-                    // 首先确保基础文件系统已初始化
-                    bool baseInitialized = await BaseJsonLoader.EnsureInitializedAsync(
-                        forceReinitialize,
-                        cancellationToken
-                    );
-                    if (!baseInitialized)
-                    {
-                        logger.Error("基础文件系统初始化失败");
-                        return false;
-                    }
-
                     logger.Info("故事文件初始化完成");
-                    return true;
                 }
-                catch (OperationCanceledException)
+                else
                 {
-                    logger.Warning("故事文件初始化被取消");
-                    return false;
+                    logger.Error("故事文件初始化失败");
                 }
-                catch (Exception ex)
-                {
-                    logger.Exception(ex);
-                    logger.Error($"故事文件初始化异常: {ex.Message}");
-                    return false;
-                }
+
+                return initialized;
             }
-        }
-
-        #endregion
-
-        #region Enhanced Load Methods with Initialization
-
-        /// <summary>
-        /// 带自动初始化的异步加载实体列表
-        /// </summary>
-        public static async UniTask<(
-            bool success,
-            List<T> entities
-        )> TryLoadEntityListWithInitializationAsync<T>(
-            string fileName,
-            bool output = true,
-            CancellationToken cancellationToken = default
-        )
-            where T : Entity
-        {
-            // 确保故事文件已初始化
-            bool initialized = await EnsureStoryFilesInitializedAsync(false, cancellationToken);
-            if (!initialized)
+            catch (OperationCanceledException)
             {
-                if (output)
-                {
-                    LogManager.Error("故事文件初始化失败，无法加载文件", nameof(StoryJsonManager));
-                }
-                return (false, new List<T>());
-            }
-
-            // 执行加载
-            return await TryLoadEntitiyListAsync<T>(fileName, output, cancellationToken);
-        }
-
-        /// <summary>
-        /// 带自动初始化的同步加载实体列表
-        /// </summary>
-        public static bool TryLoadEntitiesWithInitialization<T>(
-            string fileName,
-            out List<T> entities,
-            bool output = true
-        )
-            where T : Entity
-        {
-            entities = new List<T>();
-
-            // 同步检查初始化状态（有限制）
-            if (!FileInitializationManager.IsInitialized())
-            {
-                if (output)
-                {
-                    LogManager.Error(
-                        "文件未初始化，请先调用 EnsureStoryFilesInitializedAsync",
-                        nameof(StoryJsonManager)
-                    );
-                }
+                logger.Warning("故事文件初始化被取消");
                 return false;
             }
-
-            // 执行加载
-            return TryLoadEntities<T>(fileName, out entities, output);
-        }
-
-        /// <summary>
-        /// 带自动初始化的 ZIP 加载方法
-        /// </summary>
-        public static async UniTask<(bool success, T result)> TryLoadZipWithInitializationAsync<T>(
-            string zipFileName,
-            string jsonName = BaseJsonLoader.DEFAULT_JSON_FILE_NAME,
-            T defaultValue = default,
-            bool output = true,
-            CancellationToken cancellationToken = default
-        )
-        {
-            // 确保故事文件已初始化
-            bool initialized = await EnsureStoryFilesInitializedAsync(false, cancellationToken);
-            if (!initialized)
+            catch (Exception ex)
             {
-                if (output)
-                {
-                    LogManager.Error("故事文件初始化失败，无法加载文件", nameof(StoryJsonManager));
-                }
-                return (false, defaultValue);
+                logger.Exception(ex);
+                logger.Error($"故事文件初始化异常: {ex.Message}");
+                return false;
             }
-
-            // 执行加载
-            bool success = TryLoadJsonFromZip(
-                zipFileName,
-                out T result,
-                jsonName,
-                defaultValue,
-                output
-            );
-            return (success, result);
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
         }
 
         #endregion
 
-        #region Save Methods
+        #region 便捷方法
 
         /// <summary>
-        /// 异步保存对象到 ZIP 文件
+        /// 快速加载故事实体列表（使用默认配置）
         /// </summary>
-        public static async UniTask<bool> TrySaveJsonToZipAsync<T>(
-            string zipFileName,
-            T serializeObject,
-            JsonSerializerSettings settings,
-            string jsonName = BaseJsonLoader.DEFAULT_JSON_FILE_NAME,
-            bool output = true,
-            CancellationToken cancellationToken = default
-        )
-        {
-            return await BaseJsonLoader.TrySaveJsonToZipAsync(
-                zipFileName,
-                serializeObject,
-                settings,
-                jsonName,
-                output,
-                cancellationToken
-            );
-        }
-
-        /// <summary>
-        /// 异步保存对象到 ZIP 文件（简化版）
-        /// </summary>
-        public static async UniTask<bool> TrySaveJsonToZipAsync<T>(
-            string zipFileName,
-            T serializeObject,
-            JsonSerializerSettings settings,
-            bool output = true,
-            CancellationToken cancellationToken = default
-        )
-        {
-            return await BaseJsonLoader.TrySaveJsonToZipAsync(
-                zipFileName,
-                serializeObject,
-                settings,
-                BaseJsonLoader.DEFAULT_JSON_FILE_NAME,
-                output,
-                cancellationToken
-            );
-        }
-
-        public static bool TrySaveToZip(string zipFileName, string jsonContent, bool output = true)
-        {
-            return BaseJsonLoader.TrySaveToZip(zipFileName, jsonContent, output);
-        }
-
-        public static bool TrySaveJsonToZip<T>(
-            string zipFileName,
-            T serializeObject,
-            JsonSerializerSettings settings
-        )
-        {
-            return TrySaveJsonToZip(
-                zipFileName,
-                serializeObject,
-                settings,
-                BaseJsonLoader.DEFAULT_JSON_FILE_NAME
-            );
-        }
-
-        public static bool TrySaveJsonToZip<T>(
-            string zipFileName,
-            T serializeObject,
-            JsonSerializerSettings settings,
-            string JsonName
-        )
-        {
-            return BaseJsonLoader.TrySaveJsonToZip(
-                zipFileName,
-                serializeObject,
-                settings,
-                JsonName
-            );
-        }
-
-        #endregion
-
-        #region Load Methods
-
-        /// <summary>
-        /// 异步加载 JSON 文件并反序列化为实体列表
-        /// </summary>
-        public static async UniTask<(bool success, List<T> entities)> TryLoadEntitiyListAsync<T>(
+        public static async UniTask<List<Entity>> LoadEntitiesQuickAsync(
             string fileName,
-            bool output = true,
-            CancellationToken cancellationToken = default
+            CancellationToken cancellationToken = default,
+            AsyncLogger logger = null
         )
-            where T : Entity
         {
-            using (var logger = new AsyncLogger(nameof(StoryJsonManager), output))
+            var config = new LoadConfig
             {
-                logger.Info($"开始异步加载实体列表 [{fileName}]");
+                OutputLog = true,
+                Encoding = JsonEncoding.Unicode,
+                AutoInitialize = true,
+                CancellationToken = cancellationToken,
+                Logger = logger,
+            };
 
-                List<T> entities = new List<T>();
-                string fullPath = Path.Combine(ZipPath, fileName);
-
-                if (!File.Exists(fullPath))
-                {
-                    logger.Error($"文件不存在: {fullPath}");
-                    return (false, entities);
-                }
-
-                try
-                {
-                    // 使用 BaseJsonLoader 的异步方法加载 List<T>
-                    var result = await BaseJsonLoader.TryLoadObjectFromJsonAsync<List<T>>(
-                        fileName,
-                        output,
-                        cancellationToken
-                    );
-
-                    if (result.success)
-                    {
-                        entities = result.result ?? new List<T>();
-                        logger.Info($"成功异步加载 {entities.Count} 个实体");
-                    }
-                    else
-                    {
-                        logger.Error("异步加载失败");
-                    }
-
-                    return (result.success, entities);
-                }
-                catch (OperationCanceledException)
-                {
-                    logger.Warning("实体列表加载被取消");
-                    return (false, entities);
-                }
-                catch (Exception ex)
-                {
-                    logger.Exception(ex);
-                    return (false, entities);
-                }
-            }
+            return await LoadEntitiesAsync(fileName, config);
         }
 
         /// <summary>
-        /// 同步加载实体列表
+        /// 快速加载故事数据（使用默认配置）
         /// </summary>
-        public static bool TryLoadEntities<T>(
-            string fileName,
-            out List<T> entities,
-            bool output = true
+        public static async UniTask<T> LoadStoryQuickAsync<T>(
+            string zipFile,
+            CancellationToken cancellationToken = default,
+            AsyncLogger logger = null
         )
-            where T : Entity
         {
-            using (var logger = new AsyncLogger(nameof(StoryJsonManager), output))
+            var config = new LoadConfig
             {
-                logger.Info($"开始同步加载实体列表 [{fileName}]");
+                OutputLog = true,
+                Encoding = JsonEncoding.Unicode,
+                AutoInitialize = true,
+                CancellationToken = cancellationToken,
+                Logger = logger,
+            };
 
-                entities = new List<T>();
-                string fullPath = Path.Combine(ZipPath, fileName);
-
-                if (!File.Exists(fullPath))
-                {
-                    logger.Error($"文件不存在: {fullPath}");
-                    return false;
-                }
-
-                try
-                {
-                    // 使用 BaseJsonLoader 的同步方法加载 List<T>
-                    bool success = BaseJsonLoader.TryLoadObjectFromJson(
-                        fileName,
-                        out List<T> result,
-                        output
-                    );
-
-                    if (success && result != null)
-                    {
-                        entities = result;
-                        logger.Info($"成功加载 {entities.Count} 个实体");
-                        return true;
-                    }
-                    else
-                    {
-                        logger.Error("加载失败");
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    logger.Exception(ex);
-                    return false;
-                }
-            }
+            return await LoadStoryAsync<T>(zipFile, config);
         }
 
-        public static bool TryLoadJsonFromZip<T>(
-            string ZipFileName,
-            out T RefObject,
-            T Default = default
+        /// <summary>
+        /// 快速保存故事数据（使用默认配置）
+        /// </summary>
+        public static async UniTask<bool> SaveStoryQuickAsync<T>(
+            string zipFile,
+            T storyData,
+            CancellationToken cancellationToken = default,
+            AsyncLogger logger = null
         )
         {
-            return TryLoadJsonFromZip(
-                ZipFileName,
-                out RefObject,
-                BaseJsonLoader.DEFAULT_JSON_FILE_NAME,
-                Default
-            );
-        }
+            var config = new LoadConfig
+            {
+                OutputLog = true,
+                Encoding = JsonEncoding.Unicode,
+                CancellationToken = cancellationToken,
+                Logger = logger,
+            };
 
-        public static bool TryLoadJsonFromZip<T>(
-            string zipFileName,
-            out T result,
-            string jsonName = BaseJsonLoader.DEFAULT_JSON_FILE_NAME,
-            T defaultValue = default,
-            bool output = true
-        )
-        {
-            return BaseJsonLoader.TryLoadJsonFromZip(
-                zipFileName,
-                out result,
-                jsonName,
-                defaultValue,
-                output
-            );
+            return await SaveStoryAsync(zipFile, storyData, config);
         }
 
         #endregion
 
-        #region Helper Methods
+        #region 工具方法
 
         /// <summary>
-        /// 检查 Json 所解包出来的 <see cref="List{Entity}"/> 是否正常
+        /// 验证故事JSON结构
         /// </summary>
-        public static bool ValidateJsonStructure(string json, out string errorMessage)
+        public static bool ValidateStoryStructure(string json, out string errorMessage)
         {
             errorMessage = string.Empty;
 
@@ -399,21 +256,108 @@ namespace JsonLoader
                 var jToken = JToken.Parse(json);
                 if (jToken.Type != JTokenType.Array)
                 {
-                    errorMessage = "JSON 不是数组";
+                    errorMessage = "故事JSON应该是数组格式";
                     return false;
                 }
                 return true;
             }
             catch (JsonReaderException ex)
             {
-                errorMessage = $"JSON 解析错误: {ex.Message}";
+                errorMessage = $"JSON解析错误: {ex.Message}";
                 return false;
             }
             catch (Exception ex)
             {
-                errorMessage = $"未知错误: {ex.Message}";
+                errorMessage = $"验证错误: {ex.Message}";
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 检查故事文件是否存在
+        /// </summary>
+        public static bool StoryExists(string zipFile)
+        {
+            string fullPath = Path.Combine(ZipPath, zipFile);
+            return File.Exists(fullPath);
+        }
+
+        /// <summary>
+        /// 获取故事文件信息
+        /// </summary>
+        public static FileInfo GetStoryFileInfo(string zipFile)
+        {
+            string fullPath = Path.Combine(ZipPath, zipFile);
+            return new FileInfo(fullPath);
+        }
+
+        /// <summary>
+        /// 获取故事文件统计信息
+        /// </summary>
+        public static FileInfoStats GetStoryFileStats()
+        {
+            return FileInitializationManager.GetFileInfoStats();
+        }
+
+        #endregion
+
+        #region 高级配置方法
+
+        /// <summary>
+        /// 创建自定义配置的加载器
+        /// </summary>
+        public static LoadConfig CreateConfig(
+            bool outputLog = true,
+            JsonEncoding encoding = JsonEncoding.Unicode,
+            bool autoInitialize = true,
+            bool searchSubdirectories = true,
+            CancellationToken cancellationToken = default,
+            AsyncLogger logger = null
+        )
+        {
+            return new LoadConfig
+            {
+                OutputLog = outputLog,
+                Encoding = encoding,
+                AutoInitialize = autoInitialize,
+                SearchSubdirectories = searchSubdirectories,
+                CancellationToken = cancellationToken,
+                Logger = logger,
+            };
+        }
+
+        /// <summary>
+        /// 创建静默配置（无日志输出）
+        /// </summary>
+        public static LoadConfig CreateSilentConfig(CancellationToken cancellationToken = default)
+        {
+            return new LoadConfig
+            {
+                OutputLog = false,
+                Encoding = JsonEncoding.Unicode,
+                AutoInitialize = true,
+                SearchSubdirectories = true,
+                CancellationToken = cancellationToken,
+            };
+        }
+
+        /// <summary>
+        /// 创建调试配置（详细日志输出）
+        /// </summary>
+        public static LoadConfig CreateDebugConfig(
+            AsyncLogger logger = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            return new LoadConfig
+            {
+                OutputLog = true,
+                Encoding = JsonEncoding.Unicode,
+                AutoInitialize = true,
+                SearchSubdirectories = true,
+                CancellationToken = cancellationToken,
+                Logger = logger,
+            };
         }
 
         #endregion

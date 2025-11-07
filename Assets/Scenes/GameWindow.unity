@@ -297,14 +297,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 1
-  AppendDestination: {x: 0.3, y: 0.5, z: 0}
+  AppendDestination: {x: 0.3, y: 0.475, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 3
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 72083200}
   ResizeDetector: {fileID: 0}
@@ -657,8 +657,8 @@ MonoBehaviour:
   DisappearEdge: 0
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 107613645}
   ResizeDetector: {fileID: 0}
@@ -1085,8 +1085,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 155818803}
   ResizeDetector: {fileID: 0}
@@ -1440,8 +1440,8 @@ MonoBehaviour:
   DisappearEdge: 3
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 341488601}
   ResizeDetector: {fileID: 0}
@@ -1664,6 +1664,7 @@ MonoBehaviour:
   - {fileID: 3133666731739739588}
   DisplayImages: []
   ResizeDetector: {fileID: 1375885492}
+  switchLanguageButton: {fileID: 7488100930461001800}
 --- !u!1 &509751595
 GameObject:
   m_ObjectHideFlags: 0
@@ -2096,8 +2097,8 @@ MonoBehaviour:
   DisappearEdge: 3
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 646731393}
   ResizeDetector: {fileID: 0}
@@ -2365,8 +2366,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 658518679}
   ResizeDetector: {fileID: 0}
@@ -3404,8 +3405,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1077352958}
   ResizeDetector: {fileID: 0}
@@ -3443,6 +3444,7 @@ Transform:
   - {fileID: 495382175}
   - {fileID: 1073953113}
   - {fileID: 81095386508697628}
+  - {fileID: 9183000945596111369}
   - {fileID: 207901324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3745,8 +3747,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1151077302}
   ResizeDetector: {fileID: 0}
@@ -4173,6 +4175,7 @@ MonoBehaviour:
   - {fileID: 495382176}
   - {fileID: 1073953110}
   - {fileID: 7267781056185707381}
+  - {fileID: 9183000945596111370}
   HoverPageObjects:
   - {fileID: 6979558008094895714}
 --- !u!1 &1524348261
@@ -4553,41 +4556,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!1 &1657086629
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1657086630}
-  m_Layer: 5
-  m_Name: StoryCharacter
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!224 &1657086630
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1657086629}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 81095386508697628}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1696914624
 GameObject:
   m_ObjectHideFlags: 0
@@ -5078,7 +5046,7 @@ GameObject:
   - component: {fileID: 1937015633}
   - component: {fileID: 1937015632}
   m_Layer: 5
-  m_Name: GameLayer
+  m_Name: GameBackGroundLayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5797,8 +5765,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 2066044573}
   ResizeDetector: {fileID: 0}
@@ -6106,8 +6074,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 2119194031}
   ResizeDetector: {fileID: 0}
@@ -6165,7 +6133,6 @@ RectTransform:
   - {fileID: 28008451107189363}
   - {fileID: 7045110862005238587}
   - {fileID: 6023456073284979965}
-  - {fileID: 1657086630}
   - {fileID: 1383679163797698324}
   - {fileID: 1346589584}
   m_Father: {fileID: 1086470121}
@@ -6709,14 +6676,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.7, z: 0}
+  AppendDestination: {x: 0.25, y: 0.7, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 8494234308217207590}
   ResizeDetector: {fileID: 0}
@@ -6849,6 +6816,29 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 300, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1913133992535658849
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8226663016365805659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_UiScaleMode: 1
+  m_ReferencePixelsPerUnit: 100
+  m_ScaleFactor: 1
+  m_ReferenceResolution: {x: 1920, y: 1080}
+  m_ScreenMatchMode: 0
+  m_MatchWidthOrHeight: 1
+  m_PhysicalUnit: 3
+  m_FallbackScreenDPI: 96
+  m_DefaultSpriteDPI: 96
+  m_DynamicPixelsPerUnit: 1
+  m_PresetInfoIsWorld: 0
 --- !u!222 &1929929570740409124
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -7074,8 +7064,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1625522500315282293}
   ResizeDetector: {fileID: 0}
@@ -7461,8 +7451,8 @@ MonoBehaviour:
   DisappearEdge: 3
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 6023456073284979965}
   ResizeDetector: {fileID: 0}
@@ -7649,17 +7639,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.25, z: 0}
+  AppendDestination: {x: 0.25, y: 0.25, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 6250087705684726734}
   ResizeDetector: {fileID: 0}
+--- !u!223 &3352312369093109168
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8226663016365805659}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 1
+  m_Camera: {fileID: 963194227}
+  m_PlaneDistance: 1000
+  m_PixelPerfect: 1
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 0
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 1
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 0
+  m_TargetDisplay: 0
 --- !u!114 &3417827714026543525
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8001,8 +8014,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 28008451107189363}
   ResizeDetector: {fileID: 0}
@@ -8495,8 +8508,8 @@ MonoBehaviour:
   DisappearEdge: 1
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 8422135396831991641}
   ResizeDetector: {fileID: 0}
@@ -8519,8 +8532,8 @@ MonoBehaviour:
   DisappearEdge: 3
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 4058917468863360175}
   ResizeDetector: {fileID: 0}
@@ -8580,6 +8593,23 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &4904251509863620750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8226663016365805659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc42784cf147c0c48a680349fa168899, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_IgnoreReversedGraphics: 1
+  m_BlockingObjects: 0
+  m_BlockingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!23 &4989329625518495344
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9071,14 +9101,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.55, z: 0}
+  AppendDestination: {x: 0.25, y: 0.55, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 3963910026012552731}
   ResizeDetector: {fileID: 0}
@@ -9253,6 +9283,25 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
+--- !u!114 &5854144419860226992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8226663016365805659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d76297a2cd933dc43b316934577990d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ParentPage: {fileID: 0}
+  Selectables: []
+  FirstSelected: {fileID: 0}
+  LastSelected: {fileID: 0}
+  NavigateReference: {fileID: -8784545083839296357, guid: 6a5a02ff9bc2fc24b8ddf3daab4b4d5a, type: 3}
+  IsScaleEnabled: 1
+  AnimeScale: 1.5
 --- !u!114 &5974767802031596432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9510,8 +9559,8 @@ MonoBehaviour:
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 7045110862005238587}
   ResizeDetector: {fileID: 0}
@@ -9932,8 +9981,8 @@ MonoBehaviour:
   DisappearEdge: 1
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 7655384327154235646}
   ResizeDetector: {fileID: 0}
@@ -10204,14 +10253,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.4, z: 0}
+  AppendDestination: {x: 0.25, y: 0.4, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1745872688810772640}
   ResizeDetector: {fileID: 0}
@@ -10390,8 +10439,8 @@ MonoBehaviour:
   DisappearEdge: 1
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 2076638607544737459}
   ResizeDetector: {fileID: 0}
@@ -10534,8 +10583,8 @@ MonoBehaviour:
   DisappearEdge: 3
   AppendType: 0
   DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
+  AppendEase: 6
+  DisappearEase: 6
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1383679163797698324}
   ResizeDetector: {fileID: 0}
@@ -10751,6 +10800,27 @@ MonoBehaviour:
   Navigator: {fileID: 1654920697531178155}
   LocalizeStringEvent: {fileID: 6865815551603158747}
   ParentPage: {fileID: 0}
+--- !u!1 &8226663016365805659
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9183000945596111369}
+  - component: {fileID: 5854144419860226992}
+  - component: {fileID: 3352312369093109168}
+  - component: {fileID: 1913133992535658849}
+  - component: {fileID: 4904251509863620750}
+  - component: {fileID: 9183000945596111370}
+  m_Layer: 5
+  m_Name: EmptyPage
+  m_TagString: Page
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
 --- !u!114 &8251753067728193439
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11297,6 +11367,43 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &9183000945596111369
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8226663016365805659}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1086470121}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0, y: 0}
+--- !u!114 &9183000945596111370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8226663016365805659}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a16d694639201b848b07d2f72624594d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  EventSystem: {fileID: 5854144419860226992}
+  SelfRect: {fileID: 9183000945596111369}
+  DisplayTexts: []
+  DisplaySelectables: []
+  DisplayImages: []
+  ResizeDetector: {fileID: 1375885492}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

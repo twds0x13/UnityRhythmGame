@@ -93,13 +93,13 @@ public class ECSTreeEditorWindow : EditorWindow
             // 添加Save按钮
             if (GUILayout.Button("Save", EditorStyles.toolbarButton))
             {
-                Story.Inst.SaveStoryTreeAsyncForget("story.zip", true);
+                Story.Inst.SaveForget("story.zip", true);
             }
 
             // 添加Load按钮
             if (GUILayout.Button("Load", EditorStyles.toolbarButton))
             {
-                Story.Inst.LoadStoryTreeAsyncForget("story.zip", true);
+                Story.Inst.LoadForget("story.zip", true);
             }
 
             GUILayout.FlexibleSpace();

@@ -144,11 +144,11 @@ namespace StoryNS
 
         public async UniTaskVoid LoadStory()
         {
-            bool initialized = await BaseJsonLoader.EnsureFileExistsAsync("story.zip");
+            bool initialized = await BaseJsonLoader.EnsureInitializedAsync(); // story.zip 已经登记在需要初始化的列表中
 
             if (initialized)
             {
-                bool success = await Story.Inst.LoadStoryTreeAsync("story.zip");
+                bool success = await Story.Inst.Load("story.zip");
 
                 if (success)
                 {
