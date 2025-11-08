@@ -208,6 +208,181 @@ namespace AudioNS
             throw new ArgumentNullException("RequiredClip String Null");
         }
 
+        // 添加这些方法到 AudioManager 类中
+
+        /// <summary>
+        /// 使用外部AudioClip加载音频
+        /// </summary>
+        /// <param name="audioClip">外部AudioClip</param>
+        /// <param name="sourceEnum">音频源</param>
+        public void LoadAudioClip(AudioClip audioClip, ISource sourceEnum)
+        {
+            LoadAudioClip(audioClip, sourceEnum.Value);
+        }
+
+        /// <summary>
+        /// 使用外部AudioClip加载音频
+        /// </summary>
+        /// <param name="audioClip">外部AudioClip</param>
+        /// <param name="sourceEnum">音频源</param>
+        public void LoadAudioClip(AudioClip audioClip, Source sourceEnum)
+        {
+            LoadAudioClip(audioClip, sourceEnum.Value);
+        }
+
+        /// <summary>
+        /// 使用外部AudioClip加载音频（核心实现）
+        /// </summary>
+        /// <param name="audioClip">外部AudioClip</param>
+        /// <param name="sourceEnum">音频源名称</param>
+        /// <param name="output">是否输出日志</param>
+        private async void LoadAudioClip(
+            AudioClip audioClip,
+            string sourceEnum,
+            bool output = false
+        )
+        {
+            if (audioClip == null)
+            {
+                LogManager.Warning($"External audio clip is null for source: {sourceEnum}");
+                return;
+            }
+
+            if (!_sourceStates.ContainsKey(sourceEnum))
+            {
+                _sourceStates[sourceEnum] = new AudioSourceState();
+            }
+
+            AudioSourceState state = _sourceStates[sourceEnum];
+            AudioSource source = RequireAudioSource(sourceEnum);
+
+            if (state.IsProcessing)
+            {
+                state.PendingClipName = audioClip.name; // 使用clip名称作为pending标识
+                LogManager.Log(
+                    $"音频源忙，外部音频请求加入队列: {audioClip.name}",
+                    nameof(AudioManager),
+                    output
+                );
+                return;
+            }
+
+            state.IsProcessing = true;
+
+            try
+            {
+                await ProcessExternalAudioLoad(audioClip, sourceEnum, source, state, output);
+
+                if (state.PendingClipName != null)
+                {
+                    // 对于外部音频，我们无法重新创建AudioClip，所以只能记录警告
+                    LogManager.Warning($"有挂起的外部音频请求但无法处理: {state.PendingClipName}");
+                    state.PendingClipName = null;
+                }
+            }
+            finally
+            {
+                state.IsProcessing = false;
+            }
+        }
+
+        /// <summary>
+        /// 处理外部AudioClip的加载
+        /// </summary>
+        private async UniTask ProcessExternalAudioLoad(
+            AudioClip audioClip,
+            string sourceEnum,
+            AudioSource source,
+            AudioSourceState state,
+            bool output
+        )
+        {
+            CancelRewarmTask(sourceEnum);
+            await UniTask.Yield();
+
+            if (source.isPlaying && state.CurrentClip == audioClip)
+            {
+                source.time = 0f;
+                LogManager.Log(
+                    $"重置已播放外部音频时间: {audioClip.name}",
+                    nameof(AudioManager),
+                    output
+                );
+                return;
+            }
+
+            if (source.isPlaying)
+            {
+                source.Stop();
+                await UniTask.DelayFrame(1);
+            }
+
+            bool needWarmup = !state.IsWarmedUp || state.WarmedUpClip != audioClip;
+
+            if (needWarmup)
+            {
+                if (source.isPlaying)
+                {
+                    source.Stop();
+                    await UniTask.DelayFrame(1);
+                }
+
+                source.clip = audioClip;
+                source.volume = 0f;
+                source.Play();
+                source.Pause();
+
+                state.IsWarmedUp = true;
+                state.WarmedUpClip = audioClip;
+
+                LogManager.Log($"预热外部音频片段: {audioClip.name}", nameof(AudioManager), output);
+            }
+
+            if (source.isPlaying)
+            {
+                source.Stop();
+                await UniTask.DelayFrame(1);
+            }
+
+            source.time = 0f;
+            source.volume = state.Volume;
+            source.Play();
+
+            state.CurrentClip = audioClip;
+
+            _ = RewarmAfterPlayAsync(source, sourceEnum, state.Volume);
+
+            LogManager.Log(
+                $"播放外部音频 {audioClip.name}, 源: {sourceEnum}",
+                nameof(AudioManager),
+                output
+            );
+        }
+
+        /// <summary>
+        /// 批量加载外部AudioClip
+        /// </summary>
+        /// <param name="clipPacks">音频包列表 (AudioClip, Source)</param>
+        public void LoadExternalAudioClips(List<(AudioClip, Source)> clipPacks)
+        {
+            foreach (var clipPack in clipPacks)
+            {
+                LoadAudioClip(clipPack.Item1, clipPack.Item2);
+            }
+        }
+
+        /// <summary>
+        /// 批量加载外部AudioClip
+        /// </summary>
+        /// <param name="clipPacks">音频包列表 (AudioClip, ISource)</param>
+        public void LoadExternalAudioClips(List<(AudioClip, ISource)> clipPacks)
+        {
+            foreach (var clipPack in clipPacks)
+            {
+                LoadAudioClip(clipPack.Item1, clipPack.Item2);
+            }
+        }
+
         public void LoadAudioClip<T1, T2>(T1 clipEnum, T2 sourceEnum)
             where T1 : IAudio
             where T2 : ISource

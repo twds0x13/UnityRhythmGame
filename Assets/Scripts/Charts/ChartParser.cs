@@ -5,11 +5,14 @@ using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using UnityEngine;
+using UnityEngine.Networking;
 
 // using static ChartReader;
 
-namespace ChartParser
+namespace Parser
 {
     /// <summary>
     /// 谱面文件解析器
@@ -773,6 +776,452 @@ namespace ChartParser
                 {
                     logger.Dispose();
                 }
+            }
+        }
+
+        #endregion
+
+        #region UniTask 音频转换方法
+
+        /// <summary>
+        /// 将音频数据转换为 AudioClip
+        /// </summary>
+        public async UniTask<AudioClip> ConvertToAudioClipAsync(
+            byte[] audioData,
+            string audioFileName,
+            string clipName = "ChartAudio",
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (audioData == null || audioData.Length == 0)
+            {
+                Debug.LogError("音频数据为空");
+                return null;
+            }
+
+            try
+            {
+                // 根据文件扩展名确定音频格式
+                AudioType audioType = GetAudioTypeFromFileName(audioFileName);
+
+                if (audioType == AudioType.UNKNOWN)
+                {
+                    Debug.LogError($"不支持的音频格式: {audioFileName}");
+                    return null;
+                }
+
+                // 方法1: 使用 UnityWebRequestMultimedia (推荐)
+                return await LoadAudioWithUnityWebRequest(
+                    audioData,
+                    audioType,
+                    clipName,
+                    cancellationToken
+                );
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.Log("音频加载被取消");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"转换音频失败: {ex.Message}");
+                // 尝试备用方法
+                return await LoadAudioWithMemoryStream(
+                    audioData,
+                    audioFileName,
+                    clipName,
+                    cancellationToken
+                );
+            }
+        }
+
+        /// <summary>
+        /// 直接从谱面获取 AudioClip (不使用 WWW)
+        /// </summary>
+        public async UniTask<AudioClip> GetAudioClipAsync(
+            Chart chart,
+            string clipName = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (chart == null)
+            {
+                LogManager.Error("谱面为空");
+                return null;
+            }
+
+            // 异步获取音频数据
+            byte[] audioData = await UniTask.RunOnThreadPool(
+                () => GetAudioData(chart),
+                cancellationToken: cancellationToken
+            );
+
+            if (audioData == null)
+            {
+                LogManager.Error($"无法获取谱面 {chart.ChartName} 的音频数据");
+                return null;
+            }
+
+            return await ConvertToAudioClipAsync(
+                audioData,
+                chart.AudioFileName,
+                clipName ?? chart.AudioFileName,
+                cancellationToken
+            );
+        }
+
+        /// <summary>
+        /// 批量获取多个谱面的 AudioClip
+        /// </summary>
+        public async UniTask<Dictionary<Chart, AudioClip>> GetAudioClipsAsync(
+            IEnumerable<Chart> charts,
+            IProgress<float> progress = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var chartList = charts.ToList();
+            var results = new Dictionary<Chart, AudioClip>();
+
+            for (int i = 0; i < chartList.Count; i++)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                var chart = chartList[i];
+                try
+                {
+                    var audioClip = await GetAudioClipAsync(
+                        chart,
+                        $"{chart.ChartName}_Audio",
+                        cancellationToken
+                    );
+                    if (audioClip != null)
+                    {
+                        results[chart] = audioClip;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"加载谱面 {chart.ChartName} 音频失败: {ex.Message}");
+                }
+
+                // 更新进度
+                progress?.Report((float)(i + 1) / chartList.Count);
+
+                // 每加载一个后等待一帧，避免卡顿
+                await UniTask.Yield();
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        /// 预加载所有谱面的音频（带进度回调）
+        /// </summary>
+        public async UniTask PreloadAllAudioAsync(
+            IProgress<float> progress = null,
+            CancellationToken cancellationToken = default
+        )
+        {
+            var allCharts = GetAllCharts();
+            await GetAudioClipsAsync(allCharts, progress, cancellationToken);
+        }
+
+        #endregion
+
+        #region 音频加载核心方法（不使用 WWW）
+
+        /// <summary>
+        /// 使用 UnityWebRequestMultimedia 加载音频（推荐方法）
+        /// </summary>
+        private async UniTask<AudioClip> LoadAudioWithUnityWebRequest(
+            byte[] audioData,
+            AudioType audioType,
+            string clipName,
+            CancellationToken cancellationToken
+        )
+        {
+            // 创建临时文件路径
+            string tempPath = Path.Combine(
+                Application.temporaryCachePath,
+                $"temp_audio_{Guid.NewGuid()}{GetAudioExtension(audioType)}"
+            );
+
+            try
+            {
+                // 写入临时文件
+                await File.WriteAllBytesAsync(tempPath, audioData, cancellationToken);
+
+                // 使用 UnityWebRequestMultimedia 加载音频
+                using var www = UnityWebRequestMultimedia.GetAudioClip(
+                    $"file://{tempPath}",
+                    audioType
+                );
+
+                // 发送请求并等待完成
+                await www.SendWebRequest().WithCancellation(cancellationToken);
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    AudioClip clip = DownloadHandlerAudioClip.GetContent(www);
+                    if (clip != null)
+                    {
+                        clip.name = clipName;
+                        return clip;
+                    }
+                    else
+                    {
+                        Debug.LogError("从 UnityWebRequest 获取 AudioClip 失败");
+                        return null;
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"加载音频失败: {www.error}");
+                    return null;
+                }
+            }
+            finally
+            {
+                // 清理临时文件
+                try
+                {
+                    if (File.Exists(tempPath))
+                        File.Delete(tempPath);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"清理临时文件失败: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// 使用 MemoryStream 和 NAudio 备用方案（如果需要更复杂的音频处理）
+        /// </summary>
+        private async UniTask<AudioClip> LoadAudioWithMemoryStream(
+            byte[] audioData,
+            string audioFileName,
+            string clipName,
+            CancellationToken cancellationToken
+        )
+        {
+            // 这个方法作为备用方案，使用 System.IO 和可能的第三方库
+            // 对于简单的 WAV 文件，可以手动解析
+
+            try
+            {
+                // 检查文件类型
+                if (audioFileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
+                {
+                    return await ParseWavFile(audioData, clipName, cancellationToken);
+                }
+                else
+                {
+                    Debug.LogError($"不支持直接解析的音频格式: {audioFileName}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"备用音频加载方法失败: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 解析 WAV 文件数据（简单的 WAV 解析器）
+        /// </summary>
+        private async UniTask<AudioClip> ParseWavFile(
+            byte[] wavData,
+            string clipName,
+            CancellationToken cancellationToken
+        )
+        {
+            return await UniTask.RunOnThreadPool(
+                () =>
+                {
+                    try
+                    {
+                        using var memoryStream = new MemoryStream(wavData);
+                        using var binaryReader = new BinaryReader(memoryStream);
+
+                        // 读取 RIFF 头
+                        string riff = new string(binaryReader.ReadChars(4));
+                        if (riff != "RIFF")
+                            throw new Exception("无效的 WAV 文件");
+
+                        binaryReader.ReadInt32(); // 文件大小
+
+                        string wave = new string(binaryReader.ReadChars(4));
+                        if (wave != "WAVE")
+                            throw new Exception("无效的 WAV 文件");
+
+                        // 查找 fmt 块
+                        while (memoryStream.Position < memoryStream.Length)
+                        {
+                            string chunkId = new string(binaryReader.ReadChars(4));
+                            int chunkSize = binaryReader.ReadInt32();
+
+                            if (chunkId == "fmt ")
+                            {
+                                // 读取音频格式信息
+                                int audioFormat = binaryReader.ReadInt16();
+                                int numChannels = binaryReader.ReadInt16();
+                                int sampleRate = binaryReader.ReadInt32();
+                                int byteRate = binaryReader.ReadInt32();
+                                int blockAlign = binaryReader.ReadInt16();
+                                int bitsPerSample = binaryReader.ReadInt16();
+
+                                // 跳过剩余数据
+                                if (chunkSize > 16)
+                                    binaryReader.ReadBytes(chunkSize - 16);
+
+                                // 查找 data 块
+                                while (memoryStream.Position < memoryStream.Length)
+                                {
+                                    string dataChunkId = new string(binaryReader.ReadChars(4));
+                                    int dataChunkSize = binaryReader.ReadInt32();
+
+                                    if (dataChunkId == "data")
+                                    {
+                                        // 读取音频数据
+                                        byte[] audioBytes = binaryReader.ReadBytes(dataChunkSize);
+
+                                        // 计算样本数
+                                        int samples =
+                                            audioBytes.Length / (bitsPerSample / 8) / numChannels;
+
+                                        // 创建 AudioClip
+                                        AudioClip audioClip = AudioClip.Create(
+                                            clipName,
+                                            samples,
+                                            numChannels,
+                                            sampleRate,
+                                            false
+                                        );
+
+                                        // 设置音频数据
+                                        float[] audioData = ConvertByteToFloat(
+                                            audioBytes,
+                                            bitsPerSample
+                                        );
+                                        audioClip.SetData(audioData, 0);
+
+                                        return audioClip;
+                                    }
+                                    else
+                                    {
+                                        // 跳过未知块
+                                        binaryReader.ReadBytes(dataChunkSize);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                // 跳过未知块
+                                binaryReader.ReadBytes(chunkSize);
+                            }
+                        }
+
+                        throw new Exception("未找到音频数据");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"WAV 文件解析失败: {ex.Message}");
+                        return null;
+                    }
+                },
+                cancellationToken: cancellationToken
+            );
+        }
+
+        /// <summary>
+        /// 将字节数组转换为浮点数组
+        /// </summary>
+        private float[] ConvertByteToFloat(byte[] bytes, int bitsPerSample)
+        {
+            if (bitsPerSample == 16)
+            {
+                // 16-bit PCM
+                int sampleCount = bytes.Length / 2;
+                float[] samples = new float[sampleCount];
+
+                for (int i = 0; i < sampleCount; i++)
+                {
+                    short sample = BitConverter.ToInt16(bytes, i * 2);
+                    samples[i] = sample / 32768f;
+                }
+
+                return samples;
+            }
+            else if (bitsPerSample == 8)
+            {
+                // 8-bit PCM
+                float[] samples = new float[bytes.Length];
+
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    samples[i] = (bytes[i] - 128) / 128f;
+                }
+
+                return samples;
+            }
+            else
+            {
+                throw new Exception($"不支持的位深度: {bitsPerSample}");
+            }
+        }
+
+        #endregion
+
+        #region 音频辅助方法
+
+        /// <summary>
+        /// 根据文件名获取 AudioType
+        /// </summary>
+        private AudioType GetAudioTypeFromFileName(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                return AudioType.UNKNOWN;
+
+            string extension = Path.GetExtension(fileName).ToLower();
+
+            switch (extension)
+            {
+                case ".mp3":
+                    return AudioType.MPEG;
+                case ".wav":
+                    return AudioType.WAV;
+                case ".ogg":
+                    return AudioType.OGGVORBIS;
+                case ".aiff":
+                case ".aif":
+                    return AudioType.AIFF;
+                default:
+                    Debug.LogWarning($"未知的音频格式: {extension}，尝试自动检测");
+                    return AudioType.UNKNOWN;
+            }
+        }
+
+        /// <summary>
+        /// 获取音频文件扩展名
+        /// </summary>
+        private string GetAudioExtension(AudioType audioType)
+        {
+            switch (audioType)
+            {
+                case AudioType.MPEG:
+                    return ".mp3";
+                case AudioType.WAV:
+                    return ".wav";
+                case AudioType.OGGVORBIS:
+                    return ".ogg";
+                case AudioType.AIFF:
+                    return ".aiff";
+                default:
+                    return ".audio";
             }
         }
 

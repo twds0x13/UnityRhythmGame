@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ChartParser;
+using Parser;
 using Newtonsoft.Json.Linq;
 using Chart = JsonLoader.ChartJsonLoader;
 /*

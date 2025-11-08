@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 // using static ChartReader;
 
-namespace ChartParser
+namespace Parser
 {
     /// <summary>
     /// 谱面文件类型
