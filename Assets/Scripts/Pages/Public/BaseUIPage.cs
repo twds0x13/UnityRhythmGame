@@ -34,6 +34,9 @@ namespace PageNS
         protected List<SelectableDisplay> DisplaySelectables = new();
 
         [Ext.ReadOnlyInGame, SerializeField]
+        protected List<ScrollDisplay> DisplayScroll = new();
+
+        [Ext.ReadOnlyInGame, SerializeField]
         protected List<Image> DisplayImages = new();
 
         private List<Color> ImageColors = new();
@@ -88,7 +91,9 @@ namespace PageNS
 
             RegisterDisplayTexts();
 
-            RegisterDisplayButtons();
+            RegisterDisplaySelectables();
+
+            RegisterDisplayScrolls();
 
             RegisterDisplayImages();
         }
@@ -114,7 +119,7 @@ namespace PageNS
             }
         }
 
-        private void RegisterDisplayButtons()
+        private void RegisterDisplaySelectables()
         {
             for (int i = 0; i < DisplaySelectables.Count; i++)
             {
@@ -135,6 +140,17 @@ namespace PageNS
                 ImageColors.Add(DisplayImages[i].color);
 
                 DisplayImages[i].gameObject.SetActive(false);
+            }
+        }
+
+        private void RegisterDisplayScrolls()
+        {
+            for (int i = 0; i < DisplayScroll.Count; i++)
+            {
+                DisplayScroll[i].OnAwake();
+                DisplayScroll[i].SetParentPage(this);
+                DisplayScroll[i].SetResizeDetector(ResizeDetector);
+                RegisterObject(DisplayScroll[i]);
             }
         }
 

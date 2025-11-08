@@ -1,14 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using Singleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Game = GameManagerNS.GameManager;
-using Parser = ChartParser.ChartParser;
 using Pool = PooledObjectNS.PooledObjectManager;
 
 /// <summary>
@@ -24,21 +20,10 @@ namespace GameCore
 
         public Action ActionOnUpdate;
 
-        private Parser chartParser;
-
         protected override void SingletonAwake()
         {
             // 在初始化时移除旧的 OnUpdate 订阅
             ActionOnUpdate -= OnUpdate;
-
-            LoadChart();
-        }
-
-        public async void LoadChart()
-        {
-            chartParser = new Parser(Application.persistentDataPath);
-
-            var collection = await chartParser.ScanAsync();
         }
 
         public void StartGame()
