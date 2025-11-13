@@ -21,8 +21,6 @@ public class ButtonScrollCell : FancyScrollRectCell<ButtonScrollData, ButtonScro
     [SerializeField]
     private Image backGround; // 选中高亮效果
 
-    private ButtonScrollData currentData;
-
     // 初始化方法
     void Start()
     {
@@ -36,8 +34,6 @@ public class ButtonScrollCell : FancyScrollRectCell<ButtonScrollData, ButtonScro
     // 更新单元格内容
     public override void UpdateContent(ButtonScrollData itemData)
     {
-        currentData = itemData;
-
         if (songTitle != null)
             songTitle.text = itemData.SongTitle;
 

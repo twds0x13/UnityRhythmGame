@@ -61,6 +61,14 @@ namespace AudioNS
             UniTask.Void(PrewarmAllAudioSources);
         }
 
+        private void Update()
+        {
+            foreach (var (_, source) in _registeredAudioSources)
+            {
+                source.pitch = Time.timeScale;
+            }
+        }
+
         private void RegisterAudioClips()
         {
             foreach (AudioClip audioClip in AudioClips)
@@ -113,6 +121,164 @@ namespace AudioNS
             }
 
             await UniTask.WaitForSeconds(0);
+        }
+
+        /// <summary>
+        /// 暂停指定音频源上的音频播放
+        /// </summary>
+        /// <param name="source">要暂停的音频源</param>
+        public void PauseAudioSource(Source source)
+        {
+            PauseAudioSource(source.Value);
+        }
+
+        /// <summary>
+        /// 暂停指定音频源上的音频播放
+        /// </summary>
+        /// <param name="source">要暂停的音频源</param>
+        public void PauseAudioSource(ISource source)
+        {
+            PauseAudioSource(source.Value);
+        }
+
+        /// <summary>
+        /// 暂停指定音频源上的音频播放（核心实现）
+        /// </summary>
+        private void PauseAudioSource(string sourceName)
+        {
+            if (_registeredAudioSources.TryGetValue(sourceName, out AudioSource audioSource))
+            {
+                if (audioSource.isPlaying)
+                {
+                    audioSource.Pause();
+                    LogManager.Log($"暂停音频源: {sourceName}", nameof(AudioManager), false);
+                }
+            }
+            else
+            {
+                LogManager.Warning($"音频源 '{sourceName}' 未找到，无法暂停");
+            }
+        }
+
+        /// <summary>
+        /// 清除音频源上的音频片段（包括已预热和正在播放的）
+        /// </summary>
+        /// <param name="source">要清除的音频源</param>
+        public void ClearAudioSource(Source source)
+        {
+            ClearAudioSource(source.Value);
+        }
+
+        /// <summary>
+        /// 清除音频源上的音频片段（包括已预热和正在播放的）
+        /// </summary>
+        /// <param name="source">要清除的音频源</param>
+        public void ClearAudioSource(ISource source)
+        {
+            ClearAudioSource(source.Value);
+        }
+
+        /// <summary>
+        /// 清除音频源上的音频片段（包括已预热和正在播放的）（核心实现）
+        /// </summary>
+        private void ClearAudioSource(string sourceName)
+        {
+            if (_sourceStates.TryGetValue(sourceName, out AudioSourceState state))
+            {
+                // 取消重预热任务
+                CancelRewarmTask(sourceName);
+
+                // 停止音频播放
+                if (_registeredAudioSources.TryGetValue(sourceName, out AudioSource audioSource))
+                {
+                    if (audioSource.isPlaying)
+                    {
+                        audioSource.Stop();
+                    }
+
+                    // 清除音频片段
+                    audioSource.clip = null;
+                }
+
+                // 重置状态
+                state.CurrentClip = null;
+                state.IsWarmedUp = false;
+                state.WarmedUpClip = null;
+                state.PendingClipName = null;
+
+                LogManager.Log($"清除音频源: {sourceName}", nameof(AudioManager), false);
+            }
+            else
+            {
+                LogManager.Warning($"音频源状态 '{sourceName}' 未找到，无法清除");
+            }
+        }
+
+        /// <summary>
+        /// 预热音频片段到指定音频源
+        /// </summary>
+        /// <param name="audioClip">要预热的音频片段</param>
+        /// <param name="source">目标音频源</param>
+        /// <param name="output">是否输出日志</param>
+        public void PrewarmAudioClip(AudioClip audioClip, Source source, bool output = false)
+        {
+            PrewarmAudioClip(audioClip, source.Value, output);
+        }
+
+        /// <summary>
+        /// 预热音频片段到指定音频源
+        /// </summary>
+        /// <param name="audioClip">要预热的音频片段</param>
+        /// <param name="source">目标音频源</param>
+        /// <param name="output">是否输出日志</param>
+        public void PrewarmAudioClip(AudioClip audioClip, ISource source, bool output = false)
+        {
+            PrewarmAudioClip(audioClip, source.Value, output);
+        }
+
+        /// <summary>
+        /// 预热音频片段到指定音频源（核心实现）
+        /// </summary>
+        private void PrewarmAudioClip(AudioClip audioClip, string sourceName, bool output = false)
+        {
+            if (audioClip == null)
+            {
+                LogManager.Warning($"预热的音频片段为null，源: {sourceName}");
+                return;
+            }
+
+            if (!_sourceStates.ContainsKey(sourceName))
+            {
+                _sourceStates[sourceName] = new AudioSourceState();
+            }
+
+            AudioSourceState state = _sourceStates[sourceName];
+            AudioSource source = RequireAudioSource(sourceName);
+
+            CancelRewarmTask(sourceName);
+
+            // 如果已经在播放，先停止
+            if (source.isPlaying)
+            {
+                source.Stop();
+            }
+
+            // 设置音频片段并预热
+            source.clip = audioClip;
+            source.volume = 0f;
+            source.time = 0f;
+            source.Play();
+            source.Pause();
+
+            state.IsWarmedUp = true;
+            state.WarmedUpClip = audioClip;
+            state.RewarmToken = new CancellationTokenSource();
+
+            LogManager.Log(
+                $"预热音频片段: {audioClip.name} 到源: {sourceName}",
+                nameof(AudioManager),
+                output
+            );
         }
 
         private void CloseAudioSource(AudioSource source)
@@ -208,8 +374,6 @@ namespace AudioNS
             throw new ArgumentNullException("RequiredClip String Null");
         }
 
-        // 添加这些方法到 AudioManager 类中
-
         /// <summary>
         /// 使用外部AudioClip加载音频
         /// </summary>
@@ -225,7 +389,7 @@ namespace AudioNS
         /// </summary>
         /// <param name="audioClip">外部AudioClip</param>
         /// <param name="sourceEnum">音频源</param>
-        public void LoadAudioClip(AudioClip audioClip, Source sourceEnum)
+        public void PlayAudioClip(AudioClip audioClip, Source sourceEnum)
         {
             LoadAudioClip(audioClip, sourceEnum.Value);
         }
@@ -287,7 +451,7 @@ namespace AudioNS
         }
 
         /// <summary>
-        /// 处理外部AudioClip的加载
+        /// 处理外部AudioClip的加载 - 修改后的版本
         /// </summary>
         private async UniTask ProcessExternalAudioLoad(
             AudioClip audioClip,
@@ -300,6 +464,7 @@ namespace AudioNS
             CancelRewarmTask(sourceEnum);
             await UniTask.Yield();
 
+            // 检查是否已经在播放相同的音频片段
             if (source.isPlaying && state.CurrentClip == audioClip)
             {
                 source.time = 0f;
@@ -311,39 +476,48 @@ namespace AudioNS
                 return;
             }
 
+            // 如果正在播放其他音频，先停止
             if (source.isPlaying)
             {
                 source.Stop();
                 await UniTask.DelayFrame(1);
             }
 
-            bool needWarmup = !state.IsWarmedUp || state.WarmedUpClip != audioClip;
+            // 修改：检查是否已经预热过该音频片段
+            bool isAlreadyWarmedUp = state.IsWarmedUp && state.WarmedUpClip == audioClip;
 
-            if (needWarmup)
+            if (!isAlreadyWarmedUp)
             {
-                if (source.isPlaying)
-                {
-                    source.Stop();
-                    await UniTask.DelayFrame(1);
-                }
+                // 未预热，需要先预热
+                LogManager.Log(
+                    $"音频片段未预热，先预热: {audioClip.name}",
+                    nameof(AudioManager),
+                    output
+                );
 
-                source.clip = audioClip;
-                source.volume = 0f;
-                source.Play();
-                source.Pause();
+                // 使用预热方法
+                PrewarmAudioClip(audioClip, sourceEnum, output);
 
-                state.IsWarmedUp = true;
-                state.WarmedUpClip = audioClip;
-
-                LogManager.Log($"预热外部音频片段: {audioClip.name}", nameof(AudioManager), output);
+                // 预热后需要等待一帧确保设置生效
+                await UniTask.DelayFrame(1);
+            }
+            else
+            {
+                LogManager.Log(
+                    $"音频片段已预热，直接播放: {audioClip.name}",
+                    nameof(AudioManager),
+                    output
+                );
             }
 
+            // 确保音频源已停止
             if (source.isPlaying)
             {
                 source.Stop();
                 await UniTask.DelayFrame(1);
             }
 
+            // 设置并播放音频
             source.time = 0f;
             source.volume = state.Volume;
             source.Play();
@@ -353,7 +527,7 @@ namespace AudioNS
             _ = RewarmAfterPlayAsync(source, sourceEnum, state.Volume);
 
             LogManager.Log(
-                $"播放外部音频 {audioClip.name}, 源: {sourceEnum}",
+                $"播放外部音频 {audioClip.name}, 源: {sourceEnum}, 预热状态: {(isAlreadyWarmedUp ? "已预热" : "新预热")}",
                 nameof(AudioManager),
                 output
             );
@@ -367,7 +541,7 @@ namespace AudioNS
         {
             foreach (var clipPack in clipPacks)
             {
-                LoadAudioClip(clipPack.Item1, clipPack.Item2);
+                PlayAudioClip(clipPack.Item1, clipPack.Item2);
             }
         }
 
@@ -428,6 +602,9 @@ namespace AudioNS
             }
         }
 
+        /// <summary>
+        /// 处理音频加载 - 修改后的版本
+        /// </summary>
         private async UniTask ProcessAudioLoad(
             string clipName,
             string sourceEnum,
@@ -440,6 +617,7 @@ namespace AudioNS
             CancelRewarmTask(sourceEnum);
             await UniTask.Yield();
 
+            // 检查是否已经在播放相同的音频片段
             if (source.isPlaying && state.CurrentClip == newClip)
             {
                 source.time = 0f;
@@ -447,39 +625,48 @@ namespace AudioNS
                 return;
             }
 
+            // 如果正在播放其他音频，先停止
             if (source.isPlaying)
             {
                 source.Stop();
                 await UniTask.DelayFrame(1);
             }
 
-            bool needWarmup = !state.IsWarmedUp || state.WarmedUpClip != newClip;
+            // 修改：检查是否已经预热过该音频片段
+            bool isAlreadyWarmedUp = state.IsWarmedUp && state.WarmedUpClip == newClip;
 
-            if (needWarmup)
+            if (!isAlreadyWarmedUp)
             {
-                if (source.isPlaying)
-                {
-                    source.Stop();
-                    await UniTask.DelayFrame(1);
-                }
+                // 未预热，需要先预热
+                LogManager.Log(
+                    $"音频片段未预热，先预热: {newClip.name}",
+                    nameof(AudioManager),
+                    output
+                );
 
-                source.clip = newClip;
-                source.volume = 0f;
-                source.Play();
-                source.Pause();
+                // 使用预热方法
+                PrewarmAudioClip(newClip, sourceEnum, output);
 
-                state.IsWarmedUp = true;
-                state.WarmedUpClip = newClip;
-
-                LogManager.Log($"预热新片段: {newClip.name}", nameof(AudioManager), output);
+                // 预热后需要等待一帧确保设置生效
+                await UniTask.DelayFrame(1);
+            }
+            else
+            {
+                LogManager.Log(
+                    $"音频片段已预热，直接播放: {newClip.name}",
+                    nameof(AudioManager),
+                    output
+                );
             }
 
+            // 确保音频源已停止
             if (source.isPlaying)
             {
                 source.Stop();
                 await UniTask.DelayFrame(1);
             }
 
+            // 设置并播放音频
             source.time = 0f;
             source.volume = state.Volume;
             source.Play();
@@ -488,7 +675,11 @@ namespace AudioNS
 
             _ = RewarmAfterPlayAsync(source, sourceEnum, state.Volume);
 
-            LogManager.Log($"播放音频 {clipName}, 源: {sourceEnum}", nameof(AudioManager), output);
+            LogManager.Log(
+                $"播放音频 {clipName}, 源: {sourceEnum}, 预热状态: {(isAlreadyWarmedUp ? "已预热" : "新预热")}",
+                nameof(AudioManager),
+                output
+            );
         }
 
         private async UniTaskVoid RewarmAfterPlayAsync(
@@ -541,6 +732,195 @@ namespace AudioNS
             catch (OperationCanceledException)
             {
                 // 任务被取消是正常情况
+            }
+        }
+
+        /// <summary>
+        /// 异步预热音频片段到指定音频源
+        /// </summary>
+        /// <param name="audioClip">要预热的音频片段</param>
+        /// <param name="source">目标音频源</param>
+        /// <param name="output">是否输出日志</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>异步任务</returns>
+        public async UniTask PrewarmAudioClipAsync(
+            AudioClip audioClip,
+            Source source,
+            bool output = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            await PrewarmAudioClipAsync(audioClip, source.Value, output, cancellationToken);
+        }
+
+        /// <summary>
+        /// 异步预热音频片段到指定音频源
+        /// </summary>
+        /// <param name="audioClip">要预热的音频片段</param>
+        /// <param name="source">目标音频源</param>
+        /// <param name="output">是否输出日志</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>异步任务</returns>
+        public async UniTask PrewarmAudioClipAsync(
+            AudioClip audioClip,
+            ISource source,
+            bool output = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            await PrewarmAudioClipAsync(audioClip, source.Value, output, cancellationToken);
+        }
+
+        /// <summary>
+        /// 异步预热音频片段到指定音频源（核心实现）
+        /// </summary>
+        private async UniTask PrewarmAudioClipAsync(
+            AudioClip audioClip,
+            string sourceName,
+            bool output = false,
+            CancellationToken cancellationToken = default
+        )
+        {
+            if (audioClip == null)
+            {
+                LogManager.Warning($"预热的音频片段为null，源: {sourceName}");
+                return;
+            }
+
+            if (!_sourceStates.ContainsKey(sourceName))
+            {
+                _sourceStates[sourceName] = new AudioSourceState();
+            }
+
+            AudioSourceState state = _sourceStates[sourceName];
+            AudioSource source = RequireAudioSource(sourceName);
+
+            // 等待一帧以确保在正确的时机执行
+            await UniTask.NextFrame(cancellationToken);
+
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            CancelRewarmTask(sourceName);
+
+            // 如果已经在播放，先停止
+            if (source.isPlaying)
+            {
+                source.Stop();
+                await UniTask.DelayFrame(1);
+
+                if (cancellationToken.IsCancellationRequested)
+                    return;
+            }
+
+            // 设置音频片段并预热
+            source.clip = audioClip;
+            source.volume = 0f;
+            source.time = 0f;
+            source.Play();
+            source.Pause();
+
+            state.IsWarmedUp = true;
+            state.WarmedUpClip = audioClip;
+            state.RewarmToken = new CancellationTokenSource();
+
+            LogManager.Log(
+                $"异步预热音频片段: {audioClip.name} 到源: {sourceName}",
+                nameof(AudioManager),
+                output
+            );
+        }
+
+        /// <summary>
+        /// 异步批量预热音频片段
+        /// </summary>
+        /// <param name="clipPacks">音频包列表 (AudioClip, Source)</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>异步任务</returns>
+        public async UniTask PrewarmAudioClipsAsync(
+            List<(AudioClip, Source)> clipPacks,
+            CancellationToken cancellationToken = default
+        )
+        {
+            foreach (var clipPack in clipPacks)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                await PrewarmAudioClipAsync(
+                    clipPack.Item1,
+                    clipPack.Item2,
+                    false,
+                    cancellationToken
+                );
+            }
+        }
+
+        /// <summary>
+        /// 异步批量预热音频片段
+        /// </summary>
+        /// <param name="clipPacks">音频包列表 (AudioClip, ISource)</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>异步任务</returns>
+        public async UniTask PrewarmAudioClipsAsync(
+            List<(AudioClip, ISource)> clipPacks,
+            CancellationToken cancellationToken = default
+        )
+        {
+            foreach (var clipPack in clipPacks)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                await PrewarmAudioClipAsync(
+                    clipPack.Item1,
+                    clipPack.Item2,
+                    false,
+                    cancellationToken
+                );
+            }
+        }
+
+        /// <summary>
+        /// 异步预热所有音频源（增强版本）
+        /// </summary>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>异步任务</returns>
+        private async UniTask PrewarmAllAudioSourcesAsync(
+            CancellationToken cancellationToken = default
+        )
+        {
+            foreach (var sourcePair in _registeredAudioSources)
+            {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
+
+                string sourceName = sourcePair.Key;
+                AudioSource source = sourcePair.Value;
+
+                if (SFXClips.Count > 2)
+                {
+                    AudioClip dummyClip = SFXClips[2];
+                    var state = _sourceStates[sourceName];
+
+                    source.clip = dummyClip;
+                    source.volume = 0f;
+                    source.Play();
+                    source.Pause();
+
+                    state.IsWarmedUp = true;
+                    state.WarmedUpClip = dummyClip;
+                    state.RewarmToken = new CancellationTokenSource();
+
+                    LogManager.Log(
+                        $"异步预热源 {source.name} , 预热片段 {dummyClip.name}",
+                        nameof(AudioManager),
+                        false
+                    );
+
+                    // 每预热一个音频源等待一帧，避免同一帧内创建过多音频源
+                    await UniTask.DelayFrame(1);
+                }
             }
         }
 

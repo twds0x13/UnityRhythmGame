@@ -87,7 +87,7 @@ namespace GameManagerNS
 
         public static float TimeScaleStartingPoint { get; private set; }
 
-        public static float TimeScaleSpeed = 1.75f; // 暂停和继续游戏动画的速度倍数
+        public static float TimeScaleSpeed = 2.25f; // 暂停和继续游戏动画的速度倍数
 
         public static float TimeScale
         {
@@ -240,6 +240,10 @@ namespace GameManagerNS
             GameTime.TimeUpdate();
         }
 
+        /// <summary>
+        /// 返回游戏时间（秒）
+        /// </summary>
+        /// <returns></returns>
         public float GetGameTime() =>
             GameTime.MainTimer.GetTimeElapsed() + Inst.Settings.JudgementTimeOffset;
 
@@ -249,7 +253,7 @@ namespace GameManagerNS
 
         public float GetTimeScaleCache() => GameTime.TimeScaleCache;
 
-        public void LockTimeScale(float Speed) // 时间流速被强制设置的时候不让暂停（诡谲）
+        public void LockTimeScale() // 时间流速被强制设置的时候不让暂停（诡谲）
         {
             GameTime.IgnorePause = true;
 
@@ -289,8 +293,6 @@ namespace GameManagerNS
         {
             Score.MaxScore = 0f;
             Score.Score = 0f;
-
-            Pool.Inst.FinishCurrentGame();
         }
     }
 }

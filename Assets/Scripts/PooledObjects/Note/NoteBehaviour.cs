@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Anime;
 using NoteStateMachine;
+using Parser;
 using PooledObjectNS;
 using StateMachine;
 using TrackNS;
@@ -34,6 +35,8 @@ namespace NoteNS
         public TrackBehaviour ParentTrack; // 归属的那一个轨道，获取 transform.position 作为动画坐标原点（默认情况落到轨道上）
 
         public float JudgeTime { get; private set; } // 预计判定时间
+
+        public float Vertical { get; private set; } = 1f; // 纵向位置缩放
 
         public void InitStateMachine(NoteBehaviour Note)
         {
@@ -69,6 +72,11 @@ namespace NoteNS
             StateMachine.CurState?.Update();
         }
 
+        public void SetVertical(float vertical)
+        {
+            Vertical = vertical;
+        }
+
         public void OnPress()
         {
             if (JudgeMachine.CurState == ProcessJudge)
@@ -89,6 +97,14 @@ namespace NoteNS
             AnimeMachine = Machine;
             InitStateMachine(this);
             return this;
+        }
+
+        public void ResetNote()
+        {
+            JudgeTime = 0f;
+            ParentTrack = null;
+            Vertical = 1f;
+            AnimeMachine = null;
         }
 
         public override void OnClosePage()

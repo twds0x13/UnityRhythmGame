@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using PooledObjectNS;
 using UnityEngine;
+using Vector3ExtensionsNS;
 
 namespace Anime
 {

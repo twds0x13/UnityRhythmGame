@@ -123,11 +123,13 @@ namespace TrackStateMachine
         {
             if (Track.TrackNumber < 4)
             {
-                Ctrl
-                    .Inst.UserInput.currentActionMap.FindAction(
-                        "Track " + Track.TrackNumber.ToString()
-                    )
-                    .performed -= Track.OnPress;
+                var TrackInput = Ctrl.Inst.UserInput.currentActionMap.FindAction(
+                    "Track " + Track.TrackNumber.ToString()
+                );
+
+                TrackInput.started -= Track.OnPress;
+
+                TrackInput.canceled -= Track.OnRelease;
             }
         }
     }
