@@ -739,6 +739,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aaa2a2a394766ae4c97bfa6daee0da58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SelectedAudio: {fileID: 0}
   OnInitialized:
     m_PersistentCalls:
       m_Calls:
@@ -1865,6 +1866,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 153205840}
+        m_TargetAssemblyTypeName: ChartManager, GameAssembly
+        m_MethodName: ExitGame
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &646731395
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2306,10 +2319,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.38, y: 0.5, z: 0}
-  SelfPivot: 0
-  AppendEdge: 0
-  DisappearEdge: 1
+  AppendDestination: {x: 0.05, y: 0.5, z: 0}
+  SelfPivot: 1
+  AppendEdge: 2
+  DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
   AppendEase: 6
@@ -5232,6 +5245,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NoteInst: {fileID: 5571962577675778044, guid: 1b77a018f57a09c48826c2f78f9413ca, type: 3}
   TrackInst: {fileID: 614768867850833973, guid: 6ec400908efd3d4489aee935686d5ff0, type: 3}
+  ActiveNoteList: []
 --- !u!114 &1945939464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6914,7 +6928,7 @@ RectTransform:
   m_GameObject: {fileID: 7786861905945901523}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3458071197667993308}
@@ -6923,7 +6937,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 300, y: 100}
+  m_SizeDelta: {x: 400, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2149127814688453026
 GameObject:
@@ -7185,7 +7199,7 @@ MonoBehaviour:
   FirstSelected: {fileID: 5492145219478542560}
   LastSelected: {fileID: 0}
   NavigateReference: {fileID: -8784545083839296357, guid: 6a5a02ff9bc2fc24b8ddf3daab4b4d5a, type: 3}
-  IsScaleEnabled: 1
+  IsScaleEnabled: 0
   AnimeScale: 1.2
 --- !u!1 &2546313936021482397
 GameObject:
@@ -7789,8 +7803,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -5, y: 37.5}
+  m_SizeDelta: {x: -10, y: -75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3586542647662400813
 MonoBehaviour:
@@ -9109,7 +9123,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 1
+  m_Transition: 2
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 0.47058824}
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 0.47058824}
@@ -9119,10 +9133,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 0}
-    m_PressedSprite: {fileID: 0}
-    m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 0}
+    m_HighlightedSprite: {fileID: 533989673, guid: dc9e448d48a6d6b43a221e614b676f97, type: 3}
+    m_PressedSprite: {fileID: -1982067205, guid: fad6bfa7ff1435044984a862b23d7943, type: 3}
+    m_SelectedSprite: {fileID: 533989673, guid: dc9e448d48a6d6b43a221e614b676f97, type: 3}
+    m_DisabledSprite: {fileID: 533989673, guid: dc9e448d48a6d6b43a221e614b676f97, type: 3}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -11049,7 +11063,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -11066,8 +11080,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 65
+  m_fontSizeBase: 65
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -11246,8 +11260,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: bf9fc9f79d4b3f748babea657079284e, type: 3}
-  m_Type: 0
+  m_Sprite: {fileID: 533989673, guid: dc9e448d48a6d6b43a221e614b676f97, type: 3}
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4

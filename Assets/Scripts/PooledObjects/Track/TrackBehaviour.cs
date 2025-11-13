@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Anime;
 using AudioNS;
 using AudioRegistry;
@@ -36,7 +37,7 @@ namespace TrackNS
 
         private List<IChartObject> AllList { get; } = new(); // 遍历删除或其他操作才使用
 
-        private List<IChartObject> JudgeList = new(); // 比队列好的一点：可指定删除元素
+        private readonly List<IChartObject> JudgeList = new(); // 比队列好的一点：可指定删除元素
 
         public BaseUIPage ParentPage; // 母页面
 
@@ -148,7 +149,7 @@ namespace TrackNS
 
         public override void OnClosePage()
         {
-            foreach (PooledObjectBehaviour Object in AllList) //
+            foreach (PooledObjectBehaviour Object in AllList.Cast<PooledObjectBehaviour>())
             {
                 Object.OnClosePage();
             }
@@ -166,6 +167,16 @@ namespace TrackNS
             InitStateMachine(this);
 
             return this;
+        }
+
+        public void ResetTrack()
+        {
+            ParentPage = null;
+            TrackNumber = -1;
+            AnimeMachine = null;
+
+            AllList.Clear();
+            JudgeList.Clear();
         }
 
         public void Register(IChartObject Note)

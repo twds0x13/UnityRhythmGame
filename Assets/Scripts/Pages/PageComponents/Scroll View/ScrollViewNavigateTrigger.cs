@@ -33,11 +33,14 @@ public class ScrollViewNavigateTrigger : MonoBehaviour
                 if (currentSelectedObject.transform.IsChildOf(contentPanel))
                 {
                     // 获取该子物体在Content下的索引
-                    int selectedIndex = currentSelectedObject.transform.GetSiblingIndex();
+                    var cell = currentSelectedObject.GetComponent<
+                        FancyCell<ButtonScrollData, ButtonScrollContext>
+                    >();
 
-                    // 调用Scroller滚动到该索引位置
-                    // 使用你期望的时长和缓动函数
-                    scroller.ScrollTo(selectedIndex, 0.35f, Ease.OutCubic);
+                    if (cell != null)
+                    {
+                        scroller.ScrollTo(cell.Index, 0.35f, Ease.OutCubic);
+                    }
                 }
             }
         }

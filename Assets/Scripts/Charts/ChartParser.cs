@@ -320,6 +320,9 @@ namespace Parser
                 // 从JSON中提取谱面信息
                 ExtractChartInfo(chart, jsonObject, logger);
 
+                // 新增：计算音符时间
+                CalculateNoteTimes(chart, logger);
+
                 logger.Info($"成功解析谱面: {chart.ChartName}");
                 return chart;
             }
@@ -1222,6 +1225,353 @@ namespace Parser
                     return ".aiff";
                 default:
                     return ".audio";
+            }
+        }
+
+        #endregion
+
+        #region 音符时间计算
+
+        /// <summary>
+        /// 计算所有音符的时间（基于BPM变化）
+        /// </summary>
+        public void CalculateNoteTimes(Chart chart, AsyncLogger logger = null)
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                logger.Log($"开始计算音符时间: {chart.ChartName}");
+
+                if (chart.Notes == null || !chart.Notes.Any())
+                {
+                    logger.Warning("没有音符需要计算时间");
+                    return;
+                }
+
+                // 确保BPM变化列表已排序
+                var sortedBpmChanges = chart
+                    .BPMChanges.OrderBy(b => b.Measure)
+                    .ThenBy(b => b.Beat)
+                    .ThenBy(b => b.Division)
+                    .ToList();
+
+                if (!sortedBpmChanges.Any())
+                {
+                    logger.Warning("没有BPM变化信息，使用默认BPM计算");
+                    CalculateTimesWithSingleBPM(chart, chart.BPM, logger);
+                    return;
+                }
+
+                // 为每个音符计算时间
+                foreach (var note in chart.Notes)
+                {
+                    note.Time = CalculateTimeAtBeat(
+                        note.Measure,
+                        note.Beat,
+                        note.Division,
+                        sortedBpmChanges,
+                        logger
+                    );
+
+                    if (note.IsHold)
+                    {
+                        note.EndTime = CalculateTimeAtBeat(
+                            note.EndMeasure,
+                            note.EndBeat,
+                            note.EndDivision,
+                            sortedBpmChanges,
+                            logger
+                        );
+                    }
+                }
+
+                chart.Notes.Sort((a, b) => a.Time.CompareTo(b.Time));
+
+                logger.Info($"完成计算 {chart.Notes.Count} 个音符的时间");
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 计算指定节拍位置的时间（秒）
+        /// </summary>
+        private float CalculateTimeAtBeat(
+            int measure,
+            int beat,
+            int division,
+            List<BPMChange> bpmChanges,
+            AsyncLogger logger
+        )
+        {
+            try
+            {
+                // 将节拍位置转换为总拍数（浮点数）
+                float targetBeat = ConvertToTotalBeats(measure, beat, division);
+
+                float currentTime = 0f;
+                float currentBeat = 0f;
+                double currentBPM = bpmChanges[0].BPM;
+
+                // 遍历所有BPM变化段
+                for (int i = 0; i < bpmChanges.Count; i++)
+                {
+                    var bpmChange = bpmChanges[i];
+                    float changeBeat = ConvertToTotalBeats(
+                        bpmChange.Measure,
+                        bpmChange.Beat,
+                        bpmChange.Division
+                    );
+
+                    // 如果目标节拍在当前BPM段内
+                    if (i == bpmChanges.Count - 1 || targetBeat < GetNextChangeBeat(bpmChanges, i))
+                    {
+                        float beatsInThisSegment = targetBeat - currentBeat;
+                        currentTime += beatsInThisSegment * (60.0f / (float)currentBPM);
+                        break;
+                    }
+                    else
+                    {
+                        // 计算当前BPM段的时长
+                        float nextChangeBeat = GetNextChangeBeat(bpmChanges, i);
+                        float beatsInThisSegment = nextChangeBeat - currentBeat;
+                        currentTime += beatsInThisSegment * (60.0f / (float)currentBPM);
+
+                        // 移动到下一个BPM段
+                        currentBeat = nextChangeBeat;
+                        if (i + 1 < bpmChanges.Count)
+                        {
+                            currentBPM = bpmChanges[i + 1].BPM;
+                        }
+                    }
+                }
+
+                return currentTime;
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"计算节拍时间失败: {measure}:{beat}/{division} - {ex.Message}");
+                return 0f;
+            }
+        }
+
+        /// <summary>
+        /// 获取下一个BPM变化点的总拍数
+        /// </summary>
+        private float GetNextChangeBeat(List<BPMChange> bpmChanges, int currentIndex)
+        {
+            if (currentIndex + 1 >= bpmChanges.Count)
+                return float.MaxValue; // 没有下一个变化点
+
+            var nextChange = bpmChanges[currentIndex + 1];
+            return ConvertToTotalBeats(nextChange.Measure, nextChange.Beat, nextChange.Division);
+        }
+
+        /// <summary>
+        /// 将小节、拍、分度转换为总拍数（修正版）
+        /// 根据Malody文档：beat = [x, y, z] 表示第x小节、将每小节切分为z段后、第y段的位置
+        /// 实际总拍数 = x + y/z
+        /// 注意：这里假设每个小节有1个基准拍（因为y和z已经定义了小节的细分）
+        /// </summary>
+        private float ConvertToTotalBeats(int measure, int beat, int division)
+        {
+            // 根据Malody文档，beat数组的三个值直接对应：小节 + 拍/分度
+            // 实际计算应该是：总拍数 = measure + beat/division
+            // 因为beat和division已经定义了在小节内的位置
+
+            if (division == 0)
+            {
+                // 避免除零错误，虽然正常情况下division不应该为0
+                return measure + beat;
+            }
+
+            return measure + (beat / (float)division);
+        }
+
+        /// <summary>
+        /// 使用单一BPM计算所有音符时间（备用方法）- 修正版
+        /// </summary>
+        private void CalculateTimesWithSingleBPM(Chart chart, double bpm, AsyncLogger logger)
+        {
+            foreach (var note in chart.Notes)
+            {
+                float totalBeats = ConvertToTotalBeats(note.Measure, note.Beat, note.Division);
+                note.Time = totalBeats * (60.0f / (float)bpm);
+
+                if (note.IsHold)
+                {
+                    float endTotalBeats = ConvertToTotalBeats(
+                        note.EndMeasure,
+                        note.EndBeat,
+                        note.EndDivision
+                    );
+                    note.EndTime = endTotalBeats * (60.0f / (float)bpm);
+                }
+            }
+
+            logger.Log($"使用单一BPM {bpm} 计算了 {chart.Notes.Count} 个音符的时间");
+        }
+
+        /// <summary>
+        /// 批量计算所有谱面的音符时间
+        /// </summary>
+        public void CalculateAllNoteTimes(ChartCollection collection, AsyncLogger logger = null)
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                logger.Info($"开始批量计算所有谱面的音符时间");
+
+                int totalCharts = 0;
+                int totalNotes = 0;
+
+                foreach (var chartFile in collection.ChartFiles)
+                {
+                    foreach (var chart in chartFile.Charts)
+                    {
+                        CalculateNoteTimes(chart, logger);
+                        totalCharts++;
+                        totalNotes += chart.Notes?.Count ?? 0;
+                    }
+                }
+
+                logger.Info($"完成 {totalCharts} 个谱面，{totalNotes} 个音符的时间计算");
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        #endregion
+
+        #region 便捷方法升级
+
+        /// <summary>
+        /// 获取指定时间范围内的音符
+        /// </summary>
+        public List<Note> GetNotesInTimeRange(
+            Chart chart,
+            float startTime,
+            float endTime,
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                // 确保时间已计算
+                if (chart.Notes.Any() && chart.Notes[0].Time == 0)
+                {
+                    logger.Warning("音符时间未计算，正在计算...");
+                    CalculateNoteTimes(chart, logger);
+                }
+
+                var notesInRange = chart
+                    .Notes.Where(n => n.Time >= startTime && n.Time <= endTime)
+                    .ToList();
+
+                logger.Log(
+                    $"在时间范围 [{startTime:F2}s - {endTime:F2}s] 内找到 {notesInRange.Count} 个音符"
+                );
+                return notesInRange;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取指定小节范围内的音符
+        /// </summary>
+        public List<Note> GetNotesInMeasureRange(
+            Chart chart,
+            int startMeasure,
+            int endMeasure,
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                var notesInRange = chart
+                    .Notes.Where(n => n.Measure >= startMeasure && n.Measure <= endMeasure)
+                    .ToList();
+
+                logger.Log(
+                    $"在小节范围 [{startMeasure} - {endMeasure}] 内找到 {notesInRange.Count} 个音符"
+                );
+                return notesInRange;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取谱面的总时长（秒）
+        /// </summary>
+        public float GetChartDuration(Chart chart, AsyncLogger logger = null)
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                // 确保时间已计算
+                if (chart.Notes.Any() && chart.Notes[0].Time == 0)
+                {
+                    logger.Warning("音符时间未计算，正在计算...");
+                    CalculateNoteTimes(chart, logger);
+                }
+
+                if (!chart.Notes.Any())
+                {
+                    logger.Warning("谱面没有音符，返回默认时长 0");
+                    return 0f;
+                }
+
+                // 找到最后一个音符的时间
+                float lastNoteTime = chart.Notes.Max(n => n.Time);
+
+                // 如果是Hold音符，需要考虑结束时间
+                float lastHoldEndTime = chart.Notes.Where(n => n.IsHold).Max(n => n.EndTime);
+
+                float duration = Mathf.Max(lastNoteTime, lastHoldEndTime);
+
+                logger.Log($"谱面时长: {duration:F2} 秒");
+                return duration;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
             }
         }
 

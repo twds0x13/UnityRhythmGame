@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Anime;
 using NoteNS;
@@ -8,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Pool;
 using Game = GameManagerNS.GameManager;
 using Page = UIManagerNS.PageManager;
+using Random = UnityEngine.Random;
 
 namespace PooledObjectNS
 {
@@ -25,7 +27,7 @@ namespace PooledObjectNS
         ObjectPool<GameObject> TrackPool;
 
         [SerializeField]
-        Dictionary<int, TrackBehaviour> BaseTracks;
+        Dictionary<int, TrackBehaviour> ActiveTracks;
 
         [SerializeField]
         GameObject NoteInst;
@@ -33,11 +35,13 @@ namespace PooledObjectNS
         [SerializeField]
         GameObject TrackInst;
 
-        [SerializeField]
         public int NoteUIDIterator { get; private set; } = 0; // 你应该没同时用到21亿个 Note, 对吧？
 
-        [SerializeField]
         public int TrackUIDIterator { get; private set; } = 0; // 这两个计数器不会降低，只会递增
+
+        public List<NoteBehaviour> ActiveNoteList;
+
+        public Action<NoteBehaviour> NoteUpdateModifier;
 
         protected override void SingletonAwake()
         {
@@ -45,9 +49,17 @@ namespace PooledObjectNS
             InitPools();
         }
 
+        private void Update()
+        {
+            foreach (var note in ActiveNoteList)
+            {
+                NoteUpdateModifier?.Invoke(note);
+            }
+        }
+
         public void InitTrackDict()
         {
-            BaseTracks = new();
+            ActiveTracks = new();
         }
 
         public void InitPools()
@@ -61,6 +73,12 @@ namespace PooledObjectNS
                 (Note) =>
                 {
                     Note.SetActive(false);
+
+                    var Behaviour = Note.GetComponent<NoteBehaviour>();
+
+                    Behaviour.ResetNote();
+
+                    ActiveNoteList.Remove(Behaviour);
                 },
                 (Note) =>
                 {
@@ -68,7 +86,7 @@ namespace PooledObjectNS
                 },
                 true,
                 128,
-                1024
+                512 - 128 // 这里的 maxSize 只限制池内未启用物体数量....
             );
 
             TrackPool = new ObjectPool<GameObject>(
@@ -80,6 +98,8 @@ namespace PooledObjectNS
                 (Track) =>
                 {
                     Track.SetActive(false);
+
+                    Track.GetComponent<TrackBehaviour>().ResetTrack();
                 },
                 (Track) =>
                 {
@@ -131,13 +151,18 @@ namespace PooledObjectNS
         }
 
         /// <summary>
-        /// 获取一个 <see cref="NoteBehaviour"/> 对象，保证在 <paramref name="StartTime"/> + <paramref name="Duration"/> 时间点落在对应轨道上
+        /// 获取一个 <see cref="NoteBehaviour"/> 对象，保证在 <paramref name="generateTime"/> + <paramref name="fallDuration"/> 时间点落在对应轨道上
         /// </summary>
-        /// <param name="StartTime"></param>
+        /// <param name="generateTime"></param>
         /// <param name="Vertical"></param>
         /// <param name="TrackNum"></param>
-        /// <param name="Duration"></param>
-        public void GetNotesDynamic(float StartTime, float Vertical, int TrackNum, float Duration)
+        /// <param name="fallDuration"></param>
+        public void GetNotesDynamic(
+            float generateTime,
+            float Vertical,
+            int TrackNum,
+            float fallDuration
+        )
         {
             if (!Game.Inst.IsGamePaused())
             {
@@ -147,22 +172,21 @@ namespace PooledObjectNS
 
                 Tmp.Enqueue(
                     new AnimeClip(
-                        StartTime,
-                        StartTime + Duration,
-                        new Vector3(0f, Rect.height * Vertical, 0f),
+                        generateTime,
+                        generateTime + fallDuration,
+                        new Vector3(0f, Rect.height * 0.85f * Vertical, 0f),
                         new Vector3(0f, 0f, 0f)
                     )
                 );
 
-                AnimeMachine Machine = new(Tmp);
-
-                Machine.HasJudgeAnime = true; // 切换判定动画开关
-
-                TrackBehaviour Object;
-
-                if (BaseTracks.TryGetValue(TrackNum, out Object))
+                AnimeMachine Machine = new(Tmp)
                 {
-                    GetOneNote(Machine, Object, StartTime + Duration);
+                    HasJudgeAnime = true, // 切换判定动画开关
+                };
+
+                if (ActiveTracks.TryGetValue(TrackNum, out TrackBehaviour Object))
+                {
+                    GetOneNote(Machine, Object, generateTime + fallDuration);
                 }
             }
         }
@@ -219,7 +243,9 @@ namespace PooledObjectNS
         /// </summary>
         private void GetOneNote(AnimeMachine Machine, TrackBehaviour Track, float JudgeTime)
         {
-            NotePool.Get().GetComponent<NoteBehaviour>().Init(Machine, Track, JudgeTime);
+            var Note = NotePool.Get().GetComponent<NoteBehaviour>().Init(Machine, Track, JudgeTime);
+
+            ActiveNoteList.Add(Note);
 
             NoteUIDIterator++;
         }
@@ -237,15 +263,18 @@ namespace PooledObjectNS
             if (TrackUIDIterator < 4)
             {
                 Machine.IsDestroyable = false;
-                BaseTracks.Add(TrackUIDIterator, Track);
+                ActiveTracks.Add(TrackUIDIterator, Track);
             }
 
             TrackUIDIterator++;
         }
 
-        public void FinishCurrentGame()
+        public void ExitGame()
         {
-            BaseTracks.Clear();
+            ActiveTracks.Clear();
+            TrackPool.Clear();
+            NotePool.Clear();
+
             NoteUIDIterator = 0;
             TrackUIDIterator = 0;
         }

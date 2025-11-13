@@ -1,9 +1,7 @@
 using System.Collections.Generic;
-using NavigatorNS;
 using PageNS;
 using UIManagerNS;
 using UnityEngine;
-using UnityEngine.Localization.Components;
 using UnityEngine.UI;
 using Comp = TextManagerNS.PageComponentManager;
 

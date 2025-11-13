@@ -227,7 +227,8 @@ namespace NoteStateMachine
                     AxisFunc.Linear,
                     AxisFunc.Linear,
                     AxisFunc.Linear
-                ) + Note.ParentTrack.transform.position;
+                ) * Note.Vertical
+                + Note.ParentTrack.transform.position;
             ;
         }
 

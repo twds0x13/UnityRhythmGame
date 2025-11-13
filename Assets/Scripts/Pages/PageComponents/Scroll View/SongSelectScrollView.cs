@@ -38,12 +38,12 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
     {
         cellData = newData ?? new();
 
-        UpdateContents(cellData);
-
         scroller.SetTotalCount(cellData.Count);
+
+        UpdateContents(cellData);
     }
 
-    protected void UpdateSelection(int index)
+    public void UpdateSelection(int index)
     {
         if (Context.SelectedIndex == index)
         {
@@ -51,12 +51,24 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
         }
 
         Context.SelectedIndex = index;
-        Refresh();
+
+        OnButtonClicked(index);
+
+        LogManager.Log(
+            $"Selected Index: {Context.SelectedIndex}",
+            nameof(SongSelectScrollView),
+            false
+        );
     }
 
     protected override void UpdatePosition(float position)
     {
         base.UpdatePosition(position);
+    }
+
+    private void Scroll(int index)
+    {
+        scroller.ScrollTo(index, 0.35f, Ease.OutCubic);
     }
 
     /// <summary>
@@ -76,8 +88,7 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
             LogManager.Warning($"未找到 ID 为 {index} 的数据项", nameof(SongSelectScrollView));
         }
 
-        UpdateSelection(index);
-        scroller.ScrollTo(index, 0.35f, Ease.OutCubic);
+        Scroll(index);
     }
 
     private void HandleButtonAction(int index, ButtonScrollData item)

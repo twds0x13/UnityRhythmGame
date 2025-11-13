@@ -244,7 +244,7 @@ MonoBehaviour:
   m_text: Not Localized
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
-  m_sharedMaterial: {fileID: -9015016439112006485, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_sharedMaterial: {fileID: -4835478689616584037, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

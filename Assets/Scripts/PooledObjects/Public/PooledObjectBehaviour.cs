@@ -1,12 +1,8 @@
-using System;
 using System.Collections.Generic;
 using Anime;
 using UIManagerNS;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Events;
-using static PooledObjectNS.PooledObjectBehaviour;
-using static UnityEngine.UI.CanvasScaler;
 
 namespace PooledObjectNS
 {
@@ -77,7 +73,7 @@ namespace PooledObjectNS
 
         public virtual Sprite GetSprite(string key)
         {
-            return _sprites.ContainsKey(key) && _sprites[key] is not null ? _sprites[key] : null;
+            return _sprites[key];
         }
 
         public virtual void SetScale(Vector3 scale)

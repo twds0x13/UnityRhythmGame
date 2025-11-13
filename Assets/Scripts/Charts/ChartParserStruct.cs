@@ -52,12 +52,17 @@ namespace Parser
         public int Measure { get; set; } // 小节
         public int Beat { get; set; } // 拍
         public int Division { get; set; } // 分度
+
+        public float Time { get; set; } // 计算得出的时间（毫秒）
         public int TrackNum { get; set; } // 轨道
         public bool IsHold { get; set; } // 是否是Hold音符
         public int EndMeasure { get; set; } // 结束小节（Hold用）
         public int EndBeat { get; set; } // 结束拍（Hold用）
         public int EndDivision { get; set; } // 结束分度（Hold用）
+
+        public float EndTime { get; set; } // 计算得出的结束时间（毫秒，Hold用）
         public string SoundFile { get; set; } // 音效文件（Key音用）
+
         public int Volume { get; set; } = 100; // 音量
     }
 

@@ -217,10 +217,11 @@
       "url": "https://packages.unity.com"
     },
     "jp.setchi.fancyscrollview": {
-      "version": "file:D:/User/Download/FancyScrollView-1.9.0",
+      "version": "https://github.com/setchi/FancyScrollView.git#upm",
       "depth": 0,
-      "source": "local",
-      "dependencies": {}
+      "source": "git",
+      "dependencies": {},
+      "hash": "e5d10d3e5961848f93be43c2911344750b509a88"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

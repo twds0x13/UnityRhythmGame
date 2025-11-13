@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks.Triggers;
+using GameManagerNS;
 using PageNS;
 using Parser;
 using UnityEngine;
@@ -7,7 +9,7 @@ public class SongSelectPage : BaseUIPage
 {
     public SongSelectScrollView scrollView;
 
-    private List<ButtonScrollData> cellData = new();
+    private readonly List<ButtonScrollData> cellData = new();
 
     private int counter = 0;
 
@@ -32,8 +34,6 @@ public class SongSelectPage : BaseUIPage
 
             AddOneItem(chart);
         }
-
-        scrollView.UpdateData(cellData); // 那么这里就必须一次性刷新
     }
 
     public void AddOneItem(Chart data)
@@ -49,7 +49,9 @@ public class SongSelectPage : BaseUIPage
             Cover = null,
         };
 
-        cellData.Add(newData); // 单独添加新数据项暂不刷新
+        cellData.Add(newData);
+
+        scrollView.UpdateData(cellData);
     }
 
     public override void OnOpenPage()
