@@ -53,7 +53,7 @@ namespace NoteStateMachine
 
             if (StartJudge)
             {
-                StateMachine.SwitchState(Note.ProcessJudge);
+                StateMachine.SwitchState(Note.OnJudge);
             }
         }
 
@@ -173,22 +173,14 @@ namespace NoteStateMachine
 
         private void AnimeInit(NoteBehaviour Note)
         {
-            /*
-            Note.Inst.SpriteRenderer.sprite = Note.GetSprite(
-                Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2
-                    ? "note_l"
-                    : "note_color"
-            );
-            */
-
             Note.Inst.SpriteRenderer.sprite = Note.GetSprite("note_color");
 
             Note.SetScale(Vector3.one * 0.110f); // 魔法数字
 
             Note.Inst.SpriteRenderer.color =
                 Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2
-                    ? new Color(0.5f, 1f, 1f, 1f) // 淡蓝色
-                    : new Color(1f, 1f, 1f, 1f); // 正常颜色
+                    ? new Color(0.9f, 1f, 1f, 1f)
+                    : new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -217,7 +209,7 @@ namespace NoteStateMachine
         {
             AnimeMachine.CurT =
                 (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
-                / AnimeMachine.CurAnime.TotalTimeElapse();
+                / AnimeMachine.CurAnime.TotalTimeElapse;
 
             Note.transform.position =
                 InterpFunc.VectorHandler(
@@ -301,8 +293,8 @@ namespace NoteStateMachine
                 Note.Inst.SpriteRenderer.color = new Color(
                     1f,
                     1f,
-                    1f - 2f * AnimeMachine.CurT,
-                    1f - 2f * AnimeMachine.CurT
+                    1f - 0.5f * AnimeMachine.CurT,
+                    1f - 2.5f * AnimeMachine.CurT
                 );
             }
             else

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Anime;
+using HoldNS;
 using NoteNS;
 using PageNS;
 using Singleton;
@@ -24,24 +25,38 @@ namespace PooledObjectNS
         ObjectPool<GameObject> NotePool;
 
         [SerializeField]
+        ObjectPool<GameObject> HoldPool;
+
+        [SerializeField]
         ObjectPool<GameObject> TrackPool;
 
         [SerializeField]
         Dictionary<int, TrackBehaviour> ActiveTracks;
 
         [SerializeField]
-        GameObject NoteInst;
+        GameObject NotePrefab;
 
         [SerializeField]
-        GameObject TrackInst;
+        GameObject HoldPrefab;
+
+        [SerializeField]
+        GameObject TrackPrefab;
 
         public int NoteUIDIterator { get; private set; } = 0; // 你应该没同时用到21亿个 Note, 对吧？
+
+        public int HoldUIDIterator { get; private set; } = 0; // 你应该没同时用到21亿个 Track, 对吧？
 
         public int TrackUIDIterator { get; private set; } = 0; // 这两个计数器不会降低，只会递增
 
         public List<NoteBehaviour> ActiveNoteList;
 
-        public Action<NoteBehaviour> NoteUpdateModifier;
+        public List<HoldBehaviour> ActiveHoldList;
+
+        public Action<NoteBehaviour> NoteModifier;
+
+        public Action<HoldBehaviour> HoldModifier;
+
+        public Action<IVertical> VerticalModifier;
 
         protected override void SingletonAwake()
         {
@@ -53,7 +68,14 @@ namespace PooledObjectNS
         {
             foreach (var note in ActiveNoteList)
             {
-                NoteUpdateModifier?.Invoke(note);
+                NoteModifier?.Invoke(note);
+            }
+
+            foreach (var hold in ActiveHoldList)
+            {
+                HoldModifier?.Invoke(hold);
+
+                VerticalModifier?.Invoke(hold.TailAnimator);
             }
         }
 
@@ -76,13 +98,38 @@ namespace PooledObjectNS
 
                     var Behaviour = Note.GetComponent<NoteBehaviour>();
 
-                    Behaviour.ResetNote();
+                    Behaviour.ResetNote(); // 保险起见
 
                     ActiveNoteList.Remove(Behaviour);
                 },
                 (Note) =>
                 {
                     DestroyImmediate(Note);
+                },
+                true,
+                128,
+                512 - 128 // 这里的 maxSize 只限制池内未启用物体数量....
+            );
+
+            HoldPool = new ObjectPool<GameObject>(
+                InstantiateHold,
+                (Hold) =>
+                {
+                    Hold.SetActive(true);
+                },
+                (Hold) =>
+                {
+                    Hold.SetActive(false);
+
+                    var Behaviour = Hold.GetComponent<HoldBehaviour>();
+
+                    Behaviour.ResetHold(); // 保险起见
+
+                    ActiveHoldList.Remove(Behaviour);
+                },
+                (Hold) =>
+                {
+                    DestroyImmediate(Hold);
                 },
                 true,
                 128,
@@ -113,7 +160,7 @@ namespace PooledObjectNS
 
         private GameObject InstantiateTrack()
         {
-            GameObject Track = Instantiate(TrackInst, transform);
+            GameObject Track = Instantiate(TrackPrefab, transform);
 
             Track.GetComponent<PooledObjectBehaviour>().transform.position = new Vector3(
                 0f,
@@ -131,9 +178,28 @@ namespace PooledObjectNS
             return Track;
         }
 
+        private GameObject InstantiateHold()
+        {
+            GameObject Hold = Instantiate(HoldPrefab, transform);
+
+            Hold.GetComponent<PooledObjectBehaviour>().transform.position = new Vector3(
+                0f,
+                20f,
+                0f
+            );
+
+            Hold.GetComponent<PooledObjectBehaviour>()
+                .DestroyEvent.AddListener(() =>
+                {
+                    HoldPool.Release(Hold);
+                });
+
+            return Hold;
+        }
+
         private GameObject InstantiateNote()
         {
-            GameObject Note = Instantiate(NoteInst, transform);
+            GameObject Note = Instantiate(NotePrefab, transform);
 
             Note.GetComponent<PooledObjectBehaviour>().transform.position = new Vector3(
                 0f,
@@ -181,12 +247,66 @@ namespace PooledObjectNS
 
                 AnimeMachine Machine = new(Tmp)
                 {
-                    HasJudgeAnime = true, // 切换判定动画开关
+                    HasJudgeAnime = true, // 可以像这样修改动画机的属性
                 };
 
                 if (ActiveTracks.TryGetValue(TrackNum, out TrackBehaviour Object))
                 {
                     GetOneNote(Machine, Object, generateTime + fallDuration);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 获取一个 <see cref="HoldBehaviour"/> 对象，保证在 <paramref name="generateTime"/> + <paramref name="fallDuration"/> 时间点落在对应轨道上，并在 <paramref name="destinationTime"/> + <paramref name="fallDuration"/> 时间点结束
+        /// </summary>
+        /// <param name="generateTime"></param>
+        /// <param name="destinationTime"></param>
+        /// <param name="vertical"></param>
+        /// <param name="trackNum"></param>
+        /// <param name="fallDuration"></param>
+        public void GetHoldsDynamic(
+            float generateTime,
+            float destinationTime,
+            float vertical,
+            int trackNum,
+            float fallDuration
+        )
+        {
+            if (!Game.Inst.IsGamePaused())
+            {
+                Queue<AnimeClip> Tmp = new();
+
+                Rect Rect = ResizeDetector.Inst.Rect.rect;
+
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        generateTime,
+                        generateTime + fallDuration,
+                        new Vector3(0f, Rect.height * 0.85f * vertical, 0f),
+                        new Vector3(0f, 0f, 0f)
+                    )
+                );
+
+                AnimeMachine Machine = new(Tmp)
+                {
+                    HasJudgeAnime = true, // 切换判定动画开关
+                };
+
+                LogManager.Log(
+                    $"{generateTime},{destinationTime},{vertical},{trackNum},{fallDuration}",
+                    nameof(PooledObjectManager),
+                    false
+                );
+
+                if (ActiveTracks.TryGetValue(trackNum, out TrackBehaviour Object))
+                {
+                    GetOneHold(
+                        Machine,
+                        Object,
+                        generateTime + fallDuration,
+                        destinationTime + fallDuration
+                    );
                 }
             }
         }
@@ -211,6 +331,7 @@ namespace PooledObjectNS
                     0f
                 );
 
+                /*
                 for (int i = 0; i < 50; i++)
                 {
                     Tmp.Enqueue(
@@ -231,6 +352,16 @@ namespace PooledObjectNS
                         )
                     );
                 }
+                */
+
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        Game.Inst.GetGameTime(),
+                        Game.Inst.GetGameTime() + 114514f,
+                        VecTmp,
+                        VecTmp
+                    )
+                );
 
                 AnimeMachine Machine = new(Tmp);
 
@@ -241,13 +372,30 @@ namespace PooledObjectNS
         /// <summary>
         /// 从对象池中获取一个新的 <see cref="NoteBehaviour"/> 对象，并同时初始化它的动画机和母轨
         /// </summary>
-        private void GetOneNote(AnimeMachine Machine, TrackBehaviour Track, float JudgeTime)
+        private void GetOneNote(AnimeMachine machine, TrackBehaviour track, float judgeTime)
         {
-            var Note = NotePool.Get().GetComponent<NoteBehaviour>().Init(Machine, Track, JudgeTime);
+            var note = NotePool.Get().GetComponent<NoteBehaviour>().Init(machine, track, judgeTime);
 
-            ActiveNoteList.Add(Note);
+            ActiveNoteList.Add(note);
 
             NoteUIDIterator++;
+        }
+
+        private void GetOneHold(
+            AnimeMachine Machine,
+            TrackBehaviour track,
+            float judgeTime,
+            float releaseTime
+        )
+        {
+            var hold = HoldPool
+                .Get()
+                .GetComponent<HoldBehaviour>()
+                .Init(Machine, track, judgeTime, releaseTime - judgeTime);
+
+            ActiveHoldList.Add(hold);
+
+            HoldUIDIterator++;
         }
 
         /// <summary>
@@ -273,9 +421,11 @@ namespace PooledObjectNS
         {
             ActiveTracks.Clear();
             TrackPool.Clear();
+            HoldPool.Clear();
             NotePool.Clear();
 
             NoteUIDIterator = 0;
+            HoldUIDIterator = 0;
             TrackUIDIterator = 0;
         }
 

@@ -32,9 +32,6 @@ namespace PooledObjectNS
 
         private readonly Dictionary<string, Sprite> _sprites = new();
 
-        [Ext.ReadOnlyInGame, SerializeField]
-        private Vector3 _localScale = Vector3.one; // 存储最终 LocalScale 缩放比例
-
         private ScaleMode _scaleMode = ScaleMode.FitToWidth; // 默认匹配宽度
 
         private void Awake() // 这个不能编译时生成
@@ -91,7 +88,6 @@ namespace PooledObjectNS
 
         public void ReScale(Vector2 newScale, ScaleMode mode = ScaleMode.FitToWidth)
         {
-            _localScale = newScale;
             _scaleMode = mode;
             SetScale(newScale);
         }
