@@ -5,7 +5,7 @@ using Vector3ExtensionsNS;
 
 namespace Anime
 {
-    public static class Defaults // 有的时候，外部需要获取动画机的默认值 与其新建对象还不如打包成一个常量控制类
+    public static class Defaults // 应该用Scriptable Object来存储这些默认值，但现在先这样吧
     {
         public const bool HasDisappearAnime = true;
 
@@ -47,10 +47,7 @@ namespace Anime
             this.EndT = EndT;
         }
 
-        public float TotalTimeElapse()
-        {
-            return EndT - StartT;
-        }
+        public readonly float TotalTimeElapse => EndT - StartT;
     }
 
     /// <summary>
@@ -60,7 +57,7 @@ namespace Anime
     {
         public bool HasDisappearAnime = Defaults.HasDisappearAnime;
 
-        public bool HasJudgeAnime = Defaults.HasJudgeAnime; // 这个只对 Note 生效
+        public bool HasJudgeAnime = Defaults.HasJudgeAnime;
 
         public bool IsDestroyable = Defaults.IsDestroyable; // 只代表处于当前界面时无法摧毁，依旧会被退出页面自动销毁
 
@@ -76,7 +73,7 @@ namespace Anime
 
         public Vector3 JudgePosCache;
 
-        public float CurT // 用来处理 Interpolation 函数，需要值的范围在 0 ~ 1
+        public float CurT // 用来处理 Lerp 函数，需要值的范围在 0 ~ 1
         {
             get { return _t; }
             set { _t = Mathf.Clamp01(value); }
@@ -88,12 +85,30 @@ namespace Anime
 
         public AnimeClip CurAnime;
 
-        public AnimeMachine(Queue<AnimeClip> Queue)
+        public AnimeMachine(Queue<AnimeClip> Queue, float offset = 0f)
         {
-            foreach (var Item in Queue)
+            foreach (var item in Queue)
             {
-                AnimeQueue.Enqueue(Item);
+                var tmp = item; // 复制迭代器，避免引用问题
+
+                if (offset != 0f)
+                {
+                    tmp.StartT += offset;
+                    tmp.EndT += offset;
+                }
+
+                AnimeQueue.Enqueue(tmp);
             }
+        }
+    }
+
+    public static class AnimeMachineExtensions
+    {
+        public static AnimeMachine ResetOffset(this AnimeMachine machine, float offset)
+        {
+            var newAnimeMachine = new AnimeMachine(machine.AnimeQueue, offset);
+
+            return newAnimeMachine;
         }
     }
 }

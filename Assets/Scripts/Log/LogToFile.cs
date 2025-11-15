@@ -10,7 +10,7 @@ using UnityEngine;
 /// </summary>
 public class AsyncLogger : IDisposable
 {
-    private readonly List<string> _logEntries = new List<string>();
+    private readonly List<string> _logEntries = new();
     private readonly string _caller;
     private readonly bool _output;
     private bool _disposed = false;
@@ -109,7 +109,7 @@ public class AsyncLogger : IDisposable
             return;
 
         // 构建完整的日志输出
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
         sb.AppendLine($"====== 异步线程日志输出 [{_caller}] ======\n");
 
         foreach (var logEntry in _logEntries)
@@ -226,8 +226,7 @@ public static class LogManager
             );
 
             // 创建或追加到日志文件b
-            logWriter = new StreamWriter(fileStream, Encoding.UTF8);
-            logWriter.AutoFlush = true;
+            logWriter = new StreamWriter(fileStream, Encoding.UTF8) { AutoFlush = true };
 
             // 写入日志文件头
             logWriter.WriteLine("==========================================");

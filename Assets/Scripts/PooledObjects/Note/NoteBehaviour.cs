@@ -10,7 +10,7 @@ using Judge = JudgeNS.NoteJudge;
 
 namespace NoteNS
 {
-    public class NoteBehaviour : PooledObjectBehaviour, IChartObject
+    public class NoteBehaviour : PooledObjectBehaviour, IChartObject, IVertical
     {
         private LinearStateMachine<NoteBehaviour> StateMachine; // 动画状态机
 
@@ -28,7 +28,7 @@ namespace NoteNS
 
         public StateBeforeJudgeNote BeforeJudge; // 进入判定区之前
 
-        public StateOnJudgeNote ProcessJudge; // 在判断区间内
+        public StateOnJudgeNote OnJudge; // 在判断区间内
 
         public StateAfterJudgeNote AfterJudge; // 过了判断区间
 
@@ -36,7 +36,7 @@ namespace NoteNS
 
         public float JudgeTime { get; private set; } // 预计判定时间
 
-        public float Vertical { get; private set; } = 1f; // 纵向位置缩放
+        public float Vertical { get; set; } = 1f; // 纵向位置缩放
 
         public void InitStateMachine(NoteBehaviour Note)
         {
@@ -49,14 +49,15 @@ namespace NoteNS
             DestroyNoteAnime = new(Note, StateMachine);
 
             // 正常的状态跳转用的都是 SwitchState
-            // 如果想从前面临时插一段进去就用 LinearStateMachine 的方法调用 NextState 函数
+            // 如果想在 Init 前面临时插一段进去就用 LinearStateMachine 的方法调用 NextState 函数
             // 通用状态机写起来太麻烦了 小修小补可以
 
             var AnimeList = new List<IState<NoteBehaviour>> { InitNote };
 
             JudgeMachine = new();
+
             BeforeJudge = new(Note, JudgeMachine);
-            ProcessJudge = new(Note, JudgeMachine);
+            OnJudge = new(Note, JudgeMachine);
             AfterJudge = new(Note, JudgeMachine);
 
             var JudgeList = new List<IState<NoteBehaviour>> { BeforeJudge };
@@ -72,14 +73,9 @@ namespace NoteNS
             StateMachine.CurState?.Update();
         }
 
-        public void SetVertical(float vertical)
-        {
-            Vertical = vertical;
-        }
-
         public void OnPress()
         {
-            if (JudgeMachine.CurState == ProcessJudge)
+            if (JudgeMachine.CurState == OnJudge)
             {
                 Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetJudgeEnum(this));
 
@@ -90,7 +86,7 @@ namespace NoteNS
 
         public void OnRelease() { }
 
-        public NoteBehaviour Init(AnimeMachine Machine, TrackBehaviour Track, float Time) // 在 Objectpool 中调用这个函数作为通用起手，保证每次调用都从这里开始
+        public NoteBehaviour Init(AnimeMachine Machine, TrackBehaviour Track, float Time) // 在 Objectpool 中调用这个函数，保证每次调用都从这里开始
         {
             JudgeTime = Time;
             ParentTrack = Track;
@@ -103,8 +99,12 @@ namespace NoteNS
         {
             JudgeTime = 0f;
             ParentTrack = null;
-            Vertical = 1f;
             AnimeMachine = null;
+
+            Vertical = 1f;
+
+            StateMachine = null;
+            JudgeMachine = null;
         }
 
         public override void OnClosePage()

@@ -186,7 +186,10 @@ namespace TrackNS
 
         public void Unregister(IChartObject Note)
         {
-            AllList.Remove(Note);
+            if (AllList.Contains(Note))
+            {
+                AllList.Remove(Note);
+            }
         }
 
         public void RegisterJudge(IChartObject Note)
@@ -196,7 +199,10 @@ namespace TrackNS
 
         public void UnregisterJudge(IChartObject Note)
         {
-            JudgeList.Remove(Note);
+            if (JudgeList.Contains(Note))
+            {
+                JudgeList.Remove(Note);
+            }
         }
     }
 }

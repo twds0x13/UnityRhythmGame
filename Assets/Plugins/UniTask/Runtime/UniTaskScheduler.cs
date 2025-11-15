@@ -1,6 +1,4 @@
-﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
-
-using System;
+﻿using System;
 using System.Threading;
 
 namespace Cysharp.Threading.Tasks
@@ -22,13 +20,15 @@ namespace Cysharp.Threading.Tasks
         /// <summary>
         /// Write log type when catch unobserved exception and not registered UnobservedTaskException. Default is Exception.
         /// </summary>
-        public static UnityEngine.LogType UnobservedExceptionWriteLogType = UnityEngine.LogType.Exception;
+        public static UnityEngine.LogType UnobservedExceptionWriteLogType = UnityEngine
+            .LogType
+            .Exception;
 
         /// <summary>
         /// Dispatch exception event to Unity MainThread. Default is true.
         /// </summary>
         public static bool DispatchUnityMainThread = true;
-        
+
         // cache delegate.
         static readonly SendOrPostCallback handleExceptionInvoke = InvokeUnobservedTaskException;
 
@@ -50,7 +50,10 @@ namespace Cysharp.Threading.Tasks
                 if (UnobservedTaskException != null)
                 {
 #if UNITY_2018_3_OR_NEWER
-                    if (!DispatchUnityMainThread || Thread.CurrentThread.ManagedThreadId == PlayerLoopHelper.MainThreadId)
+                    if (
+                        !DispatchUnityMainThread
+                        || Thread.CurrentThread.ManagedThreadId == PlayerLoopHelper.MainThreadId
+                    )
                     {
                         // allows inlining call.
                         UnobservedTaskException.Invoke(ex);
@@ -58,7 +61,10 @@ namespace Cysharp.Threading.Tasks
                     else
                     {
                         // Post to MainThread.
-                        PlayerLoopHelper.UnitySynchronizationContext.Post(handleExceptionInvoke, ex);
+                        PlayerLoopHelper.UnitySynchronizationContext.Post(
+                            handleExceptionInvoke,
+                            ex
+                        );
                     }
 #else
                     UnobservedTaskException.Invoke(ex);
@@ -100,4 +106,3 @@ namespace Cysharp.Threading.Tasks
         }
     }
 }
-

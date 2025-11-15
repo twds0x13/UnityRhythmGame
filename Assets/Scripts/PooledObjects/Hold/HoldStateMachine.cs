@@ -53,7 +53,7 @@ namespace HoldStateMachine
 
             if (StartJudge)
             {
-                StateMachine.SwitchState(Hold.ProcessJudge);
+                StateMachine.SwitchState(Hold.OnJudge);
             }
         }
 
@@ -62,9 +62,11 @@ namespace HoldStateMachine
             base.Exit();
         }
 
+        // Hold 头部在进入判定时间时开始判定
+
         private bool StartJudge =>
             Game.Inst.GetGameTime() < Hold.JudgeTime
-            && Judge.GetJudgeEnum(Hold) != Judge.HoldJudgeEnum.NotEntered;
+            && Judge.GetHeadJudgeEnum(Hold) != Judge.HoldJudgeEnum.NotEntered;
     }
 
     public class StateOnJudgeHold : HoldState
@@ -76,7 +78,7 @@ namespace HoldStateMachine
         {
             base.Enter();
 
-            RegisterJudge(); // 可以在使用的时候才注册，这样能省掉 JudgeList 里的额外判断！这是好文明
+            RegisterJudge(); // 使用时注册
         }
 
         public override void Update()
@@ -85,7 +87,7 @@ namespace HoldStateMachine
 
             if (ExitJudge)
             {
-                StateMachine.SwitchState(Hold.AfterJudge);
+                Hold.OnAutoMissed(); // 在没有判定 Hold 头部的情况下，超过判定时间之后自动 Miss 整条 Hold
             }
         }
 
@@ -94,19 +96,13 @@ namespace HoldStateMachine
             base.Exit();
         }
 
-        // 在超过判定时间之后自动移除
         private bool ExitJudge =>
             Game.Inst.GetGameTime() > Hold.JudgeTime
-            && Judge.GetJudgeEnum(Hold) == Judge.HoldJudgeEnum.Miss;
+            && Judge.GetHeadJudgeEnum(Hold) == Judge.HoldJudgeEnum.Miss;
 
         private void RegisterJudge()
         {
             Hold.ParentTrack.RegisterJudge(Hold);
-        }
-
-        private void UnregisterJudge()
-        {
-            Hold.ParentTrack.UnregisterJudge(Hold);
         }
     }
 
@@ -122,7 +118,7 @@ namespace HoldStateMachine
         {
             base.Enter();
 
-            Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
+            UnregisterJudge(); // 使用后注销
         }
 
         public override void Update()
@@ -134,6 +130,44 @@ namespace HoldStateMachine
         {
             base.Exit();
         }
+
+        private void UnregisterJudge()
+        {
+            Hold.ParentTrack.UnregisterJudge(Hold);
+        }
+    }
+
+    public class StatePressingJudgeHold : HoldState
+    {
+        public StatePressingJudgeHold(
+            HoldBehaviour Hold,
+            LinearStateMachine<HoldBehaviour> StateMachine
+        )
+            : base(Hold, StateMachine) { }
+
+        public override void Enter()
+        {
+            base.Enter();
+        }
+
+        public override void Update()
+        {
+            base.Update();
+
+            if (ExitJudge)
+            {
+                Hold.OnAutoFinish(); // 在已经判定过 Hold 头部的情况下，Hold 尾部在超过判定时间之后自动完成 Hold 判定
+            }
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+        }
+
+        private bool ExitJudge =>
+            Game.Inst.GetGameTime() > Hold.JudgeTime + Hold.JudgeDuration
+            && Judge.GetHeadJudgeEnum(Hold) == Judge.HoldJudgeEnum.NotEntered;
     }
 
     public class StateInitHold : HoldState
@@ -171,15 +205,13 @@ namespace HoldStateMachine
 
         private void AnimeInit(HoldBehaviour Hold)
         {
-            Hold.Inst.SpriteRenderer.sprite = Hold.GetSprite(
-                Hold.ParentTrack.TrackNumber < 1 || Hold.ParentTrack.TrackNumber > 2
-                    ? "note_l"
-                    : "note_color"
-            );
+            Hold.Inst.SpriteRenderer.sprite = Hold.GetSprite("note_color");
 
-            Hold.SetScale(Vector3.one);
+            Hold.SetScale(Vector3.one * 0.110f);
 
             Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+
+            Hold.BodyAnimator.lineRenderer.material.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -208,7 +240,7 @@ namespace HoldStateMachine
         {
             AnimeMachine.CurT =
                 (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
-                / AnimeMachine.CurAnime.TotalTimeElapse();
+                / AnimeMachine.CurAnime.TotalTimeElapse;
 
             Hold.transform.position =
                 InterpFunc.VectorHandler(
@@ -218,7 +250,8 @@ namespace HoldStateMachine
                     AxisFunc.Linear,
                     AxisFunc.Linear,
                     AxisFunc.Linear
-                ) + Hold.ParentTrack.transform.position;
+                ) * Hold.Vertical
+                + Hold.ParentTrack.transform.position;
             ;
         }
 
@@ -247,9 +280,68 @@ namespace HoldStateMachine
         }
     }
 
-    public class StateJudgeAnimeHold : HoldState
+    public class StateJudgePressingAnimeHold : HoldState
     {
-        public StateJudgeAnimeHold(
+        public StateJudgePressingAnimeHold(
+            HoldBehaviour Hold,
+            LinearStateMachine<HoldBehaviour> StateMachine
+        )
+            : base(Hold, StateMachine) { }
+
+        public override void Enter()
+        {
+            base.Enter();
+            AnimeMachine.JudgeTimeCache = Game.Inst.GetGameTime();
+            AnimeMachine.JudgePosCache = Hold.Inst.transform.position;
+        }
+
+        public override void Update()
+        {
+            base.Update();
+
+            HoldAnime();
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+        }
+
+        public void HoldAnime()
+        {
+            Hold.Inst.transform.position = AnimeMachine.JudgePosCache;
+
+            var elapsed = Mathf.Min(
+                3f * (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache),
+                1f
+            );
+
+            if (Hold.ParentTrack.TrackNumber < 2)
+            {
+                Hold.Inst.SpriteRenderer.color = new Color(
+                    1f,
+                    0.9f + 0.1f * elapsed,
+                    0.9f + 0.1f * elapsed,
+                    0.85f + 0.5f * elapsed
+                ); // 按住时的颜色
+            }
+            else
+            {
+                Hold.Inst.SpriteRenderer.color = new Color(
+                    0.9f + 0.1f * elapsed,
+                    0.9f + 0.1f * elapsed,
+                    1f,
+                    0.85f + 0.5f * elapsed
+                ); // 按住时的颜色
+            }
+
+            Hold.BodyAnimator.lineRenderer.material.color = Hold.Inst.SpriteRenderer.color;
+        }
+    }
+
+    public class StateJudgeFinishAnimeHold : HoldState
+    {
+        public StateJudgeFinishAnimeHold(
             HoldBehaviour Hold,
             LinearStateMachine<HoldBehaviour> StateMachine
         )
@@ -291,8 +383,15 @@ namespace HoldStateMachine
                 Hold.Inst.SpriteRenderer.color = new Color(
                     1f,
                     1f,
-                    1f - 2f * AnimeMachine.CurT,
-                    1f - 2f * AnimeMachine.CurT
+                    1f - 0.5f * AnimeMachine.CurT,
+                    1f - 2.5f * AnimeMachine.CurT
+                );
+
+                Hold.BodyAnimator.lineRenderer.material.color = new Color(
+                    1f,
+                    1f,
+                    1f - 0.5f * AnimeMachine.CurT,
+                    0.5f - 1.25f * AnimeMachine.CurT
                 );
             }
             else
@@ -347,7 +446,14 @@ namespace HoldStateMachine
                     0f
                 ) + AnimeMachine.DisappearingPosCache;
 
-            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.3f - 0.3f * AnimeMachine.CurT);
+            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.6f - 0.8f * AnimeMachine.CurT);
+
+            Hold.BodyAnimator.lineRenderer.material.color = new Color(
+                1f,
+                1f,
+                1f,
+                0.8f - 1.2f * AnimeMachine.CurT
+            );
 
             return AnimeMachine.CurT - 1f >= 0;
         }

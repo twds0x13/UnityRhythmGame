@@ -193,7 +193,7 @@ namespace TrackStateMachine
         {
             AnimeMachine.CurT =
                 (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
-                / AnimeMachine.CurAnime.TotalTimeElapse();
+                / AnimeMachine.CurAnime.TotalTimeElapse;
 
             Track.transform.localPosition = InterpFunc.VectorHandler(
                 AnimeMachine.CurAnime.StartV,
