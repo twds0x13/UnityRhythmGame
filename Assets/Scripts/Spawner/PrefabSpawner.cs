@@ -11,11 +11,14 @@ namespace PrefabSpawner
 {
     public static class PrefabSpawner
     {
-        static string PagePath = "Assets/GameObjects/UI Elements/Page/SamplePage.prefab";
+        static readonly string PagePath =
+            "Assets/GameObjects/UI Elements/Prefabs/Page/SamplePage.prefab";
 
-        static string TextPath = "Assets/GameObjects/UI Elements/Text/SampleText.prefab";
+        static readonly string TextPath =
+            "Assets/GameObjects/UI Elements/Prefabs/Text/SampleText.prefab";
 
-        static string ButtonPath = "Assets/GameObjects/UI Elements/Button/SampleButton.prefab";
+        static readonly string ButtonPath =
+            "Assets/GameObjects/UI Elements/Prefabs/Button/SampleButton.prefab";
 
         enum PageType
         {

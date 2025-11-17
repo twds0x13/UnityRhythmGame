@@ -4,7 +4,6 @@ using Anime;
 using AudioNS;
 using AudioRegistry;
 using HoldNS;
-using NoteNS;
 using PageNS;
 using PooledObjectNS;
 using StateMachine;
@@ -41,15 +40,20 @@ namespace TrackNS
 
         public BaseUIPage ParentPage; // 母页面
 
+        public ITrackInputProvider InputProvider;
+
         public int TrackNumber { get; private set; }
 
         private void InitStateMachine(TrackBehaviour Track)
         {
             StateMachine = new();
+
             InitTrack = new(Track, StateMachine);
             AnimeTrack = new(Track, StateMachine);
             DisappearTrack = new(Track, StateMachine);
             DestroyTrack = new(Track, StateMachine);
+
+            // var AnimeList = new List<IState<TrackBehaviour>> { InitTrack };
 
             JudgeMachine = new();
 
@@ -57,14 +61,16 @@ namespace TrackNS
             ProcessJudge = new(Track, JudgeMachine);
             FinishJudge = new(Track, JudgeMachine);
 
+            // var JudgeList = new List<IState<TrackBehaviour>> { InitJudge };
+
             JudgeMachine.InitState(InitJudge);
             StateMachine.InitState(InitTrack);
         }
 
         private void Update()
         {
-            StateMachine.CurState?.Update();
             JudgeMachine.CurState?.Update();
+            StateMachine.CurState?.Update();
         }
 
         /*
@@ -87,14 +93,9 @@ namespace TrackNS
         
         */
 
-        public void OnPress(InputAction.CallbackContext Ctx)
+        public void OnPressed()
         {
-            if (
-                Ctx.started
-                && JudgeList.Count > 0
-                && !Game.Inst.IsGamePaused()
-                && (JudgeList[0] is NoteBehaviour || JudgeList[0] is HoldBehaviour)
-            )
+            if (JudgeList.Count > 0 && !Game.Inst.IsGamePaused() && (JudgeList[0] is not null))
             {
                 JudgeList[0].OnPress();
 
@@ -118,11 +119,10 @@ namespace TrackNS
             }
         }
 
-        public void OnRelease(InputAction.CallbackContext Ctx)
+        public void OnReleased()
         {
             if (
-                Ctx.canceled
-                && JudgeList.Count > 0
+                JudgeList.Count > 0
                 && !Game.Inst.IsGamePaused()
                 && JudgeList[0] is HoldBehaviour hold
             )
@@ -158,15 +158,32 @@ namespace TrackNS
             StateMachine.SwitchState(DisappearTrack);
         }
 
-        public TrackBehaviour Init(BaseUIPage Page, AnimeMachine Machine, int Number) // 在 Objectpool 中调用这个函数作为通用初始化，保证每次调用都从这里开始
+        public TrackBehaviour Init(
+            BaseUIPage page,
+            AnimeMachine machine,
+            ITrackInputProvider input,
+            int Number
+        ) // 在 Objectpool 中调用这个函数作为通用初始化，保证每次调用都从这里开始
         {
-            ParentPage = Page;
+            ParentPage = page;
             TrackNumber = Number;
-            AnimeMachine = Machine;
+            AnimeMachine = machine;
+
+            InputProvider = input;
 
             InitStateMachine(this);
 
             return this;
+        }
+
+        public void OnSwitchProvider(ITrackInputProvider input)
+        {
+            InputProvider = input;
+
+            if (!InputProvider.IsRegistered(TrackNumber))
+            {
+                InputProvider.Register(TrackNumber, OnPressed, OnReleased);
+            }
         }
 
         public void ResetTrack()
@@ -186,10 +203,7 @@ namespace TrackNS
 
         public void Unregister(IChartObject Note)
         {
-            if (AllList.Contains(Note))
-            {
-                AllList.Remove(Note);
-            }
+            AllList.Remove(Note);
         }
 
         public void RegisterJudge(IChartObject Note)
@@ -199,10 +213,7 @@ namespace TrackNS
 
         public void UnregisterJudge(IChartObject Note)
         {
-            if (JudgeList.Contains(Note))
-            {
-                JudgeList.Remove(Note);
-            }
+            JudgeList.Remove(Note);
         }
     }
 }

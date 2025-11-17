@@ -5,7 +5,6 @@ using HoldStateMachine;
 using PooledObjectNS;
 using StateMachine;
 using TrackNS;
-using UnityEngine;
 using Game = GameManagerNS.GameManager;
 using Judge = HoldJudgeNS.HoldJudge;
 
@@ -48,6 +47,10 @@ namespace HoldNS
         public float JudgeDuration { get; private set; } // 预计按下时长
 
         public float Vertical { get; set; } = 1f; // 纵向位置缩放
+
+        public bool IsDisappearing => StateMachine.CurState == DisappearHoldAnime; // 在消失的时候临时接管 Tail 位移
+
+        public Pack VerticalCache { get; private set; } = new(default, 0f);
 
         public void InitStateMachine(HoldBehaviour Hold)
         {
@@ -146,11 +149,9 @@ namespace HoldNS
             ParentTrack = track;
             AnimeMachine = machine;
 
-            LogManager.Log(JudgeDuration.ToString());
+            LogManager.Log(JudgeDuration.ToString(), nameof(HoldBehaviour), false);
 
             TailAnimator.Init(machine.ResetOffset(JudgeDuration), this);
-
-            // BodyAnimator.Init(ParentTrack);
 
             InitStateMachine(this);
             return this;
@@ -169,6 +170,11 @@ namespace HoldNS
 
             StateMachine = null;
             JudgeMachine = null;
+        }
+
+        public void UpdateCache()
+        {
+            VerticalCache = new(transform.position, Game.Inst.GetGameTime());
         }
 
         public override void OnClosePage()

@@ -233,9 +233,16 @@ public class MainPage : BaseUIPage
                 return;
 
 #if UNITY_EDITOR
+
+            DOTween.KillAll();
+            DOTween.Clear(true);
+
             EditorApplication.isPlaying = false;
+
 #else
+
             Application.Quit();
+
 #endif
         }
         catch (OperationCanceledException)

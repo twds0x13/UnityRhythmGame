@@ -91,6 +91,10 @@ MonoBehaviour:
     m_Key: UI_NEXT_BG
     m_Metadata:
       m_Items: []
+  - m_Id: 16761057119821824
+    m_Key: BT_AUTO_PLAY
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

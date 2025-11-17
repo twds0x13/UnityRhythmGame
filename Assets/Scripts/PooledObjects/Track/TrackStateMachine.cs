@@ -1,5 +1,6 @@
 using Anime;
 using InterpNS;
+using PooledObjectNS;
 using StateMachine;
 using TrackNS;
 using Unity.VisualScripting;
@@ -24,7 +25,7 @@ namespace TrackStateMachine
 
             this.StateMachine = StateMachine;
 
-            this.AnimeMachine = Track.Inst.AnimeMachine;
+            this.AnimeMachine = Track.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -60,13 +61,7 @@ namespace TrackStateMachine
         {
             if (Track.TrackNumber < 4)
             {
-                var TrackInput = Ctrl.Inst.UserInput.currentActionMap.FindAction(
-                    "Track " + Track.TrackNumber.ToString()
-                );
-
-                TrackInput.started += Track.OnPress;
-
-                TrackInput.canceled += Track.OnRelease;
+                Track.InputProvider.Register(Track.TrackNumber, Track.OnPressed, Track.OnReleased);
             }
         }
     }
@@ -123,13 +118,11 @@ namespace TrackStateMachine
         {
             if (Track.TrackNumber < 4)
             {
-                var TrackInput = Ctrl.Inst.UserInput.currentActionMap.FindAction(
-                    "Track " + Track.TrackNumber.ToString()
+                Track.InputProvider.Unregister(
+                    Track.TrackNumber,
+                    Track.OnPressed,
+                    Track.OnReleased
                 );
-
-                TrackInput.started -= Track.OnPress;
-
-                TrackInput.canceled -= Track.OnRelease;
             }
         }
     }
@@ -158,13 +151,13 @@ namespace TrackStateMachine
 
         private void InitTrack(TrackBehaviour Track)
         {
-            Track.Inst.SpriteRenderer.sprite = Track.GetSprite("track_1");
+            Track.SpriteRenderer.sprite = Track.GetSprite("track_1");
 
             Track.transform.SetParent(Track.ParentPage.transform, false);
 
             Track.ParentPage.RegisterObject(Track);
 
-            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Track.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
     }
 
@@ -242,8 +235,8 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
-            AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.DisappearingPosCache = Track.Inst.transform.localPosition;
+
+            AnimeMachine.DisappearCache = new(Track.transform.position, Game.Inst.GetGameTime());
         }
 
         public override void Update()
@@ -267,11 +260,11 @@ namespace TrackStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
                 / AnimeMachine.DisappearTimeSpan;
 
-            Track.Inst.transform.localPosition =
+            Track.transform.localPosition =
                 new Vector3(0f, -0.25f * Page.Inst.GetPageRect().height * AnimeMachine.CurT, 0f)
                 + AnimeMachine.DisappearingPosCache;
 
-            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - AnimeMachine.CurT);
+            Track.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - AnimeMachine.CurT);
 
             return AnimeMachine.CurT - 1f >= 0;
         }
@@ -301,8 +294,8 @@ namespace TrackStateMachine
 
         private void AnimeExit()
         {
-            Track.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
-            Track.Inst.transform.localPosition = new Vector3(0f, 20f, 0f);
+            Track.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Track.transform.localPosition = new Vector3(0f, 20f, 0f);
         }
     }
 }

@@ -1,3 +1,5 @@
+using PooledObjectNS;
+
 public interface IChartObject
 {
     public void OnPress();

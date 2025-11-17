@@ -15,15 +15,15 @@ namespace AudioNS
         private Source(string value) => Value = value;
 
         // Music
-        public static Source BGM = new Source("BackGroundMusic");
+        public static Source BGM = new("BackGroundMusic");
 
         // Fx
-        public static Source Track0 = new Source("Track0Fx");
-        public static Source Track1 = new Source("Track1Fx");
-        public static Source Track2 = new Source("Track2Fx");
-        public static Source Track3 = new Source("Track3Fx");
+        public static Source Track0 = new("Track0Fx");
+        public static Source Track1 = new("Track1Fx");
+        public static Source Track2 = new("Track2Fx");
+        public static Source Track3 = new("Track3Fx");
 
-        public static Source UI = new Source("UIFx");
+        public static Source UI = new("UIFx");
 
         public static implicit operator string(Source source) => source.Value;
     }
@@ -345,7 +345,7 @@ namespace AudioNS
 
             if (requiredSources != null)
             {
-                foreach (Source source in requiredSources)
+                foreach (ISource source in requiredSources)
                 {
                     returnSources.Add(RequireAudioSource(source.Value));
                 }
@@ -524,7 +524,7 @@ namespace AudioNS
 
             state.CurrentClip = audioClip;
 
-            _ = RewarmAfterPlayAsync(source, sourceEnum, state.Volume);
+            _ = RewarmAfterPlayAsync(source, sourceEnum);
 
             LogManager.Log(
                 $"播放外部音频 {audioClip.name}, 源: {sourceEnum}, 预热状态: {(isAlreadyWarmedUp ? "已预热" : "新预热")}",
@@ -673,7 +673,7 @@ namespace AudioNS
 
             state.CurrentClip = newClip;
 
-            _ = RewarmAfterPlayAsync(source, sourceEnum, state.Volume);
+            _ = RewarmAfterPlayAsync(source, sourceEnum);
 
             LogManager.Log(
                 $"播放音频 {clipName}, 源: {sourceEnum}, 预热状态: {(isAlreadyWarmedUp ? "已预热" : "新预热")}",
@@ -682,11 +682,7 @@ namespace AudioNS
             );
         }
 
-        private async UniTaskVoid RewarmAfterPlayAsync(
-            AudioSource source,
-            string sourceEnum,
-            float targetVolume
-        )
+        private async UniTaskVoid RewarmAfterPlayAsync(AudioSource source, string sourceEnum)
         {
             if (!_sourceStates.TryGetValue(sourceEnum, out var state))
                 return;

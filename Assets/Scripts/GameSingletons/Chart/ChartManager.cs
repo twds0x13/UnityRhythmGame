@@ -2,13 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading;
 using AudioNS;
 using Cysharp.Threading.Tasks;
 using GameManagerNS;
-using HoldNS;
-using NoteNS;
 using Parser;
 using PooledObjectNS;
 using Singleton;
@@ -28,6 +25,12 @@ public class ChartManager : Singleton<ChartManager>
     public AudioClip SelectedAudio;
 
     public UnityEvent OnInitialized;
+
+    public Action OnStartGame; // 代表游戏开始加载，开始加载谱面和音频的一瞬间
+
+    public Action OnExitGame;
+
+    public Action OnStartNoteGeneration; // 代表游戏完成加载，开始生成 Note 的一瞬间
 
     // 添加 CancellationTokenSource 用于控制任务取消
     private CancellationTokenSource _gameCancellationTokenSource;
@@ -78,14 +81,18 @@ public class ChartManager : Singleton<ChartManager>
         return false;
     }
 
-    public void StartGame(float time)
+    public void StartGame()
     {
+        var time = GameManager.Inst.GetGameTime();
+
         // 取消之前可能还在运行的任务
         _gameCancellationTokenSource?.Cancel();
         _gameCancellationTokenSource?.Dispose();
 
         // 创建新的 CancellationTokenSource
         _gameCancellationTokenSource = new CancellationTokenSource();
+
+        OnStartGame?.Invoke();
 
         StartGameTask(time, _gameCancellationTokenSource.Token).Forget();
 
@@ -173,21 +180,11 @@ public class ChartManager : Singleton<ChartManager>
             await UniTask.Delay(600, cancellationToken: cancellationToken);
 
             // 下落时间
-            float fallDuration = 1.2f;
+            float fallDuration = GameSettings.NoteFallDuration;
 
             float verticalPosition = 1f;
 
-            PooledObjectManager.Inst.NoteModifier += ModifyVertical;
-
-            PooledObjectManager.Inst.HoldModifier += HoldModifyVertical;
-
             PooledObjectManager.Inst.VerticalModifier += VerticalModify;
-
-            // 获取目标帧率（用于计算帧间隔）
-            float targetFrameRate =
-                Application.targetFrameRate <= 0 ? 60 : Application.targetFrameRate;
-
-            float frameInterval = 1f / targetFrameRate;
 
             // 在后台线程中分组音符
             var noteGroups = await GroupNotesOnThreadAsync(SelectedChart.Notes);
@@ -209,6 +206,9 @@ public class ChartManager : Singleton<ChartManager>
             // 游戏时间起点
             var gameTimeStart = GameManager.Inst.GetGameTime();
 
+            // 发送事件
+            OnStartNoteGeneration?.Invoke();
+
             // 生成音符
             foreach (var group in noteGroups)
             {
@@ -223,7 +223,7 @@ public class ChartManager : Singleton<ChartManager>
 
                 // 这里的游戏时间起点自动包含了前面的延迟时间
 
-                float generateTime = noteTime - fallDuration - frameInterval + gameTimeStart;
+                float generateTime = noteTime - fallDuration + gameTimeStart;
 
                 // 等待到调整后的生成时间，同时检查取消
                 while (GameManager.Inst.GetGameTime() < generateTime)
@@ -257,8 +257,7 @@ public class ChartManager : Singleton<ChartManager>
                     }
                     else
                     {
-                        float finishTime =
-                            note.EndTime - fallDuration - frameInterval + gameTimeStart;
+                        float finishTime = note.EndTime - fallDuration + gameTimeStart;
 
                         PooledObjectManager.Inst.GetHoldsDynamic(
                             generateTime, // StartTime
@@ -290,48 +289,11 @@ public class ChartManager : Singleton<ChartManager>
         }
     }
 
-    private void ModifyVertical(NoteBehaviour note)
-    {
-        // First Pattern !
-        /*
-        if (note.AnimeMachine.CurT < 0.45f)
-        {
-            note.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.2f * note.AnimeMachine.CurT);
-            note.Vertical = 3f * note.AnimeMachine.CurT;
-        }
-        else
-        {
-            note.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.6f + 0.4f * note.AnimeMachine.CurT);
-            note.Vertical = 3f * note.AnimeMachine.CurT;
-        }
-        */
-
-        note.Vertical = 1.75f; // + 0.15f * Mathf.Sin(2f * Mathf.PI * GameManager.Inst.GetGameTime());
-    }
-
-    private void HoldModifyVertical(HoldBehaviour hold)
-    {
-        // First Pattern !
-
-        /* 在 hold 持续按下的时候有 Bug
-        if (hold.AnimeMachine.CurT < 0.45f)
-        {
-            hold.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.2f * hold.AnimeMachine.CurT);
-            hold.Vertical = 3f * hold.AnimeMachine.CurT;
-        }
-        else
-        {
-            hold.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.6f + 0.4f * hold.AnimeMachine.CurT);
-            hold.Vertical = 3f * hold.AnimeMachine.CurT;
-        }
-        */
-
-        hold.Vertical = 1.75f; // + 0.15f * Mathf.Sin(2f * Mathf.PI * GameManager.Inst.GetGameTime());
-    }
-
     private void VerticalModify(IVertical vertical)
     {
-        vertical.Vertical = 1.75f; //  + 0.15f * Mathf.Sin(2f * Mathf.PI * GameManager.Inst.GetGameTime());
+        // vertical.UpdateCache();
+
+        vertical.Vertical = 0.75f; // + 0.0375f; //  * Mathf.Sin(2f * Mathf.PI * GameManager.Inst.GetGameTime());
     }
 
     /// <summary>
@@ -374,7 +336,9 @@ public class ChartManager : Singleton<ChartManager>
         // 取消所有正在运行的游戏任务
         _gameCancellationTokenSource?.Cancel();
 
-        PooledObjectManager.Inst.NoteModifier -= ModifyVertical;
+        OnExitGame?.Invoke();
+
+        PooledObjectManager.Inst.VerticalModifier -= VerticalModify;
 
         AudioManager.Inst.PauseAudioSource(Source.BGM);
         AudioManager.Inst.ClearAudioSource(Source.BGM);

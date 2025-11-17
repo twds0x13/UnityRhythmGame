@@ -155,7 +155,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   parentTrack: {fileID: 0}
   parentHold: {fileID: 3864510740993012106}
-  spriteRenderer: {fileID: 2398851845985309041}
+  SpriteRenderer: {fileID: 2398851845985309041}
+  PositionOverride: 0
 --- !u!212 &2398851845985309041
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -362,3 +363,4 @@ MonoBehaviour:
   lineWidth: 110
   spriteUVLength: 1
   lineRenderer: {fileID: 3256148970408777889}
+  spriteRendererAtA: {fileID: 3661432312104678926}

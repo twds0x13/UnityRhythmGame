@@ -1,10 +1,10 @@
 using System;
 using Cysharp.Threading.Tasks;
-using DG.Tweening;
 using Singleton;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Game = GameManagerNS.GameManager;
+using Input = InputProviderManager;
 using Pool = PooledObjectNS.PooledObjectManager;
 
 /// <summary>
@@ -24,6 +24,38 @@ namespace GameCore
         {
             // 在初始化时移除旧的 OnUpdate 订阅
             ActionOnUpdate -= OnUpdate;
+
+            Input.Inst.AddProvider<AutoPlayTrackInputProvider>(new(ChartManager.Inst));
+
+            Input.Inst.AddProvider<UnityTrackInputProvider>(new(UserInput.actions));
+
+            Input.Inst.RegisterAllToGameStart();
+
+            Input.Inst.SwitchToProvider<UnityTrackInputProvider>();
+
+            Pool.Inst.TrackInputProvider = Input.Inst.GetCurrentProvider();
+        }
+
+        public void ToggleAutoPlay()
+        {
+            switch (Input.Inst.GetCurrentProvider())
+            {
+                case UnityTrackInputProvider:
+
+                    Input.Inst.SwitchToProvider<AutoPlayTrackInputProvider>();
+
+                    Pool.Inst.TrackInputProvider = Input.Inst.GetCurrentProvider();
+
+                    break;
+
+                case AutoPlayTrackInputProvider:
+
+                    Input.Inst.SwitchToProvider<UnityTrackInputProvider>();
+
+                    Pool.Inst.TrackInputProvider = Input.Inst.GetCurrentProvider();
+
+                    break;
+            }
         }
 
         public void StartGame()
@@ -56,11 +88,7 @@ namespace GameCore
         /// <summary>
         /// 核心游戏循环逻辑。
         /// </summary>
-        private void OnUpdate()
-        {
-            // 移除所有 ChartReader 相关逻辑
-            // 可以在这里添加其他游戏逻辑
-        }
+        private void OnUpdate() { } // 哈 这里什么都不需要了
 
         public void RebindInput(InputActionReference Ref)
         {
@@ -96,21 +124,6 @@ namespace GameCore
                 Pool.Inst.GetTracksDynamic();
         }
 
-        public void SaveGameSettings(InputAction.CallbackContext Ctx)
-        {
-            Game.Inst.SaveGameSettings();
-        }
-
-        public void LoadGameSettings(InputAction.CallbackContext Ctx)
-        {
-            Game.Inst.LoadGameSettings(ref Game.Inst.Settings);
-        }
-
-        public void TestIgnorePause(InputAction.CallbackContext Ctx)
-        {
-            // Game.Inst.LockTimeScale(2f);
-        }
-
         public void PauseResumeGame(InputAction.CallbackContext Ctx)
         {
             if (Ctx.performed)
@@ -121,8 +134,7 @@ namespace GameCore
 
         protected override void SingletonDestroy()
         {
-            DOTween.KillAll();
-            DOTween.Clear(true);
+            Input.Inst.UnregisterAllFromGameStart();
         }
     }
 
