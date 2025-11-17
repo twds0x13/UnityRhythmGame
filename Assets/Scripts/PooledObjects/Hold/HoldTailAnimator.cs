@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using Anime;
 using InterpNS;
+using PooledObjectNS;
 using TrackNS;
 using UnityEngine;
 using Game = GameManagerNS.GameManager;
 
 namespace HoldNS
 {
-    public class HoldTailAnimator : MonoBehaviour, IVertical
+    public class HoldTailAnimator : MonoBehaviour, IVertical, IScaleAble
     {
         [SerializeField]
         private TrackBehaviour parentTrack; // 持有尾部的对象
@@ -16,13 +17,13 @@ namespace HoldNS
         [SerializeField]
         private HoldBehaviour parentHold; // 持有尾部的对象
 
-        [SerializeField]
-        private AnimeMachine animeMachine; // 尾部的动画机，用来驱动尾部动画
+        public AnimeMachine AnimeMachine; // 尾部的动画机，用来驱动尾部动画
 
-        [SerializeField]
-        private SpriteRenderer spriteRenderer; // 用于显示尾部图片
+        public SpriteRenderer SpriteRenderer; // 用于显示尾部图片
 
         public float Vertical { get; set; } = 1f; // 纵向位置缩放
+
+        public Pack VerticalCache { get; private set; } = new(default, 0f);
 
         public enum ScaleMode
         {
@@ -35,25 +36,25 @@ namespace HoldNS
 
         public void Init(AnimeMachine machine, HoldBehaviour hold)
         {
-            animeMachine = machine;
+            AnimeMachine = machine;
             parentHold = hold;
             parentTrack = hold.ParentTrack;
 
             transform.SetParent(parentTrack.transform, true);
             SetScale(Vector3.one * 0.110f);
 
-            spriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
 
         public virtual void SetScale(Vector3 scale)
         {
-            if (spriteRenderer == null || spriteRenderer.sprite == null)
+            if (SpriteRenderer == null || SpriteRenderer.sprite == null)
             {
                 LogManager.Warning("SpriteRenderer 或 Sprite 为空，无法进行缩放");
                 return;
             }
 
-            Vector2 spriteSize = spriteRenderer.sprite.bounds.size;
+            Vector2 spriteSize = SpriteRenderer.sprite.bounds.size;
             Vector3 newScale = CalculateScale(spriteSize, scale, ScaleMode.FitToWidth);
             transform.localScale = newScale;
         }
@@ -111,40 +112,49 @@ namespace HoldNS
 
         public void AnimeManager()
         {
-            animeMachine.AnimeQueue.TryPeek(out animeMachine.CurAnime); // 至少 "应该" 有一个垫底动画
+            AnimeMachine.AnimeQueue.TryPeek(out AnimeMachine.CurAnime); // 至少 "应该" 有一个垫底动画
 
-            if (Game.Inst.GetGameTime() < animeMachine.CurAnime.EndT)
+            if (Game.Inst.GetGameTime() < AnimeMachine.CurAnime.EndT)
             {
                 UpdatePosition();
             }
             else
             {
-                if (!animeMachine.AnimeQueue.TryDequeue(out animeMachine.CurAnime))
+                if (!AnimeMachine.AnimeQueue.TryDequeue(out AnimeMachine.CurAnime))
                 {
-                    spriteRenderer.color = new Color(1f, 1f, 1f, 0f); // 隐藏尾部
+                    SpriteRenderer.color = new Color(1f, 1f, 1f, 0f); // 隐藏尾部
                 }
             }
         }
 
         public void UpdatePosition()
         {
-            animeMachine.CurT =
-                (Game.Inst.GetGameTime() - animeMachine.CurAnime.StartT)
-                / animeMachine.CurAnime.TotalTimeElapse;
+            AnimeMachine.CurT =
+                (Game.Inst.GetGameTime() - AnimeMachine.CurAnime.StartT)
+                / AnimeMachine.CurAnime.TotalTimeElapse;
 
-            transform.position =
-                Vertical
-                    * InterpFunc.VectorHandler(
-                        animeMachine.CurAnime.StartV,
-                        animeMachine.CurAnime.EndV,
-                        animeMachine.CurT,
-                        AxisFunc.Linear,
-                        AxisFunc.Linear,
-                        AxisFunc.Linear
-                    )
-                + parentTrack.transform.position;
+            if (!parentHold.IsDisappearing) // 在消失的时候由 HoldBehaviour 临时接管 Tail 位移，不考虑脚本执行顺序等
+            {
+                transform.position =
+                    Vertical
+                        * InterpFunc.VectorHandler(
+                            AnimeMachine.CurAnime.StartV,
+                            AnimeMachine.CurAnime.EndV,
+                            AnimeMachine.CurT,
+                            AxisFunc.Linear,
+                            AxisFunc.Pow,
+                            AxisFunc.Linear,
+                            PowY: 1.25f
+                        )
+                    + parentTrack.transform.position;
+            }
 
-            spriteRenderer.color = parentHold.SpriteRenderer.color; // 同步颜色
+            SpriteRenderer.color = parentHold.SpriteRenderer.color; // 同步颜色
+        }
+
+        public void UpdateCache()
+        {
+            VerticalCache = new(transform.position, Game.Inst.GetGameTime());
         }
     }
 }

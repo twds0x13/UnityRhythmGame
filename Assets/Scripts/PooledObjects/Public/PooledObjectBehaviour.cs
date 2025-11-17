@@ -6,6 +6,13 @@ using UnityEngine.Events;
 
 namespace PooledObjectNS
 {
+    public interface IScaleAble
+    {
+        void SetScale(Vector3 scale);
+
+        // void ReScale(Vector2 newScale, PooledObjectBehaviour.ScaleMode mode);
+    }
+
     public class PooledObjectBehaviour : MonoBehaviour, IPageControlled
     {
         public enum ScaleMode
@@ -17,14 +24,9 @@ namespace PooledObjectNS
             FitOutside, // 适应外部（完全填充）
         }
 
-        public PooledObjectBehaviour Inst { get; private set; }
-
-        public System.Random RandInst = new(); // 随时能用的随机
-
         public UnityEvent DestroyEvent = new(); // 外部调用
 
-        public SpriteRenderer SpriteRenderer; // Object Pool 的预制体都需要 SpriteRenderer, 可以使用空图片
-
+        public SpriteRenderer SpriteRenderer;
         public AnimeMachine AnimeMachine; // 在子类中初始化
 
         [Ext.ReadOnlyInGame, SerializeField]
@@ -36,9 +38,6 @@ namespace PooledObjectNS
 
         private void Awake() // 这个不能编译时生成
         {
-            if (Inst != this)
-                Inst = this;
-
             RegisterSprites();
         }
 
@@ -72,6 +71,13 @@ namespace PooledObjectNS
         {
             return _sprites[key];
         }
+
+        /*
+        public virtual void SetSprite(Sprite sprite)
+        {
+            SpriteRenderer.sprite = sprite;
+        }
+        */
 
         public virtual void SetScale(Vector3 scale)
         {

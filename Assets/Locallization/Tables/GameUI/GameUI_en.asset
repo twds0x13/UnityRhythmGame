@@ -95,6 +95,10 @@ MonoBehaviour:
     m_Localized: Test Background
     m_Metadata:
       m_Items: []
+  - m_Id: 16761057119821824
+    m_Localized: Auto Play
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

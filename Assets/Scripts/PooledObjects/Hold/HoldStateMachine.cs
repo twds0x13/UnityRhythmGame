@@ -6,7 +6,6 @@ using StateMachine;
 using UnityEngine;
 using Game = GameManagerNS.GameManager;
 using Judge = HoldJudgeNS.HoldJudge;
-using Page = UIManagerNS.PageManager;
 
 namespace HoldStateMachine
 {
@@ -24,7 +23,7 @@ namespace HoldStateMachine
 
             this.StateMachine = StateMachine;
 
-            this.AnimeMachine = Hold.Inst.AnimeMachine;
+            this.AnimeMachine = Hold.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -205,11 +204,11 @@ namespace HoldStateMachine
 
         private void AnimeInit(HoldBehaviour Hold)
         {
-            Hold.Inst.SpriteRenderer.sprite = Hold.GetSprite("note_color");
+            Hold.SpriteRenderer.sprite = Hold.GetSprite("note_color");
 
             Hold.SetScale(Vector3.one * 0.110f);
 
-            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
+            Hold.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
 
             Hold.BodyAnimator.lineRenderer.material.color = new Color(1f, 1f, 1f, 1f);
         }
@@ -248,8 +247,9 @@ namespace HoldStateMachine
                     AnimeMachine.CurAnime.EndV,
                     AnimeMachine.CurT,
                     AxisFunc.Linear,
+                    AxisFunc.Pow,
                     AxisFunc.Linear,
-                    AxisFunc.Linear
+                    PowY: 1.25f
                 ) * Hold.Vertical
                 + Hold.ParentTrack.transform.position;
             ;
@@ -291,8 +291,23 @@ namespace HoldStateMachine
         public override void Enter()
         {
             base.Enter();
-            AnimeMachine.JudgeTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.JudgePosCache = Hold.Inst.transform.position;
+
+            if (Judge.GetHeadJudgeEnum(Hold) == Judge.HoldJudgeEnum.CriticalPerfect) // 优化显示。Note 瞬移跳一下比较明显
+            {
+                AnimeMachine.JudgeCache = new Pack(
+                    Hold.ParentTrack.transform.position,
+                    Game.Inst.GetGameTime()
+                );
+            }
+            else
+            {
+                AnimeMachine.JudgeCache = new Pack(
+                    Hold.transform.position,
+                    Game.Inst.GetGameTime()
+                );
+            }
+
+            Hold.TailAnimator.AnimeMachine.JudgeCache = new Pack();
         }
 
         public override void Update()
@@ -309,7 +324,7 @@ namespace HoldStateMachine
 
         public void HoldAnime()
         {
-            Hold.Inst.transform.position = AnimeMachine.JudgePosCache;
+            Hold.transform.position = AnimeMachine.JudgePosCache;
 
             var elapsed = Mathf.Min(
                 3f * (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache),
@@ -318,24 +333,24 @@ namespace HoldStateMachine
 
             if (Hold.ParentTrack.TrackNumber < 2)
             {
-                Hold.Inst.SpriteRenderer.color = new Color(
+                Hold.SpriteRenderer.color = new Color(
                     1f,
                     0.9f + 0.1f * elapsed,
                     0.9f + 0.1f * elapsed,
-                    0.85f + 0.5f * elapsed
+                    Mathf.Min(0.85f + 0.35f * elapsed, 1f)
                 ); // 按住时的颜色
             }
             else
             {
-                Hold.Inst.SpriteRenderer.color = new Color(
+                Hold.SpriteRenderer.color = new Color(
                     0.9f + 0.1f * elapsed,
                     0.9f + 0.1f * elapsed,
                     1f,
-                    0.85f + 0.5f * elapsed
+                    Mathf.Min(0.85f + 0.35f * elapsed, 1f)
                 ); // 按住时的颜色
             }
 
-            Hold.BodyAnimator.lineRenderer.material.color = Hold.Inst.SpriteRenderer.color;
+            Hold.BodyAnimator.lineRenderer.material.color = Hold.SpriteRenderer.color;
         }
     }
 
@@ -350,8 +365,8 @@ namespace HoldStateMachine
         public override void Enter()
         {
             base.Enter();
-            AnimeMachine.JudgeTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.JudgePosCache = Hold.Inst.transform.position;
+
+            AnimeMachine.JudgeCache = new Pack(Hold.transform.position, Game.Inst.GetGameTime());
         }
 
         public override void Update()
@@ -375,23 +390,23 @@ namespace HoldStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache)
                 / AnimeMachine.JudgeAnimeTimeSpan;
 
-            Hold.Inst.transform.position =
+            Hold.transform.position =
                 new Vector3(0f, 0f * AnimeMachine.CurT, 0f) + AnimeMachine.JudgePosCache;
 
             if (AnimeMachine.HasJudgeAnime)
             {
-                Hold.Inst.SpriteRenderer.color = new Color(
+                Hold.SpriteRenderer.color = new Color(
                     1f,
                     1f,
                     1f - 0.5f * AnimeMachine.CurT,
-                    1f - 2.5f * AnimeMachine.CurT
+                    1f - 1f * AnimeMachine.CurT
                 );
 
                 Hold.BodyAnimator.lineRenderer.material.color = new Color(
                     1f,
                     1f,
                     1f - 0.5f * AnimeMachine.CurT,
-                    0.5f - 1.25f * AnimeMachine.CurT
+                    Mathf.Max(0.5f - 0.75f * AnimeMachine.CurT, 0f)
                 );
             }
             else
@@ -414,8 +429,13 @@ namespace HoldStateMachine
         public override void Enter()
         {
             base.Enter();
-            AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.DisappearingPosCache = Hold.Inst.transform.position;
+
+            AnimeMachine.DisappearCache = new(Hold.transform.position, Game.Inst.GetGameTime());
+
+            Hold.TailAnimator.AnimeMachine.DisappearCache = new(
+                Hold.TailAnimator.transform.position,
+                Game.Inst.GetGameTime()
+            );
         }
 
         public override void Update()
@@ -439,20 +459,32 @@ namespace HoldStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
                 / AnimeMachine.DisappearTimeSpan;
 
-            Hold.Inst.transform.position =
+            Hold.transform.position =
                 new Vector3(
                     0f,
                     -0.25f * ResizeDetector.Inst.Rect.rect.height * AnimeMachine.CurT,
                     0f
                 ) + AnimeMachine.DisappearingPosCache;
 
-            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0.6f - 0.8f * AnimeMachine.CurT);
+            Hold.TailAnimator.transform.position =
+                new Vector3(
+                    0f,
+                    -0.25f * ResizeDetector.Inst.Rect.rect.height * AnimeMachine.CurT,
+                    0f
+                ) + Hold.TailAnimator.AnimeMachine.DisappearingPosCache;
+
+            Hold.SpriteRenderer.color = new Color(
+                1f,
+                1f,
+                1f,
+                Mathf.Max(0.6f - 0.9f * AnimeMachine.CurT, 0f)
+            );
 
             Hold.BodyAnimator.lineRenderer.material.color = new Color(
                 1f,
                 1f,
                 1f,
-                0.8f - 1.2f * AnimeMachine.CurT
+                Mathf.Max(0.8f - 1.2f * AnimeMachine.CurT, 0f)
             );
 
             return AnimeMachine.CurT - 1f >= 0;
@@ -493,8 +525,8 @@ namespace HoldStateMachine
 
         private void AnimeExit()
         {
-            Hold.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
-            Hold.Inst.transform.position = new Vector3(0f, 20f, 0f);
+            Hold.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Hold.transform.position = new Vector3(0f, 20f, 0f);
         }
     }
 }

@@ -24,7 +24,7 @@ namespace NoteStateMachine
 
             this.StateMachine = StateMachine;
 
-            this.AnimeMachine = Note.Inst.AnimeMachine;
+            this.AnimeMachine = Note.AnimeMachine;
         }
 
         public virtual void Enter() { }
@@ -45,6 +45,8 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
+
+            // LogManager.Log("bf");
         }
 
         public override void Update()
@@ -173,14 +175,14 @@ namespace NoteStateMachine
 
         private void AnimeInit(NoteBehaviour Note)
         {
-            Note.Inst.SpriteRenderer.sprite = Note.GetSprite("note_color");
+            Note.SpriteRenderer.sprite = Note.GetSprite("note_color");
 
             Note.SetScale(Vector3.one * 0.110f); // 魔法数字
 
-            Note.Inst.SpriteRenderer.color =
-                Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2
-                    ? new Color(0.9f, 1f, 1f, 1f)
-                    : new Color(1f, 1f, 1f, 1f);
+            Note.SpriteRenderer.color =
+                Note.ParentTrack.TrackNumber < 2
+                    ? new Color(0.95f, 0.95f, 1f, 1f)
+                    : new Color(1f, 0.95f, 0.95f, 1f);
         }
     }
 
@@ -217,8 +219,9 @@ namespace NoteStateMachine
                     AnimeMachine.CurAnime.EndV,
                     AnimeMachine.CurT,
                     AxisFunc.Linear,
+                    AxisFunc.Pow,
                     AxisFunc.Linear,
-                    AxisFunc.Linear
+                    PowY: 1.25f
                 ) * Note.Vertical
                 + Note.ParentTrack.transform.position;
             ;
@@ -260,8 +263,8 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            AnimeMachine.JudgeTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.JudgePosCache = Note.Inst.transform.position;
+
+            AnimeMachine.JudgeCache = new Pack(Note.transform.position, Game.Inst.GetGameTime());
         }
 
         public override void Update()
@@ -285,12 +288,12 @@ namespace NoteStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache)
                 / AnimeMachine.JudgeAnimeTimeSpan;
 
-            Note.Inst.transform.position =
+            Note.transform.position =
                 new Vector3(0f, 0f * AnimeMachine.CurT, 0f) + AnimeMachine.JudgePosCache;
 
             if (AnimeMachine.HasJudgeAnime)
             {
-                Note.Inst.SpriteRenderer.color = new Color(
+                Note.SpriteRenderer.color = new Color(
                     1f,
                     1f,
                     1f - 0.5f * AnimeMachine.CurT,
@@ -317,8 +320,11 @@ namespace NoteStateMachine
         public override void Enter()
         {
             base.Enter();
-            AnimeMachine.DisappearTimeCache = Game.Inst.GetGameTime();
-            AnimeMachine.DisappearingPosCache = Note.Inst.transform.position;
+
+            AnimeMachine.DisappearCache = new Pack(
+                Note.transform.position,
+                Game.Inst.GetGameTime()
+            );
         }
 
         public override void Update()
@@ -342,14 +348,14 @@ namespace NoteStateMachine
                 (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
                 / AnimeMachine.DisappearTimeSpan;
 
-            Note.Inst.transform.position =
+            Note.transform.position =
                 new Vector3(
                     0f,
                     -0.25f * ResizeDetector.Inst.Rect.rect.height * AnimeMachine.CurT,
                     0f
                 ) + AnimeMachine.DisappearingPosCache;
 
-            Note.Inst.SpriteRenderer.SetAlpha(0.3f - 0.3f * AnimeMachine.CurT);
+            Note.SpriteRenderer.SetAlpha(0.3f - 0.3f * AnimeMachine.CurT);
 
             return AnimeMachine.CurT - 1f >= 0;
         }
@@ -389,8 +395,8 @@ namespace NoteStateMachine
 
         private void AnimeExit()
         {
-            Note.Inst.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
-            Note.Inst.transform.position = new Vector3(0f, 20f, 0f);
+            Note.SpriteRenderer.color = new Color(1f, 1f, 1f, 0f);
+            Note.transform.position = new Vector3(0f, 20f, 0f);
         }
     }
 }

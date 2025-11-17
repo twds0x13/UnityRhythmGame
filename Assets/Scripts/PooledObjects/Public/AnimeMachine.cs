@@ -21,15 +21,17 @@ namespace Anime
     /// <summary>
     /// 动画切片结构体，保存一段时间内 <see cref="PooledObjectBehaviour"/> 对象的位移数据
     /// </summary>
-    public struct AnimeClip
+    public readonly struct AnimeClip
     {
-        public Vector3 StartV { get; set; }
+        public readonly Vector3 StartV { get; }
 
-        public Vector3 EndV { get; set; }
+        public readonly Vector3 EndV { get; }
 
-        public float StartT { get; set; }
+        public readonly float StartT { get; }
 
-        public float EndT { get; set; }
+        public readonly float EndT { get; }
+
+        public readonly float TotalTimeElapse => EndT - StartT;
 
         public AnimeClip(
             float StartT = 0f,
@@ -47,7 +49,26 @@ namespace Anime
             this.EndT = EndT;
         }
 
-        public readonly float TotalTimeElapse => EndT - StartT;
+        public AnimeClip Offset(float offset = 0f) =>
+            new(StartT + offset, EndT + offset, StartV, EndV);
+    }
+
+    public readonly struct Pack
+    {
+        public readonly Vector3 Vector;
+
+        public readonly float Time;
+
+        /// <summary>
+        /// 打包缓存组，避免单独修改 Cache 内容
+        /// </summary>
+        /// <param name="vector"></param>
+        /// <param name="time"></param>
+        public Pack(Vector3 vector, float time)
+        {
+            Vector = vector;
+            Time = time;
+        }
     }
 
     /// <summary>
@@ -65,13 +86,17 @@ namespace Anime
 
         public float JudgeAnimeTimeSpan = Defaults.JudgeAnimeTimeSpan;
 
-        public float DisappearTimeCache;
+        public float DisappearTimeCache => DisappearCache.Time;
 
-        public Vector3 DisappearingPosCache;
+        public Vector3 DisappearingPosCache => DisappearCache.Vector;
 
-        public float JudgeTimeCache;
+        public float JudgeTimeCache => JudgeCache.Time;
 
-        public Vector3 JudgePosCache;
+        public Vector3 JudgePosCache => JudgeCache.Vector;
+
+        public Pack DisappearCache;
+
+        public Pack JudgeCache;
 
         public float CurT // 用来处理 Lerp 函数，需要值的范围在 0 ~ 1
         {
@@ -89,13 +114,7 @@ namespace Anime
         {
             foreach (var item in Queue)
             {
-                var tmp = item; // 复制迭代器，避免引用问题
-
-                if (offset != 0f)
-                {
-                    tmp.StartT += offset;
-                    tmp.EndT += offset;
-                }
+                var tmp = item.Offset(offset);
 
                 AnimeQueue.Enqueue(tmp);
             }

@@ -44,24 +44,18 @@ namespace InterpNS
             float Pow
         )
         {
-            switch (Func)
+            return Func switch
             {
-                case AxisFunc.Linear:
-                    return LerpFloat(Start, End, CurT);
-                case AxisFunc.Sine:
-                    return LerpFloat(Start, End, Mathf.Sin(0.5f * Mathf.PI * CurT));
-                case AxisFunc.Cosine:
-                    return LerpFloat(Start, End, 1f - 1f * Mathf.Cos(0.5f * Mathf.PI * CurT));
-                case AxisFunc.Pow:
-                    return LerpFloat(Start, End, Mathf.Pow(CurT, Pow));
-                default:
-                    throw new InvalidOperationException(Func.ToString() + " Not Found.");
-            }
-        }
-
-        public static float LerpFloat(float Start, float End, float CurT)
-        {
-            return (1f - CurT) * Start + CurT * End;
+                AxisFunc.Linear => Mathf.Lerp(Start, End, CurT),
+                AxisFunc.Sine => Mathf.Lerp(Start, End, Mathf.Sin(0.5f * Mathf.PI * CurT)),
+                AxisFunc.Cosine => Mathf.Lerp(
+                    Start,
+                    End,
+                    1f - 1f * Mathf.Cos(0.5f * Mathf.PI * CurT)
+                ),
+                AxisFunc.Pow => Mathf.Lerp(Start, End, Mathf.Pow(CurT, Pow)),
+                _ => throw new InvalidOperationException(Func.ToString() + " Not Found."),
+            };
         }
     }
 }

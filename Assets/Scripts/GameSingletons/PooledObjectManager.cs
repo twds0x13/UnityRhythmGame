@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Anime;
+using Cysharp.Threading.Tasks;
 using HoldNS;
 using NoteNS;
 using PageNS;
@@ -9,6 +10,7 @@ using TrackNS;
 using UnityEngine;
 using UnityEngine.Pool;
 using Game = GameManagerNS.GameManager;
+using Input = InputProviderManager;
 using Page = UIManagerNS.PageManager;
 using Random = UnityEngine.Random;
 
@@ -52,30 +54,45 @@ namespace PooledObjectNS
 
         public List<HoldBehaviour> ActiveHoldList;
 
-        public Action<NoteBehaviour> NoteModifier;
-
-        public Action<HoldBehaviour> HoldModifier;
-
         public Action<IVertical> VerticalModifier;
+
+        public ITrackInputProvider TrackInputProvider;
 
         protected override void SingletonAwake()
         {
             InitTrackDict();
             InitPools();
+
+            DeleyedAwake().Forget();
+        }
+
+        protected async UniTaskVoid DeleyedAwake()
+        {
+            await UniTask.Yield();
+
+            Input.Inst.OnInputProviderChange += OnProviderChange;
         }
 
         private void Update()
         {
             foreach (var note in ActiveNoteList)
             {
-                NoteModifier?.Invoke(note);
+                VerticalModifier?.Invoke(note);
             }
 
             foreach (var hold in ActiveHoldList)
             {
-                HoldModifier?.Invoke(hold);
+                VerticalModifier?.Invoke(hold);
 
                 VerticalModifier?.Invoke(hold.TailAnimator);
+            }
+        }
+
+        private void OnProviderChange()
+        {
+            foreach (var track in ActiveTracks.Values)
+            {
+                track.OnSwitchProvider(TrackInputProvider);
             }
         }
 
@@ -311,6 +328,13 @@ namespace PooledObjectNS
             }
         }
 
+        public void StartGame()
+        {
+            TrackInputProvider.Enable();
+
+            GetTracksDynamic();
+        }
+
         /// <summary>
         /// 按照默认情况同时生成四个 <see cref="TrackBehaviour"/> 对象。
         /// </summary>
@@ -406,7 +430,7 @@ namespace PooledObjectNS
             var Track = TrackPool
                 .Get()
                 .GetComponent<TrackBehaviour>()
-                .Init(Page, Machine, TrackUIDIterator);
+                .Init(Page, Machine, TrackInputProvider, TrackUIDIterator);
 
             if (TrackUIDIterator < 4)
             {
@@ -423,6 +447,8 @@ namespace PooledObjectNS
             TrackPool.Clear();
             HoldPool.Clear();
             NotePool.Clear();
+
+            TrackInputProvider.Disable();
 
             NoteUIDIterator = 0;
             HoldUIDIterator = 0;

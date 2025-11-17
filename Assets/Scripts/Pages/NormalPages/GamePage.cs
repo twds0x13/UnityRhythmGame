@@ -1,9 +1,7 @@
-using GameManagerNS;
 using PageNS;
 using Chart = ChartManager;
 using Ctrl = GameCore.GameController;
 using Game = GameManagerNS.GameManager;
-using Pool = PooledObjectNS.PooledObjectManager;
 
 public class GamePage : BaseUIPage
 {
@@ -31,7 +29,7 @@ public class GamePage : BaseUIPage
 
         Ctrl.Inst.StartGame();
 
-        Chart.Inst.StartGame(Game.Inst.GetGameTime());
+        Chart.Inst.StartGame();
     }
 
     public override void OnClosePage()
@@ -43,12 +41,15 @@ public class GamePage : BaseUIPage
         Chart.Inst.ExitGame();
 
         Ctrl.Inst.ExitGame();
-
-        Pool.Inst.ExitGame();
     }
 
     public void OnExitToMenu()
     {
         OnClosePage();
+    }
+
+    public void ToggleAutoPlay()
+    {
+        Ctrl.Inst.ToggleAutoPlay();
     }
 }

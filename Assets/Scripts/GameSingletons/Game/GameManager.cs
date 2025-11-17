@@ -1,24 +1,23 @@
-using JsonLoader;
+using System;
 using Singleton;
 using UnityEngine;
-using Json = JsonLoader.BaseJsonLoader;
 using Pool = PooledObjectNS.PooledObjectManager;
 
 namespace GameManagerNS
 {
     /// <summary>
-    /// 用来存一些新版输入和其他不方便存的东西
+    /// 静态设置类
     /// </summary>
     #region GameSettings
-    public class GameSettings
+    public static class GameSettings
     {
-        internal GameSettings() { } // 两个数据类，默认只在GameMain里初始化
+        public static float JudgementTimeOffset { get; internal set; } = 0f;
 
-        public float JudgementTimeOffset = 0f;
+        public static float DisplayTimeOffset { get; internal set; } = 0f;
 
-        public float DisplayTimeOffset = 0f;
+        public static float MusicTimeOffset { get; internal set; } = 0f;
 
-        public float MusicTimeOffset = 0f;
+        public static float NoteFallDuration { get; internal set; } = 0f;
     }
 
     #endregion
@@ -67,9 +66,9 @@ namespace GameManagerNS
     /// 内嵌类，用于处理 <see cref="Time.timeScale"/> 的全局更改
     /// </summary>
     #region GameTime
-    internal class GameTime
+    public class GameTime
     {
-        private GameTime() { }
+        internal GameTime() { }
 
         public static Timer MainTimer;
 
@@ -97,7 +96,7 @@ namespace GameManagerNS
 
         public static float TimeScaleCache = 1f;
 
-        public static bool GamePaused { get; private set; }
+        public static bool IsGamePaused { get; private set; }
 
         /// <summary>
         /// 处理全局 <see cref="Time.timeScale"/> 变化（包括加减速，暂停等）相关的逻辑和按键检测。
@@ -119,7 +118,7 @@ namespace GameManagerNS
 
                 if (TimeScale <= 0)
                 {
-                    GamePaused = true;
+                    IsGamePaused = true;
                     TimePausing = false;
                     TimeChanging = false;
                 }
@@ -128,7 +127,7 @@ namespace GameManagerNS
             if (TimeResuming)
             {
                 TimeChanging = true;
-                GamePaused = false;
+                IsGamePaused = false;
                 TimeScale =
                     (RealTimer.GetTimeElapsed() - TimeScaleStartingPoint) * TimeScaleSpeed
                     + TimeScaleCache;
@@ -202,22 +201,57 @@ namespace GameManagerNS
     /// </summary>
     public class GameManager : Singleton<GameManager>
     {
-        public GameScore Score = new();
-
-        public GameSettings Settings = new(); // TODO : 改成 protected 或 private
-
-        private string UserSettingsZipPath;
+        public readonly GameScore Score = new();
 
         protected override void SingletonAwake()
         {
-            InitGameTime();
+            GameSettings.NoteFallDuration = 0.7f;
 
-            InitPath();
+            QualitySettings.vSyncCount = 1;
+
+            QualitySettings.antiAliasing = 4;
+
+            QualitySettings.anisotropicFiltering = AnisotropicFiltering.Enable;
+
+            QualitySettings.globalTextureMipmapLimit = 0;
+
+            DetectMaxFrameRate();
+
+            InitGameTime();
         }
 
-        private void InitPath()
+        public void DetectMaxFrameRate()
         {
-            UserSettingsZipPath = Application.persistentDataPath;
+            // 方法1：获取当前屏幕的刷新率（使用refreshRateRatio）
+            double currentRefreshRate = Screen.currentResolution.refreshRateRatio.value;
+            Debug.Log($"屏幕刷新率: {currentRefreshRate} Hz");
+
+            // 方法2：获取所有可用分辨率中的最大刷新率
+            double maxRefreshRate = GetMaxSupportedRefreshRate();
+            Debug.Log($"设备支持的最大刷新率: {maxRefreshRate} Hz");
+
+            // 设置目标帧率为最大刷新率（取整）
+            Application.targetFrameRate = (int)Math.Floor(currentRefreshRate);
+        }
+
+        private double GetMaxSupportedRefreshRate()
+        {
+            double maxRefreshRate = 0f;
+            Resolution[] resolutions = Screen.resolutions;
+
+            foreach (Resolution res in resolutions)
+            {
+                double refreshRate = res.refreshRateRatio.value;
+                if (refreshRate > maxRefreshRate)
+                {
+                    maxRefreshRate = refreshRate;
+                }
+            }
+
+            // 如果获取失败，使用当前刷新率
+            return maxRefreshRate > 0
+                ? maxRefreshRate
+                : Screen.currentResolution.refreshRateRatio.value;
         }
 
         public void InitGameTime() // 记得把其他数据类的初始化扔到GameBehaviour里面
@@ -244,8 +278,7 @@ namespace GameManagerNS
         /// 返回游戏时间（秒）
         /// </summary>
         /// <returns></returns>
-        public float GetGameTime() =>
-            GameTime.MainTimer.GetTimeElapsed() + Inst.Settings.JudgementTimeOffset;
+        public float GetGameTime() => GameTime.MainTimer.GetTimeElapsed();
 
         public float GetAbsTime() => GameTime.RealTimer.GetTimeElapsed();
 
@@ -253,44 +286,23 @@ namespace GameManagerNS
 
         public float GetTimeScaleCache() => GameTime.TimeScaleCache;
 
-        public void LockTimeScale() // 时间流速被强制设置的时候不让暂停（诡谲）
-        {
-            GameTime.IgnorePause = true;
+        public bool IsGamePaused() => GameTime.IsGamePaused;
 
-            // Inst.Settings.SetTimeScale(Speed);
-        }
+        // public void PauseGame() => GameTime.SwitchToPause();
 
-        public void UnlockTimeScale() => GameTime.IgnorePause = false; // 解锁强制时间流速设置，恢复到正常状态
-
-        public bool IsGamePaused() => GameTime.GamePaused;
-
-        public void PauseGame() => GameTime.SwitchToPause();
-
-        public void ResumeGame() => GameTime.SwitchToResume();
+        // public void ResumeGame() => GameTime.SwitchToResume();
 
         public void PauseResumeGame() => GameTime.OnPauseResume();
 
-        public void SaveGameSettings() => Json.SaveObject("UserSettings.zip", Inst.Settings);
-
-        public bool LoadGameSettings(ref GameSettings Object)
-        {
-            var (success, result) = Json.LoadObject<GameSettings>("UserSettings.zip");
-
-            if (success)
-            {
-                Object = result;
-            }
-
-            return success;
-        }
-
         public void StartGame()
         {
-            Pool.Inst.GetTracksDynamic();
+            Pool.Inst.StartGame();
         }
 
         public void ExitGame()
         {
+            Pool.Inst.ExitGame();
+
             Score.MaxScore = 0f;
             Score.Score = 0f;
         }

@@ -38,6 +38,8 @@ namespace NoteNS
 
         public float Vertical { get; set; } = 1f; // 纵向位置缩放
 
+        public Pack VerticalCache { get; private set; } = new(default, 0f);
+
         public void InitStateMachine(NoteBehaviour Note)
         {
             StateMachine = new();
@@ -52,7 +54,7 @@ namespace NoteNS
             // 如果想在 Init 前面临时插一段进去就用 LinearStateMachine 的方法调用 NextState 函数
             // 通用状态机写起来太麻烦了 小修小补可以
 
-            var AnimeList = new List<IState<NoteBehaviour>> { InitNote };
+            // var AnimeList = new List<IState<NoteBehaviour>> { InitNote };
 
             JudgeMachine = new();
 
@@ -60,11 +62,10 @@ namespace NoteNS
             OnJudge = new(Note, JudgeMachine);
             AfterJudge = new(Note, JudgeMachine);
 
-            var JudgeList = new List<IState<NoteBehaviour>> { BeforeJudge };
+            // var JudgeList = new List<IState<NoteBehaviour>> { BeforeJudge };
 
-            StateMachine.InitLinear(AnimeList);
-
-            JudgeMachine.InitLinear(JudgeList);
+            JudgeMachine.InitState(BeforeJudge);
+            StateMachine.InitState(InitNote);
         }
 
         private void Update() // 两个状态机
@@ -91,7 +92,11 @@ namespace NoteNS
             JudgeTime = Time;
             ParentTrack = Track;
             AnimeMachine = Machine;
+
+            UpdateCache();
+
             InitStateMachine(this);
+
             return this;
         }
 
@@ -105,6 +110,11 @@ namespace NoteNS
 
             StateMachine = null;
             JudgeMachine = null;
+        }
+
+        public void UpdateCache()
+        {
+            VerticalCache = new(transform.position, Game.Inst.GetGameTime());
         }
 
         public override void OnClosePage()
