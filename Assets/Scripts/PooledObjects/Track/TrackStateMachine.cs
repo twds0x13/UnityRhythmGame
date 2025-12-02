@@ -1,11 +1,9 @@
 using Anime;
 using InterpNS;
-using PooledObjectNS;
 using StateMachine;
 using TrackNS;
-using Unity.VisualScripting;
 using UnityEngine;
-using Ctrl = GameCore.GameController;
+using static PooledObjectNS.ScaleableSpriteBehaviour;
 using Game = GameManagerNS.GameManager;
 using Page = UIManagerNS.PageManager;
 
@@ -57,7 +55,7 @@ namespace TrackStateMachine
             base.Exit();
         }
 
-        private void RegisterJudgeKey() // 何意味？
+        private void RegisterJudgeKey() // 好文明
         {
             if (Track.TrackNumber < 4)
             {
@@ -151,11 +149,13 @@ namespace TrackStateMachine
 
         private void InitTrack(TrackBehaviour Track)
         {
-            Track.SpriteRenderer.sprite = Track.GetSprite("track_1");
+            Track.SpriteRenderer.sprite = Track.GetSprite("track_long");
 
             Track.transform.SetParent(Track.ParentPage.transform, false);
 
             Track.ParentPage.RegisterObject(Track);
+
+            Track.SetScale(Vector3.one * 160f);
 
             Track.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
         }
@@ -278,7 +278,9 @@ namespace TrackStateMachine
         public override void Enter()
         {
             base.Enter();
+
             AnimeExit();
+
             Track.DestroyEvent?.Invoke();
         }
 

@@ -6,9 +6,11 @@ public class ButtonScrollData
 {
     public int Index;
 
-    public int Difficulty;
+    public string Difficulty;
 
     public string SongTitle;
 
     public Sprite Cover;
+
+    public ClearState ClearState;
 }

@@ -172,6 +172,10 @@ MonoBehaviour:
     m_Key: C1_E2_L14_C2
     m_Metadata:
       m_Items: []
+  - m_Id: 15184044315496448
+    m_Key: CHARACTER_MIKASUKI_REI
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

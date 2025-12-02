@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Anime;
+using JudgeNS;
 using NoteStateMachine;
 using Parser;
 using PooledObjectNS;
@@ -7,6 +8,7 @@ using StateMachine;
 using TrackNS;
 using Game = GameManagerNS.GameManager;
 using Judge = JudgeNS.NoteJudge;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 namespace NoteNS
 {
@@ -80,12 +82,22 @@ namespace NoteNS
             {
                 Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetJudgeEnum(this));
 
+                Pool.Inst.GetJudgeDynamic(Judge.GetJudgeEnum(this));
+
                 JudgeMachine.SwitchState(AfterJudge);
                 StateMachine.SwitchState(JudgeNoteAnime);
             }
         }
 
         public void OnRelease() { }
+
+        public void OnAutoMissed()
+        {
+            Pool.Inst.GetJudgeDynamic(JudgeEnum.Miss);
+
+            JudgeMachine.SwitchState(AfterJudge);
+            StateMachine.SwitchState(DisappearNoteAnime);
+        }
 
         public NoteBehaviour Init(AnimeMachine Machine, TrackBehaviour Track, float Time) // 在 Objectpool 中调用这个函数，保证每次调用都从这里开始
         {

@@ -42,6 +42,10 @@ MonoBehaviour:
     m_Localized: ' '
     m_Metadata:
       m_Items: []
+  - m_Id: 15184044315496448
+    m_Localized: Mikasuki Rei
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

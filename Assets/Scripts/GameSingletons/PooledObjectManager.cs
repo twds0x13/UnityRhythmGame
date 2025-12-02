@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Anime;
 using Cysharp.Threading.Tasks;
 using HoldNS;
+using JudgeNS;
 using NoteNS;
 using PageNS;
 using Singleton;
@@ -33,6 +34,9 @@ namespace PooledObjectNS
         ObjectPool<GameObject> TrackPool;
 
         [SerializeField]
+        ObjectPool<GameObject> JudgePool;
+
+        [SerializeField]
         Dictionary<int, TrackBehaviour> ActiveTracks;
 
         [SerializeField]
@@ -43,6 +47,9 @@ namespace PooledObjectNS
 
         [SerializeField]
         GameObject TrackPrefab;
+
+        [SerializeField]
+        GameObject JudgeDisplayerPrefab;
 
         public int NoteUIDIterator { get; private set; } = 0; // 你应该没同时用到21亿个 Note, 对吧？
 
@@ -150,7 +157,7 @@ namespace PooledObjectNS
                 },
                 true,
                 128,
-                512 - 128 // 这里的 maxSize 只限制池内未启用物体数量....
+                512 - 128
             );
 
             TrackPool = new ObjectPool<GameObject>(
@@ -171,7 +178,26 @@ namespace PooledObjectNS
                 },
                 true,
                 4,
-                32 - 4 // 这里的 maxSize 只限制池内未启用物体数量....
+                32 - 4
+            );
+
+            JudgePool = new ObjectPool<GameObject>(
+                InstantiateJudge,
+                (judge) =>
+                {
+                    judge.SetActive(true);
+                },
+                (judge) =>
+                {
+                    judge.SetActive(false);
+                },
+                (judge) =>
+                {
+                    DestroyImmediate(judge);
+                },
+                true,
+                4,
+                32 - 4
             );
         }
 
@@ -179,11 +205,7 @@ namespace PooledObjectNS
         {
             GameObject Track = Instantiate(TrackPrefab, transform);
 
-            Track.GetComponent<PooledObjectBehaviour>().transform.position = new Vector3(
-                0f,
-                20f,
-                0f
-            );
+            Track.transform.position = new Vector3(0f, 20f, 0f);
 
             Track
                 .GetComponent<PooledObjectBehaviour>()
@@ -199,11 +221,7 @@ namespace PooledObjectNS
         {
             GameObject Hold = Instantiate(HoldPrefab, transform);
 
-            Hold.GetComponent<PooledObjectBehaviour>().transform.position = new Vector3(
-                0f,
-                20f,
-                0f
-            );
+            Hold.transform.position = new Vector3(0f, 20f, 0f);
 
             Hold.GetComponent<PooledObjectBehaviour>()
                 .DestroyEvent.AddListener(() =>
@@ -218,11 +236,7 @@ namespace PooledObjectNS
         {
             GameObject Note = Instantiate(NotePrefab, transform);
 
-            Note.GetComponent<PooledObjectBehaviour>().transform.position = new Vector3(
-                0f,
-                20f,
-                0f
-            );
+            Note.transform.position = new Vector3(0f, 20f, 0f);
 
             Note.GetComponent<PooledObjectBehaviour>()
                 .DestroyEvent.AddListener(() =>
@@ -231,6 +245,22 @@ namespace PooledObjectNS
                 });
 
             return Note;
+        }
+
+        private GameObject InstantiateJudge()
+        {
+            GameObject Judge = Instantiate(JudgeDisplayerPrefab, transform);
+
+            Judge.transform.position = new Vector3(0f, 20f, 0f);
+
+            Judge
+                .GetComponent<JudgeBehaviour>()
+                .DestroyEvent.AddListener(() =>
+                {
+                    JudgePool.Release(Judge);
+                });
+
+            return Judge;
         }
 
         /// <summary>
@@ -328,6 +358,11 @@ namespace PooledObjectNS
             }
         }
 
+        public void GetJudgeDynamic(JudgeEnum judgeEnum)
+        {
+            GetOneJudge(Page.Inst.CurPage, judgeEnum);
+        }
+
         public void StartGame()
         {
             TrackInputProvider.Enable();
@@ -335,10 +370,17 @@ namespace PooledObjectNS
             GetTracksDynamic();
         }
 
+        public void StartPreviewSettings()
+        {
+            TrackInputProvider.Enable();
+
+            GetPreviewTrack();
+        }
+
         /// <summary>
         /// 按照默认情况同时生成四个 <see cref="TrackBehaviour"/> 对象。
         /// </summary>
-        public void GetTracksDynamic()
+        private void GetTracksDynamic()
         {
             Queue<AnimeClip> Tmp;
             Vector3 VecTmp;
@@ -350,8 +392,8 @@ namespace PooledObjectNS
                 Tmp = new();
 
                 VecTmp = new Vector3(
-                    -0.30f * Rect.width + 0.2f * Rect.width * TrackUIDIterator,
-                    -0.35f * Rect.height,
+                    -0.225f * Rect.width + 0.15f * Rect.width * TrackUIDIterator,
+                    -0.28f * Rect.height,
                     0f
                 );
 
@@ -394,6 +436,57 @@ namespace PooledObjectNS
         }
 
         /// <summary>
+        /// 在 Game Settings 页面中预览 Note下落速度、Note下落时间、判定显示位置（ Perfect, Great, Miss 等 ）需要的轨道
+        /// </summary>
+        private void GetPreviewTrack()
+        {
+            Queue<AnimeClip> Tmp;
+            Vector3 VecTmp;
+            Rect Rect = ResizeDetector.Inst.Rect.rect;
+            Rect.width = 1080f;
+
+            Tmp = new();
+
+            VecTmp = new Vector3(0.3f * Rect.width, -0.3f * Rect.height, 0f);
+
+            /*
+            for (int i = 0; i < 50; i++)
+            {
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        Game.Inst.GetGameTime() + 10 * i,
+                        Game.Inst.GetGameTime() + 5f + 10 * i,
+                        VecTmp,
+                        VecTmp - new Vector3(0f, 0.1f * Rect.height, 0f)
+                    )
+                );
+
+                Tmp.Enqueue(
+                    new AnimeClip(
+                        Game.Inst.GetGameTime() + 5f + 10 * i,
+                        Game.Inst.GetGameTime() + 10f + 10 * i,
+                        VecTmp - new Vector3(0f, 0.1f * Rect.height, 0f),
+                        VecTmp
+                    )
+                );
+            }
+            */
+
+            Tmp.Enqueue(
+                new AnimeClip(
+                    Game.Inst.GetGameTime(),
+                    Game.Inst.GetGameTime() + 114514f,
+                    VecTmp,
+                    VecTmp
+                )
+            );
+
+            AnimeMachine Machine = new(Tmp);
+
+            GetOneTrack(Page.Inst.CurPage, Machine, 3); // 默认使用第四条轨道按键作为预览按键 编号范围为 0 ~ 3
+        }
+
+        /// <summary>
         /// 从对象池中获取一个新的 <see cref="NoteBehaviour"/> 对象，并同时初始化它的动画机和母轨
         /// </summary>
         private void GetOneNote(AnimeMachine machine, TrackBehaviour track, float judgeTime)
@@ -425,20 +518,38 @@ namespace PooledObjectNS
         /// <summary>
         /// 从对象池中获取一个新的 <see cref="TrackBehaviour"/> 对象，并同时初始化它的动画机
         /// </summary>
-        private void GetOneTrack(BaseUIPage Page, AnimeMachine Machine)
+        private void GetOneTrack(BaseUIPage Page, AnimeMachine Machine, int trackNumber = -1)
         {
-            var Track = TrackPool
-                .Get()
-                .GetComponent<TrackBehaviour>()
-                .Init(Page, Machine, TrackInputProvider, TrackUIDIterator);
-
             if (TrackUIDIterator < 4)
             {
                 Machine.IsDestroyable = false;
-                ActiveTracks.Add(TrackUIDIterator, Track);
-            }
 
-            TrackUIDIterator++;
+                if (trackNumber != -1)
+                {
+                    var Track = TrackPool
+                        .Get()
+                        .GetComponent<TrackBehaviour>()
+                        .Init(Page, Machine, TrackInputProvider, trackNumber);
+
+                    ActiveTracks.Add(trackNumber, Track);
+                }
+                else
+                {
+                    var Track = TrackPool
+                        .Get()
+                        .GetComponent<TrackBehaviour>()
+                        .Init(Page, Machine, TrackInputProvider, TrackUIDIterator);
+
+                    ActiveTracks.Add(TrackUIDIterator, Track);
+
+                    TrackUIDIterator++;
+                }
+            }
+        }
+
+        private void GetOneJudge(BaseUIPage parentPage, JudgeEnum judgeEnum)
+        {
+            JudgePool.Get().GetComponent<JudgeBehaviour>().Init(parentPage, judgeEnum);
         }
 
         public void ExitGame()

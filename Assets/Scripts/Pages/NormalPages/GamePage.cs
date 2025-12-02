@@ -27,8 +27,6 @@ public class GamePage : BaseUIPage
 
         Game.Inst.StartGame();
 
-        Ctrl.Inst.StartGame();
-
         Chart.Inst.StartGame();
     }
 
@@ -39,8 +37,6 @@ public class GamePage : BaseUIPage
         Game.Inst.ExitGame();
 
         Chart.Inst.ExitGame();
-
-        Ctrl.Inst.ExitGame();
     }
 
     public void OnExitToMenu()

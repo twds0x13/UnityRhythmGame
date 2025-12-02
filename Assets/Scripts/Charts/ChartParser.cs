@@ -92,25 +92,25 @@ namespace Parser
 
                 logger.Info($"找到 {archiveFiles.Length} 个谱面文件");
 
+                // 并行处理所有文件
+                var parseTasks = new List<UniTask<ChartFile>>();
+
                 foreach (var filePath in archiveFiles)
                 {
                     if (cancellationToken.IsCancellationRequested)
                         break;
 
-                    try
+                    // 修改点：直接调用异步方法，不再使用 RunOnThreadPool
+                    parseTasks.Add(ParseChartFile(filePath, logger));
+                }
+
+                var results = await UniTask.WhenAll(parseTasks);
+
+                foreach (var chartFile in results)
+                {
+                    if (chartFile != null)
                     {
-                        var chartFile = await Task.Run(
-                            () => ParseChartFile(filePath, logger),
-                            cancellationToken
-                        );
-                        if (chartFile != null)
-                        {
-                            chartFiles.Add(chartFile);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error($"处理文件时出错: {filePath} - {ex.Message}");
+                        chartFiles.Add(chartFile);
                     }
                 }
 
@@ -129,7 +129,6 @@ namespace Parser
                 }
             }
         }
-
         #endregion
 
         #region 文件解析核心
@@ -137,7 +136,7 @@ namespace Parser
         /// <summary>
         /// 解析单个谱面文件
         /// </summary>
-        private ChartFile ParseChartFile(string filePath, AsyncLogger logger = null)
+        private async UniTask<ChartFile> ParseChartFile(string filePath, AsyncLogger logger = null)
         {
             bool shouldDisposeLogger = logger == null;
             logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
@@ -169,12 +168,17 @@ namespace Parser
                         }
                     }
 
-                    // 解析谱面文件
-                    ParseChartFiles(chartFile, logger);
+                    // 修改点：等待谱面文件解析完成
+                    await ParseChartFiles(chartFile, logger);
                 }
 
                 logger.Info($"成功解析: {chartFile.FileName} - {chartFile.Charts.Count} 个谱面");
                 return chartFile;
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"解析谱面文件失败: {filePath} - {ex.Message}");
+                return null;
             }
             finally
             {
@@ -260,9 +264,9 @@ namespace Parser
         }
 
         /// <summary>
-        /// 解析谱面文件
+        /// 解析谱面文件 - 升级为异步并行版本
         /// </summary>
-        private void ParseChartFiles(ChartFile chartFile, AsyncLogger logger = null)
+        private async UniTask ParseChartFiles(ChartFile chartFile, AsyncLogger logger = null)
         {
             bool shouldDisposeLogger = logger == null;
             logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
@@ -275,21 +279,118 @@ namespace Parser
 
                 logger.Info($"找到 {chartFileEntries.Count} 个谱面文件需要解析");
 
-                foreach (var fileEntry in chartFileEntries)
+                // 并行解析所有谱面数据
+                var parseTasks = chartFileEntries
+                    .Select(fileEntry =>
+                        UniTask.RunOnThreadPool(() => ParseChartData(fileEntry, logger))
+                    )
+                    .ToArray();
+
+                var charts = (await UniTask.WhenAll(parseTasks))
+                    .Where(chart => chart != null)
+                    .ToList();
+
+                // 修改点：先加载公共封面，然后分配给所有Chart
+                await LoadPublicCoverForChartFile(chartFile, charts, logger);
+
+                // 添加所有谱面到集合
+                chartFile.Charts.AddRange(charts);
+
+                logger.Info($"成功解析 {charts.Count} 个谱面");
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"解析谱面文件数据失败: {ex.Message}");
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
                 {
-                    try
-                    {
-                        var chart = ParseChartData(fileEntry, logger);
-                        if (chart != null)
-                        {
-                            chartFile.Charts.Add(chart);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error($"解析谱面文件失败: {fileEntry.FileName} - {ex.Message}");
-                    }
+                    logger.Dispose();
                 }
+            }
+        }
+
+        /// <summary>
+        /// 为ChartFile加载公共封面并分配给所有Chart
+        /// </summary>
+        private async UniTask LoadPublicCoverForChartFile(
+            ChartFile chartFile,
+            List<Chart> charts,
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                if (charts.Count == 0)
+                {
+                    logger.Warning("没有可用的谱面，跳过封面加载");
+                    return;
+                }
+
+                // 如果已经加载过公共封面，直接分配给所有Chart
+                if (chartFile.PublicCover != null)
+                {
+                    foreach (var chart in charts)
+                    {
+                        chart.Cover = chartFile.PublicCover;
+                    }
+                    logger.Info($"使用已加载的公共封面，分配给 {charts.Count} 个谱面");
+                    return;
+                }
+
+                // 选择第一个有背景图的Chart作为封面源
+                var coverSourceChart = charts.FirstOrDefault(chart =>
+                    !string.IsNullOrEmpty(chart.BackgroundFileName)
+                );
+
+                if (coverSourceChart == null)
+                {
+                    logger.Warning("没有找到包含背景图的谱面，跳过封面加载");
+                    return;
+                }
+
+                logger.Info($"使用谱面 '{coverSourceChart.ChartName}' 的背景图作为公共封面");
+
+                // 获取封面数据
+                byte[] coverData = GetCoverData(coverSourceChart, chartFile, logger);
+                if (coverData == null || coverData.Length == 0)
+                {
+                    logger.Warning($"未找到封面文件: {coverSourceChart.BackgroundFileName}");
+                    return;
+                }
+
+                // 加载封面Sprite
+                var publicCover = await ConvertToSpriteAsync(
+                    coverData,
+                    $"{chartFile.Name}_PublicCover",
+                    logger
+                );
+
+                if (publicCover != null)
+                {
+                    // 设置公共封面
+                    chartFile.PublicCover = publicCover;
+
+                    // 分配给所有Chart
+                    foreach (var chart in charts)
+                    {
+                        chart.Cover = publicCover;
+                    }
+
+                    logger.Info($"成功加载公共封面并分配给 {charts.Count} 个谱面");
+                }
+                else
+                {
+                    logger.Error("公共封面加载失败");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"加载公共封面失败: {ex.Message}");
             }
             finally
             {
@@ -427,6 +528,8 @@ namespace Parser
             if (int.TryParse(meta["id"]?.ToString(), out int chartId))
             {
                 chart.ChartId = chartId.ToString();
+
+                LogManager.Log(chart.ChartName + chart.Version + chart.ChartId);
             }
 
             // 游戏模式
@@ -738,50 +841,6 @@ namespace Parser
             }
         }
 
-        /// <summary>
-        /// 获取指定谱面的封面文件数据
-        /// </summary>
-        public byte[] GetCoverData(Chart chart, AsyncLogger logger = null)
-        {
-            bool shouldDisposeLogger = logger == null;
-            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
-
-            try
-            {
-                var chartFile = ChartCollection.ChartFiles.FirstOrDefault(f =>
-                    f.Charts.Contains(chart)
-                );
-
-                if (chartFile == null)
-                {
-                    logger.Error($"未找到包含谱面 {chart.ChartName} 的文件");
-                    return null;
-                }
-
-                var coverFile = chartFile.AllFiles.FirstOrDefault(f =>
-                    f.FileName.Equals(chart.CoverFileName, StringComparison.OrdinalIgnoreCase)
-                );
-
-                if (coverFile != null)
-                {
-                    logger.Info($"获取封面数据成功: {chart.CoverFileName}");
-                    return coverFile.Data;
-                }
-                else
-                {
-                    logger.Error($"未找到封面文件: {chart.CoverFileName}");
-                    return null;
-                }
-            }
-            finally
-            {
-                if (shouldDisposeLogger)
-                {
-                    logger.Dispose();
-                }
-            }
-        }
-
         #endregion
 
         #region UniTask 音频转换方法
@@ -880,43 +939,72 @@ namespace Parser
         public async UniTask<Dictionary<Chart, AudioClip>> GetAudioClipsAsync(
             IEnumerable<Chart> charts,
             IProgress<float> progress = null,
+            AsyncLogger logger = null,
             CancellationToken cancellationToken = default
         )
         {
             var chartList = charts.ToList();
             var results = new Dictionary<Chart, AudioClip>();
 
-            for (int i = 0; i < chartList.Count; i++)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
 
-                var chart = chartList[i];
-                try
+            logger.Info($"开始批量加载 {chartList.Count} 个谱面的音频");
+
+            try
+            {
+                // 并行加载所有音频
+                var audioTasks = chartList
+                    .Select(async chart =>
+                    {
+                        try
+                        {
+                            var audioClip = await GetAudioClipAsync(
+                                chart,
+                                $"{chart.ChartName}_Audio",
+                                cancellationToken
+                            );
+                            return (chart, audioClip);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError($"加载谱面 {chart.ChartName} 音频失败: {ex.Message}");
+                            return (chart, null);
+                        }
+                    })
+                    .ToArray();
+
+                var audioResults = await UniTask.WhenAll(audioTasks);
+
+                // 构建结果字典并更新进度
+                for (int i = 0; i < audioResults.Length; i++)
                 {
-                    var audioClip = await GetAudioClipAsync(
-                        chart,
-                        $"{chart.ChartName}_Audio",
-                        cancellationToken
-                    );
+                    var (chart, audioClip) = audioResults[i];
                     if (audioClip != null)
                     {
                         results[chart] = audioClip;
+                        logger.Log($"成功加载音频: {chart.ChartName}");
                     }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"加载谱面 {chart.ChartName} 音频失败: {ex.Message}");
+
+                    // 更新进度
+                    progress?.Report((float)(i + 1) / audioResults.Length);
                 }
 
-                // 更新进度
-                progress?.Report((float)(i + 1) / chartList.Count);
-
-                // 每加载一个后等待一帧，避免卡顿
-                await UniTask.Yield();
+                logger.Info($"音频批量加载完成，成功加载 {results.Count}/{chartList.Count} 个音频");
+                return results;
             }
-
-            return results;
+            catch (Exception ex)
+            {
+                logger.Error($"批量加载音频失败: {ex.Message}");
+                return results;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -924,11 +1012,350 @@ namespace Parser
         /// </summary>
         public async UniTask PreloadAllAudioAsync(
             IProgress<float> progress = null,
+            AsyncLogger logger = null,
             CancellationToken cancellationToken = default
         )
         {
             var allCharts = GetAllCharts();
-            await GetAudioClipsAsync(allCharts, progress, cancellationToken);
+            await GetAudioClipsAsync(allCharts, progress, logger, cancellationToken);
+        }
+
+        #endregion
+
+        #region 封面提取
+
+        /*
+        /// <summary>
+        /// 提取并设置谱面封面 - 保持原有逻辑，但确保在异步上下文中工作
+        /// </summary>
+        private async UniTask ExtractCover(
+            Chart chart,
+            ChartFile chartFile,
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                // 如果已经加载过封面，直接返回
+                if (chart.Cover != null)
+                {
+                    return;
+                }
+
+                // 获取封面数据
+                byte[] coverData = GetCoverData(chart, chartFile, logger);
+                if (coverData == null || coverData.Length == 0)
+                {
+                    logger.Warning($"未找到谱面 {chart.ChartName} 的封面文件");
+                    return;
+                }
+
+                // 将封面数据转换为Sprite
+                chart.Cover = await ConvertToSpriteAsync(
+                    coverData,
+                    $"{chart.ChartName}_Cover",
+                    logger
+                );
+
+                if (chart.Cover != null)
+                {
+                    logger.Info($"成功加载封面: {chart.ChartName}");
+                }
+                else
+                {
+                    logger.Warning($"封面转换失败: {chart.ChartName}");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"提取封面失败: {chart.ChartName} - {ex.Message}");
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+        */
+
+        /// <summary>
+        /// 获取封面数据
+        /// </summary>
+        private byte[] GetCoverData(Chart chart, ChartFile chartFile, AsyncLogger logger = null)
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                // 优先使用背景图作为封面
+                if (!string.IsNullOrEmpty(chart.BackgroundFileName))
+                {
+                    var coverFile = chartFile.AllFiles.FirstOrDefault(f =>
+                        f.FileName.Equals(
+                            chart.BackgroundFileName,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    );
+
+                    if (coverFile != null && coverFile.Data != null && coverFile.Data.Length > 0)
+                    {
+                        logger.Info($"找到封面文件: {chart.BackgroundFileName}");
+                        return coverFile.Data;
+                    }
+                    else
+                    {
+                        logger.Warning($"封面文件不存在或数据为空: {chart.BackgroundFileName}");
+                    }
+                }
+                else
+                {
+                    logger.Warning("谱面未设置背景文件名");
+                }
+
+                return null;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 将图片数据转换为Sprite，优先匹配高度，保持水平缩放比例，左右裁剪到200x200
+        /// </summary>
+        private async UniTask<Sprite> ConvertToSpriteAsync(
+            byte[] imageData,
+            string spriteName = "CoverSprite",
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                if (imageData == null || imageData.Length == 0)
+                {
+                    logger.Error("封面图片数据为空");
+                    return null;
+                }
+
+                try
+                {
+                    // 切换到主线程执行所有Unity对象操作
+                    await UniTask.SwitchToMainThread();
+
+                    // 创建Texture2D并加载图片
+                    var texture = new Texture2D(2, 2);
+                    if (!texture.LoadImage(imageData))
+                    {
+                        logger.Error("加载图片数据失败");
+                        UnityEngine.Object.Destroy(texture);
+                        return null;
+                    }
+
+                    logger.Info($"成功加载纹理: {texture.width}x{texture.height}");
+
+                    // 优先匹配高度，保持水平缩放比例
+                    Texture2D croppedTexture = CropToSquareMatchHeight(texture, 1000, logger);
+
+                    // 销毁原纹理
+                    UnityEngine.Object.Destroy(texture);
+
+                    if (croppedTexture == null)
+                    {
+                        logger.Error("裁剪纹理失败");
+                        return null;
+                    }
+
+                    // 创建Sprite
+                    var sprite = Sprite.Create(
+                        croppedTexture,
+                        new Rect(0, 0, croppedTexture.width, croppedTexture.height),
+                        new Vector2(0.5f, 0.5f),
+                        100f
+                    );
+
+                    sprite.name = spriteName;
+                    logger.Info(
+                        $"成功创建Sprite: {spriteName} ({croppedTexture.width}x{croppedTexture.height})"
+                    );
+                    return sprite;
+                }
+                catch (Exception ex)
+                {
+                    logger.Error($"转换图片为Sprite失败: {ex.Message}");
+                    return null;
+                }
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 裁剪纹理为正方形，优先匹配高度，保持水平缩放比例
+        /// </summary>
+        private Texture2D CropToSquareMatchHeight(
+            Texture2D sourceTexture,
+            int targetSize,
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                int sourceWidth = sourceTexture.width;
+                int sourceHeight = sourceTexture.height;
+
+                // 计算缩放后的宽度，保持宽高比，高度固定为targetSize
+                float scaleFactor = (float)targetSize / sourceHeight;
+                int scaledWidth = Mathf.RoundToInt(sourceWidth * scaleFactor);
+
+                logger.Info(
+                    $"原始尺寸: {sourceWidth}x{sourceHeight}, 缩放后: {scaledWidth}x{targetSize}"
+                );
+
+                // 如果缩放后的宽度小于目标尺寸，需要填充而不是裁剪
+                // 但根据需求，我们只处理裁剪情况
+                if (scaledWidth < targetSize)
+                {
+                    logger.Warning(
+                        $"缩放后宽度({scaledWidth})小于目标尺寸({targetSize})，将拉伸到{targetSize}x{targetSize}"
+                    );
+                    // 这种情况下我们可以选择拉伸或保持原样，根据需求选择
+                    // 这里选择拉伸到正方形
+                    return ResizeTexture(sourceTexture, targetSize, targetSize, logger);
+                }
+
+                // 创建临时RenderTexture用于缩放
+                RenderTexture scaledRT = RenderTexture.GetTemporary(
+                    scaledWidth,
+                    targetSize,
+                    0,
+                    RenderTextureFormat.Default,
+                    RenderTextureReadWrite.Default
+                );
+                RenderTexture.active = scaledRT;
+
+                // 清除RenderTexture
+                GL.Clear(true, true, Color.clear);
+
+                // 使用Graphics.Blit进行高质量缩放
+                Graphics.Blit(sourceTexture, scaledRT);
+
+                // 计算裁剪区域（居中裁剪）
+                int cropX = (scaledWidth - targetSize) / 2;
+
+                // 创建最终的200x200纹理
+                Texture2D resultTexture = new Texture2D(
+                    targetSize,
+                    targetSize,
+                    TextureFormat.RGBA32,
+                    false
+                );
+
+                // 从缩放后的纹理中读取中间200x200的区域
+                resultTexture.ReadPixels(new Rect(cropX, 0, targetSize, targetSize), 0, 0);
+                resultTexture.Apply();
+
+                // 清理
+                RenderTexture.active = null;
+                RenderTexture.ReleaseTemporary(scaledRT);
+
+                logger.Info($"裁剪完成，从位置({cropX}, 0)裁剪出{targetSize}x{targetSize}");
+                return resultTexture;
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"裁剪纹理失败: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 调整纹理尺寸（备用方法）
+        /// </summary>
+        private Texture2D ResizeTexture(
+            Texture2D sourceTexture,
+            int newWidth,
+            int newHeight,
+            AsyncLogger logger = null
+        )
+        {
+            bool shouldDisposeLogger = logger == null;
+            logger ??= new AsyncLogger(nameof(ChartParser), _config.EnableLogging);
+
+            try
+            {
+                // 创建临时的RenderTexture用于缩放
+                RenderTexture rt = RenderTexture.GetTemporary(
+                    newWidth,
+                    newHeight,
+                    0,
+                    RenderTextureFormat.Default,
+                    RenderTextureReadWrite.Default
+                );
+                RenderTexture previous = RenderTexture.active;
+                RenderTexture.active = rt;
+
+                // 清除RenderTexture
+                GL.Clear(true, true, Color.clear);
+
+                // 使用Graphics.Blit进行高质量缩放
+                Graphics.Blit(sourceTexture, rt);
+
+                // 创建新的纹理
+                Texture2D resizedTexture = new Texture2D(
+                    newWidth,
+                    newHeight,
+                    TextureFormat.RGBA32,
+                    false
+                );
+                resizedTexture.ReadPixels(new Rect(0, 0, newWidth, newHeight), 0, 0);
+                resizedTexture.Apply();
+
+                // 恢复之前的RenderTexture
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(rt);
+
+                logger.Info($"纹理尺寸调整完成: {newWidth}x{newHeight}");
+                return resizedTexture;
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"调整纹理尺寸失败: {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                if (shouldDisposeLogger)
+                {
+                    logger.Dispose();
+                }
+            }
         }
 
         #endregion

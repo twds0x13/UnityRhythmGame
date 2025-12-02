@@ -11,13 +11,18 @@ namespace GameManagerNS
     #region GameSettings
     public static class GameSettings
     {
-        public static float JudgementTimeOffset { get; internal set; } = 0f;
+        /// <summary>
+        /// 谱面显示的垂直缩放。缩放的坐标原点为 Track 的正中央。
+        /// 这个值增大时 Note 会从屏幕外更高的位置开始下落、更快速的落到 Track 上、并且停留在屏幕内的时间更短
+        /// </summary>
+        public static float ChartVerticalScale { get; private set; } = 1f;
 
-        public static float DisplayTimeOffset { get; internal set; } = 0f;
+        /// <summary>
+        /// Note 从屏幕外一点开始运动到 Track 正中央所花费的预定时间
+        /// </summary>
+        public static float NoteFallDuration { get; internal set; } = 0.60f;
 
-        public static float MusicTimeOffset { get; internal set; } = 0f;
-
-        public static float NoteFallDuration { get; internal set; } = 0f;
+        public static float JudgeDisplayerHeight { get; internal set; } = 0.03f;
     }
 
     #endregion
@@ -205,8 +210,6 @@ namespace GameManagerNS
 
         protected override void SingletonAwake()
         {
-            GameSettings.NoteFallDuration = 0.7f;
-
             QualitySettings.vSyncCount = 1;
 
             QualitySettings.antiAliasing = 4;

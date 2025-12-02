@@ -6,7 +6,7 @@ using StateMachine;
 using UnityEngine;
 using Game = GameManagerNS.GameManager;
 using Judge = JudgeNS.NoteJudge;
-using Page = UIManagerNS.PageManager;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 namespace NoteStateMachine
 {
@@ -66,7 +66,7 @@ namespace NoteStateMachine
 
         private bool StartJudge =>
             Game.Inst.GetGameTime() < Note.JudgeTime
-            && Judge.GetJudgeEnum(Note) != Judge.NoteJudgeEnum.NotEntered;
+            && Judge.GetJudgeEnum(Note) != JudgeEnum.NotEntered;
     }
 
     public class StateOnJudgeNote : NoteState
@@ -87,21 +87,20 @@ namespace NoteStateMachine
 
             if (ExitJudge)
             {
-                StateMachine.SwitchState(Note.AfterJudge);
+                Note.OnAutoMissed();
             }
         }
 
         public override void Exit()
         {
-            base.Exit();
-
             UnregisterJudge();
+
+            base.Exit();
         }
 
         // 在超过判定时间之后自动移除
         private bool ExitJudge =>
-            Game.Inst.GetGameTime() > Note.JudgeTime
-            && Judge.GetJudgeEnum(Note) == Judge.NoteJudgeEnum.Miss;
+            Game.Inst.GetGameTime() > Note.JudgeTime && Judge.GetJudgeEnum(Note) == JudgeEnum.Miss;
 
         private void RegisterJudge()
         {
@@ -175,14 +174,21 @@ namespace NoteStateMachine
 
         private void AnimeInit(NoteBehaviour Note)
         {
-            Note.SpriteRenderer.sprite = Note.GetSprite("note_color");
+            Note.SpriteRenderer.sprite =
+                Note.ParentTrack.TrackNumber < 1 || Note.ParentTrack.TrackNumber > 2
+                    ? Note.GetSprite("note_blue")
+                    : Note.GetSprite("note_pink"); // 魔法图片
 
-            Note.SetScale(Vector3.one * 0.110f); // 魔法数字
+            Note.SetScale(Vector3.one * 3.15f); // 魔法数字
 
+            /*
             Note.SpriteRenderer.color =
                 Note.ParentTrack.TrackNumber < 2
                     ? new Color(0.95f, 0.95f, 1f, 1f)
                     : new Color(1f, 0.95f, 0.95f, 1f);
+            */
+
+            Note.SpriteRenderer.color = Color.white;
         }
     }
 
@@ -221,7 +227,7 @@ namespace NoteStateMachine
                     AxisFunc.Linear,
                     AxisFunc.Pow,
                     AxisFunc.Linear,
-                    PowY: 1.25f
+                    PowY: 1.00f
                 ) * Note.Vertical
                 + Note.ParentTrack.transform.position;
             ;
@@ -293,12 +299,7 @@ namespace NoteStateMachine
 
             if (AnimeMachine.HasJudgeAnime)
             {
-                Note.SpriteRenderer.color = new Color(
-                    1f,
-                    1f,
-                    1f - 0.5f * AnimeMachine.CurT,
-                    1f - 2.5f * AnimeMachine.CurT
-                );
+                Note.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - 2.5f * AnimeMachine.CurT);
             }
             else
             {

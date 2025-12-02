@@ -3,14 +3,11 @@ using System.Linq;
 using Anime;
 using AudioNS;
 using AudioRegistry;
-using HoldNS;
 using PageNS;
 using PooledObjectNS;
 using StateMachine;
 using TrackStateMachine;
-using UnityEngine.InputSystem;
 using Audio = AudioNS.AudioManager;
-using Game = GameManagerNS.GameManager;
 
 namespace TrackNS
 {
@@ -95,7 +92,7 @@ namespace TrackNS
 
         public void OnPressed()
         {
-            if (JudgeList.Count > 0 && !Game.Inst.IsGamePaused() && (JudgeList[0] is not null))
+            if (JudgeList.Count > 0 && JudgeList[0] is not null)
             {
                 JudgeList[0].OnPress();
 
@@ -121,13 +118,9 @@ namespace TrackNS
 
         public void OnReleased()
         {
-            if (
-                JudgeList.Count > 0
-                && !Game.Inst.IsGamePaused()
-                && JudgeList[0] is HoldBehaviour hold
-            )
+            if (JudgeList.Count > 0 && JudgeList[0] is not null)
             {
-                hold.OnRelease();
+                JudgeList[0].OnRelease();
 
                 switch (TrackNumber)
                 {

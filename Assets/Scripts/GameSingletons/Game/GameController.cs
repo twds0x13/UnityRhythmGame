@@ -18,13 +18,8 @@ namespace GameCore
     {
         public PlayerInput UserInput;
 
-        public Action ActionOnUpdate;
-
         protected override void SingletonAwake()
         {
-            // 在初始化时移除旧的 OnUpdate 订阅
-            ActionOnUpdate -= OnUpdate;
-
             Input.Inst.AddProvider<AutoPlayTrackInputProvider>(new(ChartManager.Inst));
 
             Input.Inst.AddProvider<UnityTrackInputProvider>(new(UserInput.actions));
@@ -58,38 +53,6 @@ namespace GameCore
             }
         }
 
-        public void StartGame()
-        {
-            OnStartGame().Forget();
-        }
-
-        public void ExitGame()
-        {
-            OnExitGame();
-        }
-
-        private async UniTaskVoid OnStartGame()
-        {
-            await UniTask.WaitForSeconds(1.5f);
-
-            ActionOnUpdate += OnUpdate;
-        }
-
-        private void OnExitGame()
-        {
-            ActionOnUpdate -= OnUpdate;
-        }
-
-        private void Update()
-        {
-            ActionOnUpdate?.Invoke();
-        }
-
-        /// <summary>
-        /// 核心游戏循环逻辑。
-        /// </summary>
-        private void OnUpdate() { } // 哈 这里什么都不需要了
-
         public void RebindInput(InputActionReference Ref)
         {
             UserInput.SwitchCurrentActionMap("UserRebinding");
@@ -120,8 +83,8 @@ namespace GameCore
 
         public void GetTrack(InputAction.CallbackContext Ctx)
         {
-            if (Ctx.performed && Pool.Inst.TrackUIDIterator == 0)
-                Pool.Inst.GetTracksDynamic();
+            if (Ctx.performed && Pool.Inst.TrackUIDIterator == 0) { }
+            // Pool.Inst.GetTracksDynamic();
         }
 
         public void PauseResumeGame(InputAction.CallbackContext Ctx)

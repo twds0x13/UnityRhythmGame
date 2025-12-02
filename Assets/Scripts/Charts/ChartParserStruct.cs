@@ -1,24 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using UnityEngine;
 
 // using static ChartReader;
 
 namespace Parser
 {
-    /// <summary>
-    /// 谱面文件类型
-    /// </summary>
-    public enum ChartFileType
-    {
-        Chart, // .mc 文件
-        Audio, // 音频文件
-        Cover, // 封面图片
-        Other, // 其他文件
-    }
-
     /// <summary>
     /// 压缩包内的文件项
     /// </summary>
@@ -26,8 +17,6 @@ namespace Parser
     {
         public string FileName { get; set; }
         public string RelativePath { get; set; }
-        public ChartFileType FileType { get; set; }
-        public long Size { get; set; }
         public byte[] Data { get; set; }
 
         public string Extension => Path.GetExtension(FileName).ToLowerInvariant();
@@ -77,10 +66,7 @@ namespace Parser
         public string Artist { get; set; }
         public string Charter { get; set; }
         public string AudioFileName { get; set; }
-        public string CoverFileName { get; set; }
         public double BPM { get; set; }
-        public double Duration { get; set; }
-        public int Difficulty { get; set; }
         public JObject RawData { get; set; }
 
         // 新增属性
@@ -102,6 +88,8 @@ namespace Parser
         public int PlaySpeed { get; set; } = 100;
         public int EditMode { get; set; }
 
+        public Sprite Cover { get; set; }
+
         // 集合属性
         public List<BPMChange> BPMChanges { get; set; } = new List<BPMChange>();
         public List<Note> Notes { get; set; } = new List<Note>();
@@ -117,6 +105,8 @@ namespace Parser
         public string Name => Path.GetFileNameWithoutExtension(FilePath);
         public long FileSize { get; set; }
         public DateTime LastModified { get; set; }
+
+        public Sprite PublicCover { get; set; }
 
         // 包内包含的所有谱面
         public List<Chart> Charts { get; set; } = new List<Chart>();

@@ -2,6 +2,7 @@ using System;
 using DG.Tweening;
 using PageNS;
 using TransformExtentionsNS;
+using UIManagerNS;
 using UnityEngine;
 
 namespace NavigatorNS
@@ -18,6 +19,7 @@ namespace NavigatorNS
             RightUp,
             LeftDown,
             RightDown,
+            Middle,
         }
 
         public enum PivotType
@@ -53,10 +55,10 @@ namespace NavigatorNS
             Pop,
         }
 
-        [Ext.ReadOnlyInGame, SerializeField]
+        [Ext.ReadOnlyInGame]
         public AxisType NavigateAxis;
 
-        [Ext.ReadOnlyInGame, SerializeField]
+        // [Ext.ReadOnlyInGame]
         public Vector3 AppendDestination;
 
         [Ext.ReadOnlyInGame, SerializeField]
@@ -195,35 +197,30 @@ namespace NavigatorNS
         {
             Rect Rect = ResizeDetector.Rect.rect;
 
-            switch (Edge)
+            return Edge switch
             {
-                case CanvasEdge.LeftEdge:
-                    return new Vector3(
-                        -0.5f * Rect.width - SelfRect.rect.width,
-                        transform.localPosition.y,
-                        0f
-                    );
-                case CanvasEdge.RightEdge:
-                    return new Vector3(
-                        0.5f * Rect.width + SelfRect.rect.width,
-                        transform.localPosition.y,
-                        0f
-                    );
-                case CanvasEdge.TopEdge:
-                    return new Vector3(
-                        transform.localPosition.x,
-                        0.5f * Rect.height + SelfRect.rect.height,
-                        0f
-                    );
-                case CanvasEdge.BottomEdge:
-                    return new Vector3(
-                        transform.localPosition.x,
-                        -0.5f * Rect.height - SelfRect.rect.height,
-                        0f
-                    );
-            }
-
-            throw new ArgumentOutOfRangeException();
+                CanvasEdge.LeftEdge => new Vector3(
+                    -0.5f * Rect.width - SelfRect.rect.width,
+                    transform.localPosition.y,
+                    0f
+                ),
+                CanvasEdge.RightEdge => new Vector3(
+                    0.5f * Rect.width + SelfRect.rect.width,
+                    transform.localPosition.y,
+                    0f
+                ),
+                CanvasEdge.TopEdge => new Vector3(
+                    transform.localPosition.x,
+                    0.5f * Rect.height + SelfRect.rect.height,
+                    0f
+                ),
+                CanvasEdge.BottomEdge => new Vector3(
+                    transform.localPosition.x,
+                    -0.5f * Rect.height - SelfRect.rect.height,
+                    0f
+                ),
+                _ => throw new ArgumentOutOfRangeException(),
+            };
         }
 
         public void SetPivotByType(PivotType Type) // 需要严密观察
@@ -271,35 +268,41 @@ namespace NavigatorNS
         {
             Rect Rect = ResizeDetector.Rect.rect;
 
-            switch (NavigateAxis)
+            return NavigateAxis switch
             {
-                case AxisType.LeftUp: // Canvas 左上角为坐标 0 点，右下角为（1，1）
-                    return new Vector3(
-                        -0.5f * Rect.width + AppendPosition.x * Rect.width,
-                        0.5f * Rect.height - AppendPosition.y * Rect.height,
-                        AppendPosition.z
-                    );
-                case AxisType.RightUp: // Canvas 右上角为坐标 0 点，左下角为（1，1）
-                    return new Vector3(
-                        0.5f * Rect.width - AppendPosition.x * Rect.width,
-                        0.5f * Rect.height - AppendPosition.y * Rect.height,
-                        AppendPosition.z
-                    );
-                case AxisType.LeftDown: // Canvas 左下角为坐标 0 点，右上角为（1，1）
-                    return new Vector3(
-                        -0.5f * Rect.width + AppendPosition.x * Rect.width,
-                        -0.5f * Rect.height + AppendPosition.y * Rect.height,
-                        AppendPosition.z
-                    );
-                case AxisType.RightDown: // Canvas 右下角为坐标 0 点，左上角为（1，1）
-                    return new Vector3(
-                        0.5f * Rect.width - AppendPosition.x * Rect.width,
-                        -0.5f * Rect.height + AppendPosition.y * Rect.height,
-                        AppendPosition.z
-                    );
-            }
+                // Canvas 左上角为坐标 0 点，右下角为（1，1）
+                AxisType.LeftUp => new Vector3(
+                    -0.5f * Rect.width + AppendPosition.x * Rect.width,
+                    0.5f * Rect.height - AppendPosition.y * Rect.height,
+                    AppendPosition.z
+                ),
+                // Canvas 右上角为坐标 0 点，左下角为（1，1）
+                AxisType.RightUp => new Vector3(
+                    0.5f * Rect.width - AppendPosition.x * Rect.width,
+                    0.5f * Rect.height - AppendPosition.y * Rect.height,
+                    AppendPosition.z
+                ),
+                // Canvas 左下角为坐标 0 点，右上角为（1，1）
+                AxisType.LeftDown => new Vector3(
+                    -0.5f * Rect.width + AppendPosition.x * Rect.width,
+                    -0.5f * Rect.height + AppendPosition.y * Rect.height,
+                    AppendPosition.z
+                ),
+                // Canvas 右下角为坐标 0 点，左上角为（1，1）
+                AxisType.RightDown => new Vector3(
+                    0.5f * Rect.width - AppendPosition.x * Rect.width,
+                    -0.5f * Rect.height + AppendPosition.y * Rect.height,
+                    AppendPosition.z
+                ),
+                // Canvas 中心为坐标 0 点，右上角为（0.5，0.5），左下角为（-0.5，-0.5）
+                AxisType.Middle => new Vector3(
+                    AppendPosition.x * Rect.width,
+                    AppendPosition.y * Rect.height,
+                    AppendPosition.z
+                ),
 
-            throw new ArgumentOutOfRangeException();
+                _ => throw new ArgumentOutOfRangeException(),
+            };
         }
     }
 }

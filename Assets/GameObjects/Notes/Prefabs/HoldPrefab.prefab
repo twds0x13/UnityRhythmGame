@@ -75,7 +75,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_Sprite: {fileID: 21300000, guid: 2fda724035f784143a4187173dedae93, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -99,12 +99,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b00b5e09d92df747adf8d98ebf87bb0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SpriteList:
+  - {fileID: 21300000, guid: 2fda724035f784143a4187173dedae93, type: 3}
+  - {fileID: 21300000, guid: d4503fe9a9307c142a573da03e9704ed, type: 3}
+  - {fileID: 21300000, guid: 22756c5fe2b1a4c41ab3d27a2e23b1ed, type: 3}
+  SpriteRenderer: {fileID: 3661432312104678926}
   DestroyEvent:
     m_PersistentCalls:
       m_Calls: []
-  SpriteRenderer: {fileID: 3661432312104678926}
-  SpriteList:
-  - {fileID: 21300000, guid: 2fda724035f784143a4187173dedae93, type: 3}
   ParentTrack: {fileID: 0}
   TailAnimator: {fileID: 927674181128819839}
   BodyAnimator: {fileID: 1245874901699081222}
@@ -153,10 +155,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ad23fc77f0a7fa4eabc9b839b8483d6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SpriteList: []
+  SpriteRenderer: {fileID: 2398851845985309041}
   parentTrack: {fileID: 0}
   parentHold: {fileID: 3864510740993012106}
-  SpriteRenderer: {fileID: 2398851845985309041}
-  PositionOverride: 0
 --- !u!212 &2398851845985309041
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -197,8 +199,8 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: 2fda724035f784143a4187173dedae93, type: 3}
+  m_SortingOrder: 1
+  m_Sprite: {fileID: 21300000, guid: 493c5e0ef45fac248bb93793fe7799bc, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -206,7 +208,7 @@ SpriteRenderer:
   m_Size: {x: 9.84, y: 3.3825002}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
 --- !u!1 &8039001761646796939
@@ -283,7 +285,7 @@ LineRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: -5
+  m_SortingOrder: 0
   m_Positions:
   - {x: 0, y: 0, z: 0}
   - {x: 0, y: -5, z: 0}
@@ -360,7 +362,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   pointA: {fileID: 4635102523780348396}
   pointB: {fileID: 5451664293739206292}
-  lineWidth: 110
+  lineWidth: 90
   spriteUVLength: 1
   lineRenderer: {fileID: 3256148970408777889}
   spriteRendererAtA: {fileID: 3661432312104678926}
