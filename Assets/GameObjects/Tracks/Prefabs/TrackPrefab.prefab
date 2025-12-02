@@ -49,10 +49,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d52f9a48b9500aa4f96ce5017fc8ffe5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SpriteRenderer: {fileID: -5438484560457107927}
   SpriteList:
   - {fileID: 21300000, guid: d90dead9f9d54644da63f8256171f851, type: 3}
   - {fileID: 21300000, guid: af829a3704e709d47a22e415a2402ea8, type: 3}
+  - {fileID: 21300000, guid: 01301d23b52e32349b20122f80f7650d, type: 3}
+  SpriteRenderer: {fileID: -5438484560457107927}
+  DestroyEvent:
+    m_PersistentCalls:
+      m_Calls: []
   ParentPage: {fileID: 0}
 --- !u!212 &-5438484560457107927
 SpriteRenderer:
@@ -94,7 +98,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -1
   m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0

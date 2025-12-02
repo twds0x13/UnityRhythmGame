@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using PageNS;
 using Singleton;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UIManagerNS
 {
@@ -39,15 +40,20 @@ namespace UIManagerNS
         [Ext.ReadOnlyInGame, SerializeField]
         Canvas BackGroundCanvas; // 公用背景图层 ( 渲染顺序 -1 ) 在切换到不同页面时操作这个图层内的内容
 
-        [Ext.ReadOnlyInGame, SerializeField]
-        List<BaseUIPage> PageObjects; // 方便在 Inspector 里查看
+        [Ext.ReadOnlyInGame]
+        public List<BaseUIPage> PageObjects; // 方便在 Inspector 里查看
 
-        [Ext.ReadOnlyInGame, SerializeField]
+        [Ext.ReadOnlyInGame]
         public List<BaseUIPage> HoverPageObjects; // 悬浮页面 (弹窗)
+
+        // [Ext.ReadOnlyInGame]
+        // public List<Image> ImageObjects; // 页面图像
 
         public readonly Dictionary<string, BaseUIPage> AllPages = new();
 
         public readonly Dictionary<string, BaseUIPage> AllHoverPages = new();
+
+        public readonly Dictionary<string, Image> AllImages = new();
 
 #if UNITY_EDITOR
 
@@ -77,7 +83,7 @@ namespace UIManagerNS
 
         protected override void SingletonDestroy()
         {
-            foreach (var (key, page) in AllPages)
+            foreach (var (_, page) in AllPages)
             {
                 page.OnDestroyPage();
             }
@@ -99,6 +105,11 @@ namespace UIManagerNS
                 HoverPageObjects[i].OnAwake();
 
                 AllHoverPages.Add(HoverPageObjects[i].Name, HoverPageObjects[i]);
+            }
+
+            for (int i = 0; i < PageObjects.Count; i++)
+            {
+                // AllImages.Add(ImageObjects[i].name, ImageObjects[i]);
             }
         }
 

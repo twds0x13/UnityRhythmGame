@@ -1,11 +1,11 @@
 using Anime;
-using HoldJudgeNS;
 using HoldNS;
 using InterpNS;
+using JudgeNS;
 using StateMachine;
 using UnityEngine;
 using Game = GameManagerNS.GameManager;
-using Judge = HoldJudgeNS.HoldJudge;
+using Judge = JudgeNS.HoldJudge;
 
 namespace HoldStateMachine
 {
@@ -65,7 +65,7 @@ namespace HoldStateMachine
 
         private bool StartJudge =>
             Game.Inst.GetGameTime() < Hold.JudgeTime
-            && Judge.GetHeadJudgeEnum(Hold) != Judge.HoldJudgeEnum.NotEntered;
+            && Judge.GetHeadJudgeEnum(Hold) != JudgeEnum.NotEntered;
     }
 
     public class StateOnJudgeHold : HoldState
@@ -97,7 +97,7 @@ namespace HoldStateMachine
 
         private bool ExitJudge =>
             Game.Inst.GetGameTime() > Hold.JudgeTime
-            && Judge.GetHeadJudgeEnum(Hold) == Judge.HoldJudgeEnum.Miss;
+            && Judge.GetHeadJudgeEnum(Hold) == JudgeEnum.Miss;
 
         private void RegisterJudge()
         {
@@ -155,7 +155,7 @@ namespace HoldStateMachine
 
             if (ExitJudge)
             {
-                Hold.OnAutoFinish(); // 在已经判定过 Hold 头部的情况下，Hold 尾部在超过判定时间之后自动完成 Hold 判定
+                Hold.OnAutoFinish(); // 这里写的有问题
             }
         }
 
@@ -166,7 +166,7 @@ namespace HoldStateMachine
 
         private bool ExitJudge =>
             Game.Inst.GetGameTime() > Hold.JudgeTime + Hold.JudgeDuration
-            && Judge.GetHeadJudgeEnum(Hold) == Judge.HoldJudgeEnum.NotEntered;
+            && Judge.GetHeadJudgeEnum(Hold) == JudgeEnum.NotEntered;
     }
 
     public class StateInitHold : HoldState
@@ -204,9 +204,12 @@ namespace HoldStateMachine
 
         private void AnimeInit(HoldBehaviour Hold)
         {
-            Hold.SpriteRenderer.sprite = Hold.GetSprite("note_color");
+            Hold.SpriteRenderer.sprite =
+                Hold.ParentTrack.TrackNumber < 1 || Hold.ParentTrack.TrackNumber > 2
+                    ? Hold.GetSprite("note_blue")
+                    : Hold.GetSprite("note_pink");
 
-            Hold.SetScale(Vector3.one * 0.110f);
+            Hold.SetScale(Vector3.one * 3.15f);
 
             Hold.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
 
@@ -249,7 +252,7 @@ namespace HoldStateMachine
                     AxisFunc.Linear,
                     AxisFunc.Pow,
                     AxisFunc.Linear,
-                    PowY: 1.25f
+                    PowY: 1.00f
                 ) * Hold.Vertical
                 + Hold.ParentTrack.transform.position;
             ;
@@ -292,7 +295,7 @@ namespace HoldStateMachine
         {
             base.Enter();
 
-            if (Judge.GetHeadJudgeEnum(Hold) == Judge.HoldJudgeEnum.CriticalPerfect) // 优化显示。Note 瞬移跳一下比较明显
+            if (Judge.GetHeadJudgeEnum(Hold) == JudgeEnum.CriticalPerfect) // 优化显示。Note 瞬移跳一下比较明显
             {
                 AnimeMachine.JudgeCache = new Pack(
                     Hold.ParentTrack.transform.position,
@@ -327,7 +330,7 @@ namespace HoldStateMachine
             Hold.transform.position = AnimeMachine.JudgePosCache;
 
             var elapsed = Mathf.Min(
-                3f * (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache),
+                2.5f * (Game.Inst.GetGameTime() - AnimeMachine.JudgeTimeCache),
                 1f
             );
 
@@ -335,16 +338,16 @@ namespace HoldStateMachine
             {
                 Hold.SpriteRenderer.color = new Color(
                     1f,
-                    0.9f + 0.1f * elapsed,
-                    0.9f + 0.1f * elapsed,
+                    0.85f + 0.15f * elapsed,
+                    0.85f + 0.15f * elapsed,
                     Mathf.Min(0.85f + 0.35f * elapsed, 1f)
                 ); // 按住时的颜色
             }
             else
             {
                 Hold.SpriteRenderer.color = new Color(
-                    0.9f + 0.1f * elapsed,
-                    0.9f + 0.1f * elapsed,
+                    0.85f + 0.15f * elapsed,
+                    0.85f + 0.15f * elapsed,
                     1f,
                     Mathf.Min(0.85f + 0.35f * elapsed, 1f)
                 ); // 按住时的颜色
@@ -395,17 +398,12 @@ namespace HoldStateMachine
 
             if (AnimeMachine.HasJudgeAnime)
             {
-                Hold.SpriteRenderer.color = new Color(
-                    1f,
-                    1f,
-                    1f - 0.5f * AnimeMachine.CurT,
-                    1f - 1f * AnimeMachine.CurT
-                );
+                Hold.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - 1f * AnimeMachine.CurT);
 
                 Hold.BodyAnimator.lineRenderer.material.color = new Color(
                     1f,
                     1f,
-                    1f - 0.5f * AnimeMachine.CurT,
+                    1f,
                     Mathf.Max(0.5f - 0.75f * AnimeMachine.CurT, 0f)
                 );
             }

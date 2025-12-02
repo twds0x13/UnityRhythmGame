@@ -11,6 +11,7 @@ using PooledObjectNS;
 using Singleton;
 using UnityEngine;
 using UnityEngine.Events;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 public class ChartManager : Singleton<ChartManager>
 {
@@ -28,7 +29,7 @@ public class ChartManager : Singleton<ChartManager>
 
     public Action OnStartGame; // 代表游戏开始加载，开始加载谱面和音频的一瞬间
 
-    public Action OnExitGame;
+    public Action OnExitGame; // 代表游戏 Note 生成和音频 Task 都恰好完成的一瞬间
 
     public Action OnStartNoteGeneration; // 代表游戏完成加载，开始生成 Note 的一瞬间
 
@@ -39,7 +40,7 @@ public class ChartManager : Singleton<ChartManager>
     {
         var path = Path.Combine(Application.streamingAssetsPath);
 
-        var config = new ChartParser.ParserConfig { EnableLogging = true };
+        var config = new ChartParser.ParserConfig { EnableLogging = false };
 
         Parser = new ChartParser(path, config);
 
@@ -103,6 +104,80 @@ public class ChartManager : Singleton<ChartManager>
         );
     }
 
+    /// <summary>
+    /// Game Settings页面内预览游戏下落设置
+    /// </summary>
+    public void StartPreviewSettings()
+    {
+        var time = GameManager.Inst.GetGameTime();
+
+        _gameCancellationTokenSource?.Cancel();
+        _gameCancellationTokenSource?.Dispose();
+
+        _gameCancellationTokenSource = new CancellationTokenSource();
+
+        StartPreviewTask(_gameCancellationTokenSource.Token).Forget();
+    }
+
+    protected async UniTask StartPreviewTask(CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        try
+        {
+            // 注册垂直修改器
+            Pool.Inst.VerticalModifier += VerticalModify;
+
+            LogManager.Log("开始预览模式，每秒在3号轨道生成一个音符", nameof(ChartManager), true);
+
+            // 记录开始时间
+            var startTime = GameManager.Inst.GetGameTime();
+
+            // 发送开始生成音符事件
+            OnStartNoteGeneration?.Invoke();
+
+            // 循环生成预览音符，直到任务被取消
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // 计算当前时间偏移
+                var currentTimeOffset = GameManager.Inst.GetGameTime() - startTime;
+
+                // 计算生成时间（当前时间 + 下落时间）
+                var generateTime = GameManager.Inst.GetGameTime();
+
+                // 在3号轨道生成单个音符
+                Pool.Inst.GetNotesDynamic(
+                    generateTime, // StartTime
+                    GameSettings.ChartVerticalScale, // Vertical
+                    3, // TrackNum (0号轨道)
+                    GameSettings.NoteFallDuration // Duration
+                );
+
+                LogManager.Log(
+                    $"生成预览音符 - 时间: {generateTime:F2}, 轨道: 3, 下落时间: {GameSettings.NoteFallDuration:F2}",
+                    nameof(ChartManager),
+                    false
+                );
+
+                // 等待1秒，同时支持取消
+                await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: cancellationToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 任务被取消，正常退出
+            LogManager.Log("预览任务被取消", nameof(ChartManager), false);
+        }
+        finally
+        {
+            // 清理垂直修改器
+            Pool.Inst.VerticalModifier -= VerticalModify;
+
+            LogManager.Log("预览模式结束", nameof(ChartManager), true);
+        }
+    }
+
     protected async UniTask StartGameTask(
         float startTime,
         CancellationToken cancellationToken = default
@@ -116,6 +191,8 @@ public class ChartManager : Singleton<ChartManager>
 
         // 等待两个任务完成或取消
         await UniTask.WhenAll(chartTask, audioTask).SuppressCancellationThrow();
+
+        OnExitGame?.Invoke();
     }
 
     protected async UniTask StartAudioTask(
@@ -179,12 +256,7 @@ public class ChartManager : Singleton<ChartManager>
         {
             await UniTask.Delay(600, cancellationToken: cancellationToken);
 
-            // 下落时间
-            float fallDuration = GameSettings.NoteFallDuration;
-
-            float verticalPosition = 1f;
-
-            PooledObjectManager.Inst.VerticalModifier += VerticalModify;
+            Pool.Inst.VerticalModifier += VerticalModify;
 
             // 在后台线程中分组音符
             var noteGroups = await GroupNotesOnThreadAsync(SelectedChart.Notes);
@@ -223,7 +295,7 @@ public class ChartManager : Singleton<ChartManager>
 
                 // 这里的游戏时间起点自动包含了前面的延迟时间
 
-                float generateTime = noteTime - fallDuration + gameTimeStart;
+                float generateTime = noteTime - GameSettings.NoteFallDuration + gameTimeStart;
 
                 // 等待到调整后的生成时间，同时检查取消
                 while (GameManager.Inst.GetGameTime() < generateTime)
@@ -248,27 +320,28 @@ public class ChartManager : Singleton<ChartManager>
 
                     if (!note.IsHold)
                     {
-                        PooledObjectManager.Inst.GetNotesDynamic(
+                        Pool.Inst.GetNotesDynamic(
                             generateTime, // StartTime
-                            verticalPosition, // Vertical
+                            GameSettings.ChartVerticalScale, // Vertical
                             note.TrackNum, // TrackNum
-                            fallDuration // Duration
+                            GameSettings.NoteFallDuration // Duration
                         );
                     }
                     else
                     {
-                        float finishTime = note.EndTime - fallDuration + gameTimeStart;
+                        float finishTime =
+                            note.EndTime - GameSettings.NoteFallDuration + gameTimeStart;
 
-                        PooledObjectManager.Inst.GetHoldsDynamic(
+                        Pool.Inst.GetHoldsDynamic(
                             generateTime, // StartTime
                             finishTime, // EndTime
-                            verticalPosition, // Vertical
+                            GameSettings.ChartVerticalScale, // Vertical
                             note.TrackNum, // TrackNum
-                            fallDuration // Duration
+                            GameSettings.NoteFallDuration // Duration
                         );
 
                         LogManager.Log(
-                            $"Generated Hold at Time: {note.Time} , {note.EndTime} , Track: {note.TrackNum}, fallDuration : {fallDuration}",
+                            $"Generated Hold at Time: {note.Time} , {note.EndTime} , Track: {note.TrackNum}, fallDuration : {GameSettings.NoteFallDuration}",
                             nameof(ChartManager),
                             false
                         );
@@ -289,11 +362,13 @@ public class ChartManager : Singleton<ChartManager>
         }
     }
 
+    /// <summary>
+    /// 可以在运行时注册事件，根据查找条件调整特定 Note 的 Vertical 值（以下为框架示例）
+    /// </summary>
+    /// <param name="vertical"></param>
     private void VerticalModify(IVertical vertical)
     {
-        // vertical.UpdateCache();
-
-        vertical.Vertical = 0.75f; // + 0.0375f; //  * Mathf.Sin(2f * Mathf.PI * GameManager.Inst.GetGameTime());
+        vertical.Vertical = 0.8f;
     }
 
     /// <summary>
@@ -338,7 +413,7 @@ public class ChartManager : Singleton<ChartManager>
 
         OnExitGame?.Invoke();
 
-        PooledObjectManager.Inst.VerticalModifier -= VerticalModify;
+        Pool.Inst.VerticalModifier -= VerticalModify;
 
         AudioManager.Inst.PauseAudioSource(Source.BGM);
         AudioManager.Inst.ClearAudioSource(Source.BGM);

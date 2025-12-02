@@ -4,9 +4,16 @@ using EasingCore;
 using FancyScrollView;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScrollContext>
 {
+    [SerializeField]
+    private Image selectedSongCover;
+
+    [SerializeField]
+    private Image gameSongCover;
+
     [SerializeField]
     private Scroller scroller;
 
@@ -52,6 +59,10 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
 
         Context.SelectedIndex = index;
 
+        selectedSongCover.sprite = cellData[Context.SelectedIndex].Cover;
+
+        gameSongCover.sprite = cellData[Context.SelectedIndex].Cover;
+
         OnButtonClicked(index);
 
         LogManager.Log(
@@ -81,7 +92,7 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
 
         if (item != null)
         {
-            HandleButtonAction(index, item);
+            HandleButtonAction(index);
         }
         else
         {
@@ -91,7 +102,7 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
         Scroll(index);
     }
 
-    private void HandleButtonAction(int index, ButtonScrollData item)
+    private void HandleButtonAction(int index)
     {
         OnButtonAction?.Invoke(index);
     }

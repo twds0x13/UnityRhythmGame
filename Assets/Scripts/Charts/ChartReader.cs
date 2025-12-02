@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Parser;
 using Newtonsoft.Json.Linq;
+using Parser;
 using Chart = JsonLoader.ChartJsonLoader;
+
 /*
 public class ChartReader
 {

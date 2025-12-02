@@ -2,7 +2,7 @@ using System;
 using HoldNS;
 using Game = GameManagerNS.GameManager;
 
-namespace HoldJudgeNS
+namespace JudgeNS
 {
     /// <summary>
     /// 长按音符判定时间阈值
@@ -10,16 +10,19 @@ namespace HoldJudgeNS
     public class HoldJudgeTime
     {
         /// <summary> 精准完美 </summary>
-        public const float CriticalPerfect = 0.032f;
+        public const float CriticalPerfect = 0.024f;
 
         /// <summary> 完美 </summary>
-        public const float Perfect = 0.064f;
+        public const float Perfect = 0.048f;
 
         /// <summary> 优秀 </summary>
-        public const float Great = 0.096f;
+        public const float Great = 0.072f;
+
+        /// <summary> 好 </summary>
+        public const float Good = 0.096f;
 
         /// <summary> 错过 </summary>
-        public const float Miss = 0.128f;
+        public const float Miss = 0.120f;
     }
 
     /// <summary>
@@ -39,6 +42,9 @@ namespace HoldJudgeNS
         /// <summary> 优秀 </summary>
         public const float Great = 0.50f;
 
+        /// <summary> 好 </summary>
+        public const float Good = 0.20f;
+
         /// <summary> 错过 </summary>
         public const float Miss = 0.00f;
     }
@@ -49,29 +55,18 @@ namespace HoldJudgeNS
     public static class HoldJudge
     {
         /// <summary>
-        /// 判定等级枚举
-        /// </summary>
-        public enum HoldJudgeEnum
-        {
-            CriticalPerfect, // 精准完美
-            Perfect, // 完美
-            Great, // 优秀
-            Miss, // 错过
-            NotEntered, // 未进入判定区间
-        }
-
-        /// <summary>
         /// 头部判定：根据时间差转换为判定等级
         /// </summary>
         /// <param name="Hold">长按音符对象</param>
-        public static HoldJudgeEnum GetHeadJudgeEnum(HoldBehaviour Hold) =>
+        public static JudgeEnum GetHeadJudgeEnum(HoldBehaviour Hold) =>
             MathF.Abs(Hold.JudgeTime - Game.Inst.GetGameTime()) switch
             {
-                < HoldJudgeTime.CriticalPerfect => HoldJudgeEnum.CriticalPerfect,
-                < HoldJudgeTime.Perfect => HoldJudgeEnum.Perfect,
-                < HoldJudgeTime.Great => HoldJudgeEnum.Great,
-                < HoldJudgeTime.Miss => HoldJudgeEnum.Miss,
-                > HoldJudgeTime.Miss => HoldJudgeEnum.NotEntered,
+                < HoldJudgeTime.CriticalPerfect => JudgeEnum.CriticalPerfect,
+                < HoldJudgeTime.Perfect => JudgeEnum.Perfect,
+                < HoldJudgeTime.Great => JudgeEnum.Great,
+                < HoldJudgeTime.Good => JudgeEnum.Good,
+                < HoldJudgeTime.Miss => JudgeEnum.Miss,
+                > HoldJudgeTime.Miss => JudgeEnum.NotEntered,
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
@@ -80,34 +75,32 @@ namespace HoldJudgeNS
         /// </summary>
         /// <param name="Hold">长按音符对象</param>
         /// <param name="tailJudge">严格判定 / 宽松判定 (在 Miss 区间以内统一 CriticalPerfect) </param>
-        public static HoldJudgeEnum GetTailJudgeEnum(HoldBehaviour Hold, bool tailJudge = false) =>
-            MathF.Abs((Hold.JudgeTime + Hold.JudgeDuration) - Game.Inst.GetGameTime()) switch
+        public static JudgeEnum GetTailJudgeEnum(HoldBehaviour Hold, bool tailJudge = false) =>
+            MathF.Abs(Hold.JudgeTime + Hold.JudgeDuration - Game.Inst.GetGameTime()) switch
             {
-                < HoldJudgeTime.CriticalPerfect => HoldJudgeEnum.CriticalPerfect,
+                < HoldJudgeTime.CriticalPerfect => JudgeEnum.CriticalPerfect,
                 < HoldJudgeTime.Perfect => tailJudge
-                    ? HoldJudgeEnum.Perfect
-                    : HoldJudgeEnum.CriticalPerfect,
-                < HoldJudgeTime.Great => tailJudge
-                    ? HoldJudgeEnum.Great
-                    : HoldJudgeEnum.CriticalPerfect,
-                < HoldJudgeTime.Miss => tailJudge
-                    ? HoldJudgeEnum.Miss
-                    : HoldJudgeEnum.CriticalPerfect,
-                > HoldJudgeTime.Miss => HoldJudgeEnum.NotEntered,
+                    ? JudgeEnum.Perfect
+                    : JudgeEnum.CriticalPerfect,
+                < HoldJudgeTime.Great => tailJudge ? JudgeEnum.Great : JudgeEnum.CriticalPerfect,
+                < HoldJudgeTime.Good => tailJudge ? JudgeEnum.Good : JudgeEnum.CriticalPerfect,
+                < HoldJudgeTime.Miss => JudgeEnum.Miss,
+                > HoldJudgeTime.Miss => JudgeEnum.NotEntered,
                 _ => throw new ArgumentOutOfRangeException(),
             };
 
         /// <summary>
         /// 判定等级转得分系数
         /// </summary>
-        public static float GetJudgeScore(HoldJudgeEnum Enum) =>
+        public static float GetJudgeScore(JudgeEnum Enum) =>
             Enum switch
             {
-                HoldJudgeEnum.CriticalPerfect => HoldJudgeScore.CriticalPerfect,
-                HoldJudgeEnum.Perfect => HoldJudgeScore.Perfect,
-                HoldJudgeEnum.Great => HoldJudgeScore.Great,
-                HoldJudgeEnum.Miss => HoldJudgeScore.Miss,
-                HoldJudgeEnum.NotEntered => throw new ArgumentNullException(),
+                JudgeEnum.CriticalPerfect => HoldJudgeScore.CriticalPerfect,
+                JudgeEnum.Perfect => HoldJudgeScore.Perfect,
+                JudgeEnum.Great => HoldJudgeScore.Great,
+                JudgeEnum.Good => HoldJudgeScore.Good,
+                JudgeEnum.Miss => HoldJudgeScore.Miss,
+                JudgeEnum.NotEntered => HoldJudgeScore.Miss,
                 _ => throw new ArgumentOutOfRangeException(),
             };
     }

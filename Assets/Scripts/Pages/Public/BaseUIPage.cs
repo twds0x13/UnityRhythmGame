@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using NavigatorNS;
 using UIEventSystemNS;
 using UIManagerNS;
 using UnityEngine;
@@ -39,12 +40,17 @@ namespace PageNS
         [Ext.ReadOnlyInGame, SerializeField]
         protected List<Image> DisplayImages = new();
 
-        private List<Color> ImageColors = new();
+        [Ext.ReadOnlyInGame, SerializeField]
+        protected List<UINavigator> DisplayNavigator = new();
+
+        private readonly List<Color> ImageColors = new();
 
         [Ext.ReadOnlyInGame, SerializeField]
         private ResizeDetector ResizeDetector;
 
-        private List<IPageControlled> ControlledObjects = new();
+        private readonly List<IPageControlled> ControlledObjects = new();
+
+        private readonly List<UINavigator> ControlledNavigators = new();
 
         public float PageOpenAnimeDuration { get; protected set; } = 0f;
 
@@ -56,6 +62,10 @@ namespace PageNS
 
 #if UNITY_EDITOR
 
+        /// <summary>
+        /// 只在自动创建模板 Page 时使用
+        /// </summary>
+        /// <param name="Component"></param>
         public void RegisterComponent(IPageComponent Component)
         {
             if (Component is not null)
@@ -72,6 +82,10 @@ namespace PageNS
             }
         }
 
+        /// <summary>
+        /// 只在自动创建模板 Page 时使用
+        /// </summary>
+        /// <param name="Detector"></param>
         public void SetResizeDetector(ResizeDetector Detector)
         {
             ResizeDetector = Detector;
@@ -87,6 +101,8 @@ namespace PageNS
         {
             Manager = PageManager.Inst;
 
+            ResizeDetector = ResizeDetector.Inst;
+
             RegisterEventSystem();
 
             RegisterDisplayTexts();
@@ -96,6 +112,8 @@ namespace PageNS
             RegisterDisplayScrolls();
 
             RegisterDisplayImages();
+
+            RegisterDisplayNavigators();
         }
 
         private void RegisterEventSystem()
@@ -154,6 +172,18 @@ namespace PageNS
             }
         }
 
+        private void RegisterDisplayNavigators()
+        {
+            for (int i = 0; i < DisplayNavigator.Count; i++)
+            {
+                DisplayNavigator[i].Init(this);
+
+                DisplayNavigator[i].SetResizeDetector(ResizeDetector);
+
+                ControlledNavigators.Add(DisplayNavigator[i]);
+            }
+        }
+
         public void SelectFirstAfterOneFrame() => EventSystem.SelectFirstAfterOneFrame().Forget();
 
         public Image GetDisplayImage(int num) => DisplayImages[num];
@@ -191,6 +221,14 @@ namespace PageNS
                     DisplayImages[i].DOColor(ImageColors[i], PageOpenAnimeDuration);
                 }
             }
+
+            if (ControlledNavigators.Count > 0)
+            {
+                foreach (UINavigator Navigator in ControlledNavigators)
+                {
+                    Navigator.Append();
+                }
+            }
         }
 
         public virtual void OnUpdatePage() { }
@@ -210,6 +248,14 @@ namespace PageNS
                 for (int i = 0; i < DisplayImages.Count; i++)
                 {
                     DisplayImages[i].DOColor(new Color(0f, 0f, 0f, 0f), PageCloseAnimeDuration);
+                }
+            }
+
+            if (ControlledNavigators.Count > 0)
+            {
+                foreach (UINavigator Navigator in ControlledNavigators)
+                {
+                    Navigator.Disappear();
                 }
             }
 

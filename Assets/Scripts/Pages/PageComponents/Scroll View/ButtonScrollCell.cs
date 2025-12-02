@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using FancyScrollView;
 using TMPro;
 using UnityEngine;
@@ -16,10 +17,25 @@ public class ButtonScrollCell : FancyScrollRectCell<ButtonScrollData, ButtonScro
     private Image songCover;
 
     [SerializeField]
-    private Button cellButton; // 覆盖整个单元格
+    private Image clearState;
+
+    [SerializeField]
+    public Button cellButton; // 覆盖整个单元格
 
     [SerializeField]
     private Image backGround; // 选中高亮效果
+
+    [SerializeField]
+    private Sprite UnClear;
+
+    [SerializeField]
+    private Sprite Clear;
+
+    [SerializeField]
+    private Sprite FullCombo;
+
+    [SerializeField]
+    private Sprite AllPerfect;
 
     // 初始化方法
     void Start()
@@ -38,10 +54,46 @@ public class ButtonScrollCell : FancyScrollRectCell<ButtonScrollData, ButtonScro
             songTitle.text = itemData.SongTitle;
 
         if (difficulty != null)
-            difficulty.text = $"Lv. {itemData.Difficulty}";
+        {
+            Match match = Regex.Match(itemData.Difficulty, @"Lv\.(\d+)");
+
+            string number = null;
+
+            if (match.Success)
+            {
+                number = match.Groups[1].Value;
+            }
+
+            difficulty.text = $"Lv.{number ??= "??"}";
+        }
 
         if (songCover != null)
             songCover.sprite = itemData.Cover;
+
+        if (clearState != null)
+        {
+            switch (itemData.ClearState)
+            {
+                case ClearState.NotPlayed:
+
+                case ClearState.Failed:
+
+                    clearState.sprite = UnClear;
+                    break;
+
+                case ClearState.Cleared:
+                    clearState.sprite = Clear;
+                    break;
+
+                case ClearState.FullCombo:
+                    clearState.sprite = FullCombo;
+                    break;
+
+                case ClearState.AllPerfect:
+                    clearState.sprite = AllPerfect;
+                    break;
+            }
+        }
     }
 
     // 更新单元格位置（用于动画效果）

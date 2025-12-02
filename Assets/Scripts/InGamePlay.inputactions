@@ -68,13 +68,22 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Exit Game",
+                    "type": "Button",
+                    "id": "a220c65c-8ea5-4e8d-a632-c97c1d07ad8d",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
                 {
                     "name": "",
                     "id": "c03e30f8-b75e-4b19-8c71-385616d04417",
-                    "path": "<Keyboard>/q",
+                    "path": "<Keyboard>/d",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -85,7 +94,7 @@
                 {
                     "name": "",
                     "id": "cdea50d9-e074-4eab-845c-088fec94d0ce",
-                    "path": "<Keyboard>/w",
+                    "path": "<Keyboard>/f",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -96,7 +105,7 @@
                 {
                     "name": "",
                     "id": "78335eec-3310-423f-a73f-54713eabf886",
-                    "path": "<Keyboard>/leftBracket",
+                    "path": "<Keyboard>/j",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -107,7 +116,7 @@
                 {
                     "name": "",
                     "id": "181d5ed2-8452-44c5-81c5-3b69bfb9119a",
-                    "path": "<Keyboard>/rightBracket",
+                    "path": "<Keyboard>/k",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -123,6 +132,17 @@
                     "processors": "",
                     "groups": "",
                     "action": "Pause & Resume Game",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c56b8650-c4c6-4e57-8cc6-7607472e133a",
+                    "path": "<Keyboard>/escape",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Exit Game",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

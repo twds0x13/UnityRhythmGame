@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks.Triggers;
 using GameManagerNS;
 using PageNS;
@@ -34,6 +35,10 @@ public class SongSelectPage : BaseUIPage
 
             AddOneItem(chart);
         }
+
+        scrollView.UpdateData(cellData);
+
+        scrollView.UpdateSelection(1);
     }
 
     public void AddOneItem(Chart data)
@@ -42,16 +47,14 @@ public class SongSelectPage : BaseUIPage
         {
             Index = counter++,
 
-            Difficulty = Random.Range(1, 15),
+            Difficulty = data.Version,
 
             SongTitle = data.OriginalTitle,
 
-            Cover = null,
+            Cover = data.Cover,
         };
 
         cellData.Add(newData);
-
-        scrollView.UpdateData(cellData);
     }
 
     public override void OnOpenPage()

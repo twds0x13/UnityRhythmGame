@@ -95,6 +95,22 @@ MonoBehaviour:
     m_Key: BT_AUTO_PLAY
     m_Metadata:
       m_Items: []
+  - m_Id: 18496994174423040
+    m_Key: G
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18497022246899712
+    m_Key: UI_PRESS_ANY_BUTTON
+    m_Metadata:
+      m_Items: []
+  - m_Id: 18504001199656960
+    m_Key: UI_
+    m_Metadata:
+      m_Items: []
+  - m_Id: 20380444363968512
+    m_Key: BT_GAME_SETTINGS
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

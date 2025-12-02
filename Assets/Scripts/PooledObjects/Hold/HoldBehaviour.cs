@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using Anime;
-using HoldJudgeNS;
 using HoldStateMachine;
+using JudgeNS;
 using PooledObjectNS;
 using StateMachine;
 using TrackNS;
 using Game = GameManagerNS.GameManager;
-using Judge = HoldJudgeNS.HoldJudge;
+using Judge = JudgeNS.HoldJudge;
+using Pool = PooledObjectNS.PooledObjectManager;
 
 namespace HoldNS
 {
@@ -48,7 +49,8 @@ namespace HoldNS
 
         public float Vertical { get; set; } = 1f; // 纵向位置缩放
 
-        public bool IsDisappearing => StateMachine.CurState == DisappearHoldAnime; // 在消失的时候临时接管 Tail 位移
+        public bool IsDisappearing =>
+            StateMachine is not null && StateMachine.CurState == DisappearHoldAnime; // 在消失的时候临时接管 Tail 位移
 
         public Pack VerticalCache { get; private set; } = new(default, 0f);
 
@@ -87,7 +89,7 @@ namespace HoldNS
             StateMachine.CurState?.Update();
         }
 
-        public void OnPress()
+        public void OnPress() // 按下
         {
             if (JudgeMachine.CurState == OnJudge)
             {
@@ -95,33 +97,40 @@ namespace HoldNS
 
                 Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
 
+                Pool.Inst.GetJudgeDynamic(Judge.GetHeadJudgeEnum(this));
+
                 JudgeMachine.SwitchState(PressingJudge);
                 StateMachine.SwitchState(JudgePressingHoldAnime);
             }
         }
 
-        public void OnRelease()
+        public void OnRelease() // 松手
         {
-            if (JudgeMachine.CurState == PressingJudge) // 这个状态内置了如果没抬手就自动 OnAutoFinish 的功能（无尾判）
+            if (JudgeMachine.CurState == PressingJudge)
             {
-                if (Judge.GetTailJudgeEnum(this) == Judge.HoldJudgeEnum.NotEntered) // 如果过早松开就不加分
+                Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetTailJudgeEnum(this)); // TailJusgeEunm 可以开关是否拥有尾判
+
+                Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
+
+                if (
+                    Judge.GetTailJudgeEnum(this) == JudgeEnum.Miss
+                    || Judge.GetTailJudgeEnum(this) == JudgeEnum.NotEntered
+                )
                 {
+                    Pool.Inst.GetJudgeDynamic(Judge.GetTailJudgeEnum(this));
+
                     JudgeMachine.SwitchState(AfterJudge);
-                    StateMachine.SwitchState(DisappearHoldAnime);
+                    StateMachine.SwitchState(DisappearHoldAnime); // 松太早了
                 }
-                else // 只要不是过早松开就根据尾判开关加分
+                else
                 {
-                    Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetTailJudgeEnum(this)); // TailJusgeEunm 可以开关是否拥有尾判
-
-                    Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
-
                     JudgeMachine.SwitchState(AfterJudge);
-                    StateMachine.SwitchState(JudgeFinishHoldAnime);
+                    StateMachine.SwitchState(JudgeFinishHoldAnime); // 松的刚好
                 }
             }
         }
 
-        public void OnAutoFinish() // 当长条已按下且进入尾判时间点时自动调用
+        public void OnAutoFinish() // 不松自动判 Perfect
         {
             Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetTailJudgeEnum(this)); // TailJusgeEunm 可以开关是否拥有尾判
 
@@ -131,8 +140,12 @@ namespace HoldNS
             StateMachine.SwitchState(JudgeFinishHoldAnime);
         }
 
-        public void OnAutoMissed() // 当长条头部过了判定时间点（Miss）时自动调用
+        public void OnAutoMissed() // 没按上长条头
         {
+            Pool.Inst.GetJudgeDynamic(JudgeEnum.Miss);
+
+            Game.Inst.Score.MaxScore += 2f * HoldJudgeScore.Max; // 长条共 2 物量
+
             JudgeMachine.SwitchState(AfterJudge);
             StateMachine.SwitchState(DisappearHoldAnime);
         }
