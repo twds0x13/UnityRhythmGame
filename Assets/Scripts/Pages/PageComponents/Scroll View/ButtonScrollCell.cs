@@ -14,6 +14,9 @@ public class ButtonScrollCell : FancyScrollRectCell<ButtonScrollData, ButtonScro
     private TextMeshProUGUI difficulty;
 
     [SerializeField]
+    private TextMeshProUGUI artist;
+
+    [SerializeField]
     private Image songCover;
 
     [SerializeField]
@@ -52,6 +55,9 @@ public class ButtonScrollCell : FancyScrollRectCell<ButtonScrollData, ButtonScro
     {
         if (songTitle != null)
             songTitle.text = itemData.SongTitle;
+
+        if (artist != null)
+            artist.text = itemData.SongArtist;
 
         if (difficulty != null)
         {

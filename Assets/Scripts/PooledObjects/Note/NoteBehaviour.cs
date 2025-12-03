@@ -80,7 +80,7 @@ namespace NoteNS
         {
             if (JudgeMachine.CurState == OnJudge)
             {
-                Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetJudgeEnum(this));
+                Game.Inst.AddScore<NoteBehaviour>(Judge.GetJudgeEnum(this));
 
                 Pool.Inst.GetJudgeDynamic(Judge.GetJudgeEnum(this));
 
@@ -93,6 +93,8 @@ namespace NoteNS
 
         public void OnAutoMissed()
         {
+            Game.Inst.AddScore<NoteBehaviour>(JudgeEnum.Miss);
+
             Pool.Inst.GetJudgeDynamic(JudgeEnum.Miss);
 
             JudgeMachine.SwitchState(AfterJudge);

@@ -125,7 +125,7 @@ namespace NoteStateMachine
         {
             base.Enter();
 
-            Game.Inst.Score.MaxScore += NoteJudgeScore.Max;
+            // Game.Inst.Score.MaxScore += NoteJudgeScore.Max;
         }
 
         public override void Update()

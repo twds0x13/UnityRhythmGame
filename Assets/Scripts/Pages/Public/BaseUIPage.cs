@@ -166,8 +166,11 @@ namespace PageNS
             for (int i = 0; i < DisplayScroll.Count; i++)
             {
                 DisplayScroll[i].OnAwake();
+
                 DisplayScroll[i].SetParentPage(this);
+
                 DisplayScroll[i].SetResizeDetector(ResizeDetector);
+
                 RegisterObject(DisplayScroll[i]);
             }
         }

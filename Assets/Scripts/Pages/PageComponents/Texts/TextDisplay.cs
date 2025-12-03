@@ -46,6 +46,9 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     [Ext.ReadOnlyInGame, Range(1f, 30f), SerializeField]
     private float TypeSpeed;
 
+    [Ext.ReadOnlyInGame, SerializeField]
+    private bool ignoreLocalization = false; // 是否忽略本地化
+
     private bool ProtectFlag; // 还是得加上 CancellationToken, 这个只能临时用
 
     private CancellationTokenSource CancellationTokenSource; // 取消打字机 UniTask 协程
@@ -93,7 +96,12 @@ public class TextDisplay : MonoBehaviour, IPageComponent
         {
             ProtectFlag = true;
 
-            SelfTextMesh.text = null;
+            SelfTextMesh.alpha = 0f;
+
+            if (!ignoreLocalization)
+            {
+                SelfTextMesh.text = null;
+            }
 
             Offset(CancellationTokenSource.Token).Forget();
         }
@@ -116,7 +124,12 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     {
         TypeProcess = 0f;
 
-        SelfTextMesh.text = LocalizeStringEvent.StringReference.GetLocalizedString();
+        if (!ignoreLocalization)
+        {
+            SelfTextMesh.text = LocalizeStringEvent.StringReference.GetLocalizedString();
+        }
+
+        SelfTextMesh.alpha = 1f;
 
         try
         {
@@ -167,6 +180,9 @@ public class TextDisplay : MonoBehaviour, IPageComponent
 
     public void RefreshText()
     {
+        if (ignoreLocalization)
+            return;
+
         LocalizeStringEvent.RefreshString();
     }
 

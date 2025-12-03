@@ -10,6 +10,8 @@ public class ButtonScrollData
 
     public string SongTitle;
 
+    public string SongArtist;
+
     public Sprite Cover;
 
     public ClearState ClearState;

@@ -49,6 +49,8 @@ public class SongSelectPage : BaseUIPage
 
             Difficulty = data.Version,
 
+            SongArtist = data.OriginalArtist,
+
             SongTitle = data.OriginalTitle,
 
             Cover = data.Cover,

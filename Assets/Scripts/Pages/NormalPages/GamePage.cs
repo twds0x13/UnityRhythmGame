@@ -34,9 +34,9 @@ public class GamePage : BaseUIPage
     {
         base.OnClosePage();
 
-        Game.Inst.ExitGame();
-
         Chart.Inst.ExitGame();
+
+        Game.Inst.ExitGame();
     }
 
     public void OnExitToMenu()
