@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using EasingCore;
 using FancyScrollView;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -15,6 +16,9 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
     private Image gameSongCover;
 
     [SerializeField]
+    private TextMeshProUGUI selectedSongName;
+
+    [SerializeField]
     private Scroller scroller;
 
     [SerializeField]
@@ -22,9 +26,6 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
 
     [SerializeField]
     private GameObject cellPrefab;
-
-    [SerializeField]
-    private InputActionReference navigate;
 
     public Action<int> OnButtonAction;
 
@@ -58,6 +59,8 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
         }
 
         Context.SelectedIndex = index;
+
+        selectedSongName.text = cellData[Context.SelectedIndex].SongTitle;
 
         selectedSongCover.sprite = cellData[Context.SelectedIndex].Cover;
 

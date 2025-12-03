@@ -281,6 +281,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 72083201}
   TypeProcess: 0
   TypeSpeed: 2.5
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -296,8 +297,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 1
-  AppendDestination: {x: 0.3, y: 0.475, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 1
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 3
@@ -305,6 +308,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 72083200}
   ResizeDetector: {fileID: 0}
@@ -476,6 +482,74 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!1 &89153127
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 89153128}
+  - component: {fileID: 89153129}
+  m_Layer: 5
+  m_Name: SelectSong
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &89153128
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 89153127}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 540696535}
+  - {fileID: 302412149}
+  - {fileID: 823161652}
+  m_Father: {fileID: 119837049}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 429, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &89153129
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 89153127}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NavigateAxis: 1
+  NavigateMode: 1
+  AppendPosition: {x: 52, y: 540, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
+  SelfPivot: 2
+  AppendEdge: 3
+  DisappearEdge: 3
+  AppendType: 0
+  DisappearType: 0
+  AppendEase: 6
+  DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
+  ParentPage: {fileID: 0}
+  SelfRect: {fileID: 302412149}
+  ResizeDetector: {fileID: 0}
 --- !u!1 &107824062
 GameObject:
   m_ObjectHideFlags: 0
@@ -576,7 +650,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EventSystem: {fileID: 119837045}
   SelfRect: {fileID: 119837049}
-  DisplayTexts: []
+  DisplayTexts:
+  - {fileID: 306664972}
+  - {fileID: 322588249}
   DisplaySelectables:
   - {fileID: 341488605}
   - {fileID: 155818807}
@@ -584,10 +660,12 @@ MonoBehaviour:
   - {fileID: 374473460}
   DisplayScroll:
   - {fileID: 675703432}
-  DisplayImages: []
+  DisplayImages:
+  - {fileID: 1637781318}
+  - {fileID: 2024403687}
   DisplayNavigator:
-  - {fileID: 540696538}
-  - {fileID: 302412150}
+  - {fileID: 89153129}
+  - {fileID: 1637781317}
   ResizeDetector: {fileID: 1375885492}
   scrollView: {fileID: 675703435}
 --- !u!114 &119837045
@@ -672,12 +750,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 675703427}
-  - {fileID: 540696535}
-  - {fileID: 302412149}
+  - {fileID: 89153128}
   - {fileID: 7230833440349081610}
   - {fileID: 155818803}
   - {fileID: 374473459}
   - {fileID: 341488601}
+  - {fileID: 1637781316}
   m_Father: {fileID: 1086470121}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -787,6 +865,7 @@ GameObject:
   m_Component:
   - component: {fileID: 153205839}
   - component: {fileID: 153205840}
+  - component: {fileID: 153205841}
   m_Layer: 0
   m_Name: ChartSingletons
   m_TagString: Untagged
@@ -841,6 +920,30 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 153205841}
+        m_TargetAssemblyTypeName: ChartScoreManager, GameAssembly
+        m_MethodName: InitChartScores
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+--- !u!114 &153205841
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 153205838}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8fbea0afaead93945bf74ee011d254eb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &155818802
 GameObject:
   m_ObjectHideFlags: 0
@@ -871,7 +974,7 @@ RectTransform:
   m_GameObject: {fileID: 155818802}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4, y: 1.4, z: 1}
+  m_LocalScale: {x: 1.25, y: 1.25, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1051798505}
@@ -1005,7 +1108,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 3
-  AppendDestination: {x: 0.26, y: 0.16, z: 0}
+  NavigateMode: 1
+  AppendPosition: {x: 433, y: 210, z: 0}
+  AppendPercent: {x: 0.2, y: 0.2, z: 0}
   SelfPivot: 0
   AppendEdge: 1
   DisappearEdge: 1
@@ -1013,6 +1118,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 155818803}
   ResizeDetector: {fileID: 0}
@@ -1285,7 +1393,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.31, y: 0.5, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 2
   AppendEdge: 2
   DisappearEdge: 2
@@ -1293,6 +1403,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 217657044}
   ResizeDetector: {fileID: 0}
@@ -1365,15 +1478,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.56666, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: -0.2, y: -0.0666, z: 0}
   SelfPivot: 0
-  AppendEdge: 0
+  AppendEdge: 2
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 259267586}
   ResizeDetector: {fileID: 0}
@@ -1480,7 +1598,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 302412149}
-  - component: {fileID: 302412150}
   - component: {fileID: 302412152}
   - component: {fileID: 302412151}
   m_Layer: 0
@@ -1499,40 +1616,16 @@ RectTransform:
   m_GameObject: {fileID: 302412148}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.68, y: 1.68, z: 1}
+  m_LocalScale: {x: 0.8, y: 0.84, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 119837049}
+  m_Father: {fileID: 89153128}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 480, y: 540}
+  m_SizeDelta: {x: 960, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &302412150
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 302412148}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  NavigateAxis: 1
-  AppendDestination: {x: 0.26, y: 0.5, z: 0}
-  SelfPivot: 0
-  AppendEdge: 3
-  DisappearEdge: 3
-  AppendType: 0
-  DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
-  ParentPage: {fileID: 0}
-  SelfRect: {fileID: 302412149}
-  ResizeDetector: {fileID: 0}
 --- !u!114 &302412151
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1553,7 +1646,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 82ea4f30998032246b2ab30167f7edfb, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9062dd92da6dc674bbcab1f759bb1b0a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1570,6 +1663,446 @@ CanvasRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 302412148}
+  m_CullTransparentMesh: 1
+--- !u!1 &306664968
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 306664969}
+  - component: {fileID: 306664971}
+  - component: {fileID: 306664970}
+  - component: {fileID: 306664974}
+  - component: {fileID: 306664973}
+  - component: {fileID: 306664972}
+  m_Layer: 5
+  m_Name: UserNameText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &306664969
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306664968}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.4950495, y: 0.4950495, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1637781316}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -8, y: 9}
+  m_SizeDelta: {x: 0, y: 80}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &306664970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306664968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: Twds0x13.bbhll
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_sharedMaterial: {fileID: -4835478689616584037, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 40
+  m_fontSizeBase: 40
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 1
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: -311.04178, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &306664971
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306664968}
+  m_CullTransparentMesh: 1
+--- !u!114 &306664972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306664968}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 592e4d9f7dc5efb4fbc6e07ee4047748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DynamicEnumList: 
+  Navigator: {fileID: 306664973}
+  LocalizeStringEvent: {fileID: 306664974}
+  ParentPage: {fileID: 0}
+  TypeWriterEffect: 1
+  StartWithAnime: 1
+  AnimeOffset: 0
+  SelfTextMesh: {fileID: 306664970}
+  TypeProcess: 0
+  TypeSpeed: 8
+  ignoreLocalization: 1
+  TypeWriterEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &306664973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306664968}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NavigateAxis: 0
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
+  SelfPivot: 0
+  AppendEdge: 0
+  DisappearEdge: 0
+  AppendType: 0
+  DisappearType: 0
+  AppendEase: 3
+  DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 0
+  ParentPage: {fileID: 0}
+  SelfRect: {fileID: 306664969}
+  ResizeDetector: {fileID: 0}
+--- !u!114 &306664974
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 306664968}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:1b773c2c7d134ea468d44075385436a5
+    m_TableEntryReference:
+      m_KeyId: 977511289573376
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls: []
+  references:
+    version: 2
+    RefIds: []
+--- !u!1 &322588247
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 322588248}
+  - component: {fileID: 322588253}
+  - component: {fileID: 322588252}
+  - component: {fileID: 322588251}
+  - component: {fileID: 322588250}
+  - component: {fileID: 322588249}
+  m_Layer: 5
+  m_Name: UserRatingText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &322588248
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322588247}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.4950495, y: 0.4950495, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1637781316}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -116, y: 9}
+  m_SizeDelta: {x: 0, y: 80}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &322588249
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322588247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 592e4d9f7dc5efb4fbc6e07ee4047748, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DynamicEnumList: 
+  Navigator: {fileID: 322588250}
+  LocalizeStringEvent: {fileID: 322588251}
+  ParentPage: {fileID: 0}
+  TypeWriterEffect: 1
+  StartWithAnime: 1
+  AnimeOffset: 0
+  SelfTextMesh: {fileID: 322588252}
+  TypeProcess: 0
+  TypeSpeed: 8
+  ignoreLocalization: 1
+  TypeWriterEvent:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &322588250
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322588247}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NavigateAxis: 0
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
+  SelfPivot: 0
+  AppendEdge: 0
+  DisappearEdge: 0
+  AppendType: 0
+  DisappearType: 0
+  AppendEase: 3
+  DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 0
+  ParentPage: {fileID: 0}
+  SelfRect: {fileID: 322588248}
+  ResizeDetector: {fileID: 0}
+--- !u!114 &322588251
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322588247}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56eb0353ae6e5124bb35b17aff880f16, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_StringReference:
+    m_TableReference:
+      m_TableCollectionName: GUID:1b773c2c7d134ea468d44075385436a5
+    m_TableEntryReference:
+      m_KeyId: 977511289573376
+      m_Key: 
+    m_FallbackState: 0
+    m_WaitForCompletion: 0
+    m_LocalVariables: []
+  m_FormatArguments: []
+  m_UpdateString:
+    m_PersistentCalls:
+      m_Calls: []
+  references:
+    version: 2
+    RefIds: []
+--- !u!114 &322588252
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322588247}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 00000
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_sharedMaterial: {fileID: -4835478689616584037, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 40
+  m_fontSizeBase: 40
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 1
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: -191.65585, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &322588253
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322588247}
   m_CullTransparentMesh: 1
 --- !u!1 &341488600
 GameObject:
@@ -1735,7 +2268,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 2
-  AppendDestination: {x: 0.065, y: 0.16, z: 0}
+  NavigateMode: 1
+  AppendPosition: {x: 163, y: 210, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 1
   DisappearEdge: 1
@@ -1743,6 +2278,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 341488601}
   ResizeDetector: {fileID: 0}
@@ -1841,7 +2379,7 @@ RectTransform:
   m_GameObject: {fileID: 374473458}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1488903229}
@@ -1881,7 +2419,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 3
-  AppendDestination: {x: 0.18, y: 0.16, z: 0}
+  NavigateMode: 1
+  AppendPosition: {x: 313, y: 210, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 1
   DisappearEdge: 1
@@ -1889,6 +2429,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 374473459}
   ResizeDetector: {fileID: 0}
@@ -2286,7 +2829,6 @@ GameObject:
   - component: {fileID: 540696535}
   - component: {fileID: 540696537}
   - component: {fileID: 540696536}
-  - component: {fileID: 540696538}
   m_Layer: 5
   m_Name: SelectedSongCover
   m_TagString: Untagged
@@ -2301,16 +2843,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 540696534}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalScale: {x: 0.95, y: 0.982, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 119837049}
+  m_Father: {fileID: 89153128}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2000, y: 0}
+  m_AnchoredPosition: {x: -376, y: 95}
   m_SizeDelta: {x: 525, y: 525}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &540696536
@@ -2351,30 +2893,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 540696534}
   m_CullTransparentMesh: 1
---- !u!114 &540696538
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 540696534}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  NavigateAxis: 1
-  AppendDestination: {x: 0.26, y: 0.4075, z: 0}
-  SelfPivot: 0
-  AppendEdge: 3
-  DisappearEdge: 3
-  AppendType: 0
-  DisappearType: 0
-  AppendEase: 3
-  DisappearEase: 3
-  ParentPage: {fileID: 0}
-  SelfRect: {fileID: 540696535}
-  ResizeDetector: {fileID: 0}
 --- !u!1 &556792643
 GameObject:
   m_ObjectHideFlags: 0
@@ -2478,7 +2996,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.7, y: 0.5, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 3
@@ -2486,6 +3006,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 645082945}
   ResizeDetector: {fileID: 0}
@@ -2680,18 +3203,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 153205840}
-        m_TargetAssemblyTypeName: ChartManager, GameAssembly
-        m_MethodName: ExitGame
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!114 &646731395
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2758,8 +3269,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 1
-  AppendDestination: {x: 0.04, y: 0.1, z: 0}
+  NavigateAxis: 0
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0.2, y: 0.5, z: 0}
   SelfPivot: 2
   AppendEdge: 0
   DisappearEdge: 3
@@ -2767,6 +3280,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 646731393}
   ResizeDetector: {fileID: 0}
@@ -2833,6 +3349,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 658518683}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -3028,7 +3545,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.038, y: 0.495, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 5
   AppendEdge: 2
   DisappearEdge: 2
@@ -3036,6 +3555,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 658518679}
   ResizeDetector: {fileID: 0}
@@ -3133,14 +3655,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.26, y: 0.5, z: 0}
-  SelfPivot: 0
+  NavigateMode: 1
+  AppendPosition: {x: 52, y: 540, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
+  SelfPivot: 1
   AppendEdge: 2
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 675703427}
   ResizeDetector: {fileID: 0}
@@ -3177,10 +3704,10 @@ MonoBehaviour:
   cellContainer: {fileID: 1712337115}
   selectedSongCover: {fileID: 540696536}
   gameSongCover: {fileID: 1843485271}
+  selectedSongName: {fileID: 823161655}
   scroller: {fileID: 675703436}
   cellData: []
   cellPrefab: {fileID: 7029134628111963623, guid: 9cba68904dd0356439e443079e7d1a30, type: 3}
-  navigate: {fileID: 0}
 --- !u!114 &675703436
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3300,6 +3827,183 @@ MonoBehaviour:
   m_PointerBehavior: 1
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
+--- !u!1 &823161651
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 823161652}
+  - component: {fileID: 823161658}
+  - component: {fileID: 823161656}
+  - component: {fileID: 823161655}
+  m_Layer: 5
+  m_Name: SelectedSongName
+  m_TagString: DevInterface
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &823161652
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823161651}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 89153128}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -710, y: -180}
+  m_SizeDelta: {x: 665, y: 80}
+  m_Pivot: {x: 0, y: 1}
+--- !u!114 &823161655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823161651}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: Not Localized
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_sharedMaterial: {fileID: -4835478689616584037, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 50
+  m_fontSizeBase: 50
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 2
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &823161656
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823161651}
+  m_CullTransparentMesh: 1
+--- !u!23 &823161658
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823161651}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 6307360045478820274, guid: e134dfef4dc5ef24ea69fd84bca3498d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &854038347
 GameObject:
   m_ObjectHideFlags: 0
@@ -3878,7 +4582,7 @@ MonoBehaviour:
   m_text: Wut?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
-  m_sharedMaterial: {fileID: -9015016439112006485, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_sharedMaterial: {fileID: -4835478689616584037, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -4438,6 +5142,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 1077352962}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -4633,7 +5338,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0, y: 0.3, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 5
   AppendEdge: 2
   DisappearEdge: 2
@@ -4641,6 +5348,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1077352958}
   ResizeDetector: {fileID: 0}
@@ -4822,6 +5532,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 1151077306}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -4977,7 +5688,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0, y: 0.12, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 5
   AppendEdge: 2
   DisappearEdge: 2
@@ -4985,6 +5698,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1151077302}
   ResizeDetector: {fileID: 0}
@@ -6177,7 +6893,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 1
-  AppendDestination: {x: 0.31, y: 0.5, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 1
   AppendEdge: 3
   DisappearEdge: 3
@@ -6185,6 +6903,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1556000494}
   ResizeDetector: {fileID: 0}
@@ -6371,6 +7092,138 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1576268813}
   m_CullTransparentMesh: 1
+--- !u!1 &1637781315
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1637781316}
+  - component: {fileID: 1637781319}
+  - component: {fileID: 1637781318}
+  - component: {fileID: 1637781317}
+  - component: {fileID: 1637781320}
+  m_Layer: 5
+  m_Name: RatingBoard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1637781316
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637781315}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.02, y: 2.02, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2024403686}
+  - {fileID: 306664969}
+  - {fileID: 322588248}
+  m_Father: {fileID: 119837049}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 814, y: -470}
+  m_SizeDelta: {x: 461, y: 80}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1637781317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637781315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  NavigateAxis: 0
+  NavigateMode: 0
+  AppendPosition: {x: 515, y: -171, z: 0}
+  AppendPercent: {x: 0.022, y: 0.1564, z: 0}
+  SelfPivot: 1
+  AppendEdge: 0
+  DisappearEdge: 0
+  AppendType: 0
+  DisappearType: 0
+  AppendEase: 6
+  DisappearEase: 6
+  disableAppendAnime: 1
+  disableDisappearAnime: 1
+  enableNavigator: 1
+  ParentPage: {fileID: 0}
+  SelfRect: {fileID: 1637781316}
+  ResizeDetector: {fileID: 0}
+--- !u!114 &1637781318
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637781315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 4b1f0bb7f9a87f542aa04abdbbc6fefe, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1637781319
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637781315}
+  m_CullTransparentMesh: 1
+--- !u!223 &1637781320
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1637781315}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 25
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 2
+  m_TargetDisplay: 0
 --- !u!1 &1652998778
 GameObject:
   m_ObjectHideFlags: 0
@@ -7138,7 +7991,7 @@ MonoBehaviour:
   m_text: Wut?
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
-  m_sharedMaterial: {fileID: -9015016439112006485, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
+  m_sharedMaterial: {fileID: -4835478689616584037, guid: 1ce229c6d5067114c9e92c41f49fe340, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -7485,6 +8338,10 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: acfc3438-3cb5-4df8-8084-95a8673688cd
     m_ActionName: UserNormal/Pause & Resume Game[/Keyboard/escape]
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a220c65c-8ea5-4e8d-a632-c97c1d07ad8d
+    m_ActionName: UserNormal/Exit Game[/Keyboard/escape]
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: UserNormal
@@ -7635,6 +8492,105 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!1 &2024403685
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2024403686}
+  - component: {fileID: 2024403688}
+  - component: {fileID: 2024403687}
+  - component: {fileID: 2024403689}
+  m_Layer: 5
+  m_Name: RatingColorBoard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2024403686
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2024403685}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1.53, y: 1.65, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1637781316}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -110, y: 8}
+  m_SizeDelta: {x: 128, y: 32}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2024403687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2024403685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 4109a02d788572c4dadb77a1d603eea3, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &2024403688
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2024403685}
+  m_CullTransparentMesh: 1
+--- !u!223 &2024403689
+Canvas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2024403685}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_RenderMode: 2
+  m_Camera: {fileID: 0}
+  m_PlaneDistance: 100
+  m_PixelPerfect: 0
+  m_ReceivesEvents: 1
+  m_OverrideSorting: 1
+  m_OverridePixelPerfect: 0
+  m_SortingBucketNormalizedSize: 0
+  m_VertexColorAlwaysGammaSpace: 0
+  m_AdditionalShaderChannelsFlag: 0
+  m_UpdateRectTransformForStandalone: 0
+  m_SortingLayerID: 0
+  m_SortingOrder: 1
+  m_TargetDisplay: 0
 --- !u!1 &2030133906
 GameObject:
   m_ObjectHideFlags: 0
@@ -7862,6 +8818,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 2066044577}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -8017,7 +8974,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0, y: 0.18, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 5
   AppendEdge: 2
   DisappearEdge: 2
@@ -8025,6 +8984,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 2066044573}
   ResizeDetector: {fileID: 0}
@@ -8179,8 +9141,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 1
-  AppendDestination: {x: 0.3, y: 0.5, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0.2, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 3
   DisappearEdge: 3
@@ -8188,6 +9152,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 2098347653}
   ResizeDetector: {fileID: 0}
@@ -8254,6 +9221,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 2119194035}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -8449,7 +9417,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0, y: 0.06, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 5
   AppendEdge: 2
   DisappearEdge: 2
@@ -8457,6 +9427,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 2119194031}
   ResizeDetector: {fileID: 0}
@@ -8578,8 +9551,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 0
-  AppendDestination: {x: 0.5, y: 0.5, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 1
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0.5, y: 0.5, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 1
@@ -8587,6 +9562,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 3824572570968569885}
   ResizeDetector: {fileID: 0}
@@ -9003,6 +9981,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 7637754105850709503}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -9184,15 +10163,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.7, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: -0.2, y: -0.2, z: 0}
   SelfPivot: 0
-  AppendEdge: 0
+  AppendEdge: 2
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 8494234308217207590}
   ResizeDetector: {fileID: 0}
@@ -9462,7 +10446,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.5, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 2
@@ -9470,6 +10456,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 7859610614935017154}
   ResizeDetector: {fileID: 0}
@@ -9678,7 +10667,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 3
-  AppendDestination: {x: 0.34, y: 0.16, z: 0}
+  NavigateMode: 1
+  AppendPosition: {x: 553, y: 210, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 1
   DisappearEdge: 1
@@ -9686,6 +10677,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 7230833440349081610}
   ResizeDetector: {fileID: 0}
@@ -9762,7 +10756,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.04, y: 0.07, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 1
   AppendEdge: 0
   DisappearEdge: 2
@@ -9770,6 +10766,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1625522500315282293}
   ResizeDetector: {fileID: 0}
@@ -10182,7 +11181,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 1
-  AppendDestination: {x: 0.04, y: 0.2, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 2
   AppendEdge: 0
   DisappearEdge: 3
@@ -10190,6 +11191,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 6023456073284979965}
   ResizeDetector: {fileID: 0}
@@ -10223,6 +11227,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 5359943830130493079}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -10375,15 +11380,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.3, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: -0.2, y: 0.2, z: 0}
   SelfPivot: 0
-  AppendEdge: 0
+  AppendEdge: 2
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 6250087705684726734}
   ResizeDetector: {fileID: 0}
@@ -10759,7 +11769,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.04, y: 0.13, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 1
   AppendEdge: 0
   DisappearEdge: 2
@@ -10767,6 +11779,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 28008451107189363}
   ResizeDetector: {fileID: 0}
@@ -11053,6 +12068,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 6669511160543842193}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -11364,7 +12380,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 2
-  AppendDestination: {x: 0.5, y: 0.36, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 3
   AppendEdge: 1
   DisappearEdge: 1
@@ -11372,6 +12390,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 8422135396831991641}
   ResizeDetector: {fileID: 0}
@@ -11388,7 +12409,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 1
-  AppendDestination: {x: 0.04, y: 0.1, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 2
   AppendEdge: 0
   DisappearEdge: 3
@@ -11396,6 +12419,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 4058917468863360175}
   ResizeDetector: {fileID: 0}
@@ -11772,6 +12798,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 2885737658957556411}
   TypeProcess: 0
   TypeSpeed: 5
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls:
@@ -11948,7 +12975,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.7, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 2
@@ -11956,6 +12985,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 3963910026012552731}
   ResizeDetector: {fileID: 0}
@@ -12387,6 +13419,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 3949727128673912092}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -12403,7 +13436,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0.04, y: 0.19, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 1
   AppendEdge: 0
   DisappearEdge: 2
@@ -12411,6 +13446,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 7045110862005238587}
   ResizeDetector: {fileID: 0}
@@ -12921,7 +13959,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 2
-  AppendDestination: {x: 0.5, y: 0.42, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 3
   AppendEdge: 1
   DisappearEdge: 1
@@ -12929,6 +13969,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 7655384327154235646}
   ResizeDetector: {fileID: 0}
@@ -12954,6 +13997,7 @@ MonoBehaviour:
   SelfTextMesh: {fileID: 4406806979291023065}
   TypeProcess: 0
   TypeSpeed: 0
+  ignoreLocalization: 0
   TypeWriterEvent:
     m_PersistentCalls:
       m_Calls: []
@@ -13239,15 +14283,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3bcaffa69320e1444a6671167184e181, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NavigateAxis: 0
-  AppendDestination: {x: 0.3, y: 0.43333, z: 0}
+  NavigateAxis: 4
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: -0.2, y: 0.06666, z: 0}
   SelfPivot: 0
-  AppendEdge: 0
+  AppendEdge: 2
   DisappearEdge: 2
   AppendType: 0
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1745872688810772640}
   ResizeDetector: {fileID: 0}
@@ -13281,7 +14330,7 @@ RectTransform:
   m_GameObject: {fileID: 1484176724931917674}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.15, y: 1.15, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6301993923226609765}
@@ -13701,7 +14750,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 1
-  AppendDestination: {x: 0.04, y: 0.3, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 2
   AppendEdge: 0
   DisappearEdge: 3
@@ -13709,6 +14760,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 6
   DisappearEase: 6
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 1383679163797698324}
   ResizeDetector: {fileID: 0}
@@ -13950,7 +15004,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 0
-  AppendDestination: {x: 0, y: 0, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 0
   AppendEdge: 0
   DisappearEdge: 0
@@ -13958,6 +15014,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 8958633978222473415}
   ResizeDetector: {fileID: 0}
@@ -14257,7 +15316,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NavigateAxis: 3
-  AppendDestination: {x: 0.04, y: 0.1, z: 0}
+  NavigateMode: 0
+  AppendPosition: {x: 0, y: 0, z: 0}
+  AppendPercent: {x: 0, y: 0, z: 0}
   SelfPivot: 2
   AppendEdge: 1
   DisappearEdge: 3
@@ -14265,6 +15326,9 @@ MonoBehaviour:
   DisappearType: 0
   AppendEase: 3
   DisappearEase: 3
+  disableAppendAnime: 0
+  disableDisappearAnime: 0
+  enableNavigator: 1
   ParentPage: {fileID: 0}
   SelfRect: {fileID: 879885653358272632}
   ResizeDetector: {fileID: 0}

@@ -1,4 +1,6 @@
 using System;
+using JudgeNS;
+using Palmmedia.ReportGenerator.Core.Parser.Analysis;
 using Singleton;
 using UnityEngine;
 using Pool = PooledObjectNS.PooledObjectManager;
@@ -35,9 +37,9 @@ namespace GameManagerNS
     {
         internal GameScore() { }
 
-        float _score; // 当前分数
+        float _score; // 内部当前分数 （ 按照得分倍率计算 ）
 
-        float _maxScore; // 理论最大分数（全 Perfect）
+        float _maxScore; // 内部最大分数（ 全大 Perfect ）
 
         public float Accuracy // 完成率
         {
@@ -64,6 +66,10 @@ namespace GameManagerNS
             get { return _maxScore; }
             set { _maxScore = value; }
         }
+
+        public float MaxCombo { get; set; }
+
+        public float CurrentCombo { get; set; }
     }
     #endregion
 
@@ -185,8 +191,6 @@ namespace GameManagerNS
             TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
         }
 
-        // 随时随地能按暂停对游戏外没用，游戏内使用 HoverPage (弹窗) 调用 SwitchToResume() 代替
-
         public static void OnPauseResume()
         {
             OnOneKeyPause();
@@ -225,15 +229,12 @@ namespace GameManagerNS
 
         public void DetectMaxFrameRate()
         {
-            // 方法1：获取当前屏幕的刷新率（使用refreshRateRatio）
             double currentRefreshRate = Screen.currentResolution.refreshRateRatio.value;
             Debug.Log($"屏幕刷新率: {currentRefreshRate} Hz");
 
-            // 方法2：获取所有可用分辨率中的最大刷新率
             double maxRefreshRate = GetMaxSupportedRefreshRate();
             Debug.Log($"设备支持的最大刷新率: {maxRefreshRate} Hz");
 
-            // 设置目标帧率为最大刷新率（取整）
             Application.targetFrameRate = (int)Math.Floor(currentRefreshRate);
         }
 
@@ -297,6 +298,36 @@ namespace GameManagerNS
 
         public void PauseResumeGame() => GameTime.OnPauseResume();
 
+        /// <summary>
+        /// 简易的包装方法，根据传入的判定枚举和对象类型，增加对应的分数
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="judgeEnum"></param>
+        public void AddScore<T>(JudgeEnum judgeEnum)
+            where T : class
+        {
+            if (judgeEnum != JudgeEnum.Miss || judgeEnum != JudgeEnum.NotEntered)
+            {
+                Score.CurrentCombo += 1;
+                Score.MaxCombo = Mathf.Max(Score.MaxCombo, Score.CurrentCombo);
+            }
+            else
+            {
+                Score.CurrentCombo = 0;
+            }
+
+            if (typeof(T) == typeof(NoteNS.NoteBehaviour))
+            {
+                Score.Score += NoteJudge.GetJudgeScore(judgeEnum);
+                Score.MaxScore += NoteJudgeScore.Max;
+            }
+            else if (typeof(T) == typeof(HoldNS.HoldBehaviour))
+            {
+                Score.Score += HoldJudge.GetJudgeScore(judgeEnum);
+                Score.MaxScore += HoldJudgeScore.Max;
+            }
+        }
+
         public void StartGame()
         {
             Pool.Inst.StartGame();
@@ -308,6 +339,8 @@ namespace GameManagerNS
 
             Score.MaxScore = 0f;
             Score.Score = 0f;
+            Score.MaxCombo = 0f;
+            Score.CurrentCombo = 0f;
         }
     }
 }

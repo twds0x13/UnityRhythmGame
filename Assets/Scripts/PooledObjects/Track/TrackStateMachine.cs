@@ -256,12 +256,14 @@ namespace TrackStateMachine
 
         private bool Disappear()
         {
+            Rect rect = ResizeDetector.Inst.Rect.rect;
+
             AnimeMachine.CurT =
                 (Game.Inst.GetGameTime() - AnimeMachine.DisappearTimeCache)
                 / AnimeMachine.DisappearTimeSpan;
 
             Track.transform.localPosition =
-                new Vector3(0f, -0.25f * Page.Inst.GetPageRect().height * AnimeMachine.CurT, 0f)
+                new Vector3(0f, -0.25f * rect.height * AnimeMachine.CurT, 0f)
                 + AnimeMachine.DisappearingPosCache;
 
             Track.SpriteRenderer.color = new Color(1f, 1f, 1f, 1f - AnimeMachine.CurT);

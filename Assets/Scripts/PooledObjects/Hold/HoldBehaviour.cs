@@ -93,9 +93,7 @@ namespace HoldNS
         {
             if (JudgeMachine.CurState == OnJudge)
             {
-                Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetHeadJudgeEnum(this));
-
-                Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
+                Game.Inst.AddScore<HoldBehaviour>(Judge.GetHeadJudgeEnum(this));
 
                 Pool.Inst.GetJudgeDynamic(Judge.GetHeadJudgeEnum(this));
 
@@ -108,9 +106,7 @@ namespace HoldNS
         {
             if (JudgeMachine.CurState == PressingJudge)
             {
-                Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetTailJudgeEnum(this)); // TailJusgeEunm 可以开关是否拥有尾判
-
-                Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
+                Game.Inst.AddScore<HoldBehaviour>(Judge.GetTailJudgeEnum(this));
 
                 if (
                     Judge.GetTailJudgeEnum(this) == JudgeEnum.Miss
@@ -130,11 +126,9 @@ namespace HoldNS
             }
         }
 
-        public void OnAutoFinish() // 不松自动判 Perfect
+        public void OnAutoFinish()
         {
-            Game.Inst.Score.Score += Judge.GetJudgeScore(Judge.GetTailJudgeEnum(this)); // TailJusgeEunm 可以开关是否拥有尾判
-
-            Game.Inst.Score.MaxScore += HoldJudgeScore.Max;
+            Game.Inst.AddScore<HoldBehaviour>(JudgeEnum.CriticalPerfect);
 
             JudgeMachine.SwitchState(AfterJudge);
             StateMachine.SwitchState(JudgeFinishHoldAnime);
@@ -144,7 +138,8 @@ namespace HoldNS
         {
             Pool.Inst.GetJudgeDynamic(JudgeEnum.Miss);
 
-            Game.Inst.Score.MaxScore += 2f * HoldJudgeScore.Max; // 长条共 2 物量
+            Game.Inst.AddScore<HoldBehaviour>(JudgeEnum.Miss);
+            Game.Inst.AddScore<HoldBehaviour>(JudgeEnum.Miss); // 长条共 2 物量
 
             JudgeMachine.SwitchState(AfterJudge);
             StateMachine.SwitchState(DisappearHoldAnime);

@@ -6,8 +6,8 @@ using System.Threading;
 using AudioNS;
 using Cysharp.Threading.Tasks;
 using GameManagerNS;
+using JudgeNS;
 using Parser;
-using PooledObjectNS;
 using Singleton;
 using UnityEngine;
 using UnityEngine.Events;
@@ -33,6 +33,8 @@ public class ChartManager : Singleton<ChartManager>
 
     public Action OnStartNoteGeneration; // 代表游戏完成加载，开始生成 Note 的一瞬间
 
+    public IChartScoreManager chartScoreManager;
+
     // 添加 CancellationTokenSource 用于控制任务取消
     private CancellationTokenSource _gameCancellationTokenSource;
 
@@ -45,6 +47,8 @@ public class ChartManager : Singleton<ChartManager>
         Parser = new ChartParser(path, config);
 
         ParseCharts().Forget();
+
+        chartScoreManager = ChartScoreManager.Inst;
     }
 
     private async UniTaskVoid ParseCharts()
@@ -411,6 +415,8 @@ public class ChartManager : Singleton<ChartManager>
         // 取消所有正在运行的游戏任务
         _gameCancellationTokenSource?.Cancel();
 
+        SaveChartScore();
+
         OnExitGame?.Invoke();
 
         Pool.Inst.VerticalModifier -= VerticalModify;
@@ -427,5 +433,83 @@ public class ChartManager : Singleton<ChartManager>
         _gameCancellationTokenSource = null;
 
         Parser?.Dispose();
+    }
+
+    /// <summary>
+    /// 计算谱面理论最大分数
+    /// 普通音符：每个音符基础分 x 1.1 (CriticalPerfect)
+    /// Hold音符：头尾各计算一次，每个Hold总分为基础分 x 1.1 x 2
+    /// </summary>
+    /// <param name="chart">要计算最大分数的谱面</param>
+    /// <returns>理论最大分数</returns>
+    public float GetChartMaxScore(Chart chart)
+    {
+        if (chart?.Notes == null || chart.Notes.Count == 0)
+            return 0f;
+
+        // 统计音符数量
+        int normalNoteCount = 0;
+        int holdNoteCount = 0;
+
+        foreach (var note in chart.Notes)
+        {
+            if (note.IsHold)
+            {
+                holdNoteCount++;
+            }
+            else
+            {
+                normalNoteCount++;
+            }
+        }
+
+        var maxScore =
+            normalNoteCount * NoteJudgeScore.Max + holdNoteCount * 2f * HoldJudgeScore.Max;
+
+        LogManager.Log(
+            $"计算谱面理论最大分数: 普通音符={normalNoteCount}, Hold音符={holdNoteCount}, "
+                + $"最大分数={maxScore:F0}",
+            nameof(ChartManager),
+            true
+        );
+
+        return maxScore;
+    }
+
+    protected void SaveChartScore()
+    {
+        ClearState clearState;
+
+        var classifiedScore = ScoreRankCalculator.ClassifyScore(
+            GameManager.Inst.Score.Score,
+            GetChartMaxScore(SelectedChart)
+        );
+
+        if (
+            ScoreRankCalculator.CalculateScoreRank(classifiedScore) == ScoreRank.F
+            || ScoreRankCalculator.CalculateScoreRank(classifiedScore) == ScoreRank.NotPlayed
+        )
+        {
+            clearState = ClearState.Failed;
+        }
+        else
+        {
+            clearState = ClearState.Cleared;
+        }
+
+        ChartScoreData data = new ChartScoreData
+        {
+            ChartId = SelectedChart.ChartId,
+            ClearState = clearState,
+            CompletionRate = GameManager.Inst.Score.Score / GetChartMaxScore(SelectedChart),
+            ScoreRankState = ScoreRankCalculator.CalculateScoreRank(classifiedScore),
+            HighScore = (int)Mathf.Ceil(classifiedScore),
+            MaxCombo = (int)Mathf.Floor(GameManager.Inst.Score.MaxCombo),
+            Accuracy = GameManager.Inst.Score.Accuracy,
+            PlayCount = 1,
+            LastPlayed = DateTime.Now,
+        };
+
+        chartScoreManager.SaveChartScore(data);
     }
 }
