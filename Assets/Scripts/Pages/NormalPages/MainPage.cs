@@ -3,6 +3,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using PageNS;
 using UnityEditor;
+using UnityEngine;
 
 public class MainPage : BaseUIPage
 {
@@ -71,6 +72,8 @@ public class MainPage : BaseUIPage
 #if UNITY_EDITOR
 
             EditorApplication.isPlaying = false;
+
+            Application.Quit();
 
 #else
 
