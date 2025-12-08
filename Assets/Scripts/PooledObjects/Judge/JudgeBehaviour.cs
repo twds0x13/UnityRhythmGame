@@ -56,7 +56,7 @@ public class JudgeBehaviour : ScaleableSpriteBehaviour
                 break;
         }
 
-        SetScale(Vector3.one * 225f, ScaleMode.FitToHeight);
+        SetScale(Vector3.one * 45f, ScaleMode.FitToHeight);
 
         SpriteRenderer.color = new Color(1f, 1f, 1f, 1f);
 

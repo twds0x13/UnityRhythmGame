@@ -102,7 +102,7 @@ public class ChartScoreData
 
 public static class ScoreRankCalculator
 {
-    public static float ClassifyScore(float score, float maxScore) =>
+    public static float GetClassifiedScore(float score, float maxScore) =>
         ScoreRankScores.MaxChartScore * (score / maxScore);
 
     /// <summary>

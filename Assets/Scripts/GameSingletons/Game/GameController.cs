@@ -2,6 +2,7 @@ using System;
 using Cysharp.Threading.Tasks;
 using Singleton;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Game = GameManagerNS.GameManager;
 using Input = InputProviderManager;
@@ -51,24 +52,6 @@ namespace GameCore
 
                     break;
             }
-        }
-
-        public void RebindInput(InputActionReference Ref)
-        {
-            UserInput.SwitchCurrentActionMap("UserRebinding");
-            Ref.action.PerformInteractiveRebinding()
-                .WithControlsExcluding("Mouse")
-                .WithCancelingThrough("<keyboard>/escape")
-                .OnMatchWaitForAnother(0.05f)
-                .OnComplete(Operation => SwitchToNormal(Operation))
-                .OnCancel(Operation => SwitchToNormal(Operation))
-                .Start();
-        }
-
-        private void SwitchToNormal(InputActionRebindingExtensions.RebindingOperation Operation)
-        {
-            Operation.Dispose();
-            UserInput.SwitchCurrentActionMap("UserNormal");
         }
 
         #region GameTests

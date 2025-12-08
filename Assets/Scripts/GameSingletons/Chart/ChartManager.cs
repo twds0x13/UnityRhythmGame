@@ -123,6 +123,11 @@ public class ChartManager : Singleton<ChartManager>
         StartPreviewTask(_gameCancellationTokenSource.Token).Forget();
     }
 
+    public void StopPreviewSettings()
+    {
+        ExitGame();
+    }
+
     protected async UniTask StartPreviewTask(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
@@ -470,17 +475,22 @@ public class ChartManager : Singleton<ChartManager>
             $"计算谱面理论最大分数: 普通音符={normalNoteCount}, Hold音符={holdNoteCount}, "
                 + $"最大分数={maxScore:F0}",
             nameof(ChartManager),
-            true
+            false
         );
 
         return maxScore;
+    }
+
+    public float GetChartMaxScore()
+    {
+        return GetChartMaxScore(SelectedChart);
     }
 
     protected void SaveChartScore()
     {
         ClearState clearState;
 
-        var classifiedScore = ScoreRankCalculator.ClassifyScore(
+        var classifiedScore = ScoreRankCalculator.GetClassifiedScore(
             GameManager.Inst.Score.Score,
             GetChartMaxScore(SelectedChart)
         );

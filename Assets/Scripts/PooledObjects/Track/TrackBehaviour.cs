@@ -3,11 +3,14 @@ using System.Linq;
 using Anime;
 using AudioNS;
 using AudioRegistry;
+using Cysharp.Threading.Tasks;
+using GameManagerNS;
 using PageNS;
 using PooledObjectNS;
 using StateMachine;
 using TrackStateMachine;
 using Audio = AudioNS.AudioManager;
+using Game = GameManagerNS.GameManager;
 
 namespace TrackNS
 {
@@ -64,6 +67,26 @@ namespace TrackNS
             StateMachine.InitState(InitTrack);
         }
 
+        public void InitResumeBehaviour()
+        {
+            GameTime.OnGameResume += ResumeRelease;
+        }
+
+        private void ResumeRelease() // 如果在从暂停中恢复时按键未被按下，就触发一次延迟释放事件，否则就允许长条继续按住
+        {
+            if (!InputProvider.IsPressing(TrackNumber))
+            {
+                DelayRelease().Forget();
+            }
+        }
+
+        private async UniTaskVoid DelayRelease()
+        {
+            await UniTask.NextFrame(); // 如果不等一帧 会因为游戏时间系统里代码执行顺序而没有触发 Release
+
+            OnReleased();
+        }
+
         private void Update()
         {
             JudgeMachine.CurState?.Update();
@@ -92,11 +115,13 @@ namespace TrackNS
 
         public void OnPressed()
         {
-            if (JudgeList.Count > 0 && JudgeList[0] is not null)
+            if (
+                JudgeList.Count > 0
+                && JudgeList[0] is not null
+                && !(Game.Inst.IsGamePausing() || Game.Inst.IsGamePaused())
+            )
             {
                 JudgeList[0].OnPress();
-
-                // 这里处理的是 key 音，也就是成功击打才会触发的音效。
 
                 switch (TrackNumber)
                 {
@@ -118,7 +143,11 @@ namespace TrackNS
 
         public void OnReleased()
         {
-            if (JudgeList.Count > 0 && JudgeList[0] is not null)
+            if (
+                JudgeList.Count > 0
+                && JudgeList[0] is not null
+                && !(Game.Inst.IsGamePausing() || Game.Inst.IsGamePaused()) // 只要处于暂停过程中或者已经暂停就不触发释放事件
+            )
             {
                 JudgeList[0].OnRelease();
 
@@ -147,6 +176,8 @@ namespace TrackNS
                 Object.OnClosePage();
             }
 
+            GameTime.OnGameResume -= ResumeRelease;
+
             JudgeMachine.SwitchState(FinishJudge);
             StateMachine.SwitchState(DisappearTrack);
         }
@@ -165,6 +196,8 @@ namespace TrackNS
             InputProvider = input;
 
             InitStateMachine(this);
+
+            InitResumeBehaviour();
 
             return this;
         }

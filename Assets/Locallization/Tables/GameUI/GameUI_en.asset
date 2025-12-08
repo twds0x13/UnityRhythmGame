@@ -60,7 +60,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 3882162704384
-    m_Localized: 'Score : {0}'
+    m_Localized: ': {0}'
     m_Metadata:
       m_Items: []
   - m_Id: 4040220856320
@@ -105,6 +105,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 20380444363968512
     m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 22936618879799296
+    m_Localized: '{0}'
     m_Metadata:
       m_Items: []
   references:

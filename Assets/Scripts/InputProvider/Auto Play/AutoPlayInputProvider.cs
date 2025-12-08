@@ -11,7 +11,7 @@ public class AutoPlayTrackInputProvider : ITrackInputProvider
     {
         public Action OnPressed { get; set; }
         public Action OnReleased { get; set; }
-        public bool IsPressed { get; set; }
+        public bool IsPressing { get; set; }
     }
 
     public AutoPlayTrackInputProvider(ChartManager chartManager)
@@ -62,11 +62,27 @@ public class AutoPlayTrackInputProvider : ITrackInputProvider
         {
             OnPressed = onPressed,
             OnReleased = onReleased,
-            IsPressed = false,
+            IsPressing = false,
         };
     }
 
     public bool IsRegistered(int number) => _trackHandlers.ContainsKey(number);
+
+    public bool IsPressing(int trackNumber)
+    {
+        if (!_trackHandlers.TryGetValue(trackNumber, out var handler))
+        {
+            LogManager.Log(
+                $"Track {trackNumber} not registered!",
+                nameof(AutoPlayTrackInputProvider),
+                true
+            );
+
+            return false;
+        }
+
+        return _trackHandlers[trackNumber].IsPressing;
+    }
 
     public void Unregister(int trackNumber, Action onPressed, Action onReleased)
     {
@@ -87,9 +103,9 @@ public class AutoPlayTrackInputProvider : ITrackInputProvider
             return;
 
         var handler = _trackHandlers[trackNumber];
-        if (!handler.IsPressed)
+        if (!handler.IsPressing)
         {
-            handler.IsPressed = true;
+            handler.IsPressing = true;
             handler.OnPressed?.Invoke();
         }
     }
@@ -100,9 +116,9 @@ public class AutoPlayTrackInputProvider : ITrackInputProvider
             return;
 
         var handler = _trackHandlers[trackNumber];
-        if (handler.IsPressed)
+        if (handler.IsPressing)
         {
-            handler.IsPressed = false;
+            handler.IsPressing = false;
             handler.OnReleased?.Invoke();
         }
     }

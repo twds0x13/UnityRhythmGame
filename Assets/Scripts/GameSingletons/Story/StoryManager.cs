@@ -116,11 +116,6 @@ namespace StoryNS
 
         public int LineNumber() => Pointer.IsValid ? Pointer.LineNumber : 0;
 
-        public void GetNextLine()
-        {
-            Pointer.Next();
-        }
-
         private void OnChioceEncounter()
         {
             PageManager.Inst.OpenHoverPage(nameof(ChoiceHover));

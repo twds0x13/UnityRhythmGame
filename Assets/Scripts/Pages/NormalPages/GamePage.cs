@@ -13,11 +13,6 @@ public class GamePage : BaseUIPage
 
         PageCloseAnimeDuration = 0.5f;
 
-        ActionFinishClosePage = () =>
-        {
-            Manager.JumpToPage(nameof(MainPage));
-        };
-
         base.OnAwake();
     }
 
@@ -37,11 +32,6 @@ public class GamePage : BaseUIPage
         Chart.Inst.ExitGame();
 
         Game.Inst.ExitGame();
-    }
-
-    public void OnExitToMenu()
-    {
-        OnClosePage();
     }
 
     public void ToggleAutoPlay()

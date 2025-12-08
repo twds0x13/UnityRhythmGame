@@ -8,6 +8,8 @@ public interface ITrackInputProvider
 
     bool IsRegistered(int trackNumber);
 
+    bool IsPressing(int trackNumber);
+
     void Register(int trackNumber, Action onPressed, Action onReleased);
 
     void Unregister(int trackNumber, Action onPressed, Action onReleased);

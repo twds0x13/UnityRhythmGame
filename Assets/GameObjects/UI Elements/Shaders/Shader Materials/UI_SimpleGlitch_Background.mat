@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: UI_SimpleGlitch_Purple
+  m_Name: UI_SimpleGlitch_Background
   m_Shader: {fileID: 4800000, guid: 9b4f8cab2058409418c36b06366d8e60, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0

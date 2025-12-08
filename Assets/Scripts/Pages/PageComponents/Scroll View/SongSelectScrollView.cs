@@ -10,10 +10,10 @@ using UnityEngine.UI;
 public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScrollContext>
 {
     [SerializeField]
-    private Image selectedSongCover;
+    private List<Image> selectedSongCover;
 
     [SerializeField]
-    private Image gameSongCover;
+    private List<Image> gameSongCover;
 
     [SerializeField]
     private TextMeshProUGUI selectedSongName;
@@ -62,9 +62,15 @@ public class SongSelectScrollView : FancyScrollView<ButtonScrollData, ButtonScro
 
         selectedSongName.text = cellData[Context.SelectedIndex].SongTitle;
 
-        selectedSongCover.sprite = cellData[Context.SelectedIndex].Cover;
+        foreach (var Cover in selectedSongCover)
+        {
+            Cover.sprite = cellData[Context.SelectedIndex].Cover;
+        }
 
-        gameSongCover.sprite = cellData[Context.SelectedIndex].Cover;
+        foreach (var Cover in gameSongCover)
+        {
+            Cover.sprite = cellData[Context.SelectedIndex].Cover;
+        }
 
         OnButtonClicked(index);
 

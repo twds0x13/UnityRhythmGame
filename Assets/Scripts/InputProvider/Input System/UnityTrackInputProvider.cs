@@ -90,6 +90,22 @@ public class UnityTrackInputProvider : ITrackInputProvider
 
     public bool IsRegistered(int number) => _trackHandlers.ContainsKey(number);
 
+    public bool IsPressing(int number)
+    {
+        if (!_trackHandlers.TryGetValue(number, out var handler))
+        {
+            LogManager.Log(
+                $"Track {number} not registered!",
+                nameof(UnityTrackInputProvider),
+                true
+            );
+
+            return false;
+        }
+
+        return _trackHandlers[number].Action.IsPressed();
+    }
+
     public void Unregister(int number, Action onPressed, Action onReleased)
     {
         if (_trackHandlers.ContainsKey(number))

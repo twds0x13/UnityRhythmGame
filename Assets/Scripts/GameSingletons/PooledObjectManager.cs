@@ -68,6 +68,7 @@ namespace PooledObjectNS
         protected override void SingletonAwake()
         {
             InitTrackDict();
+
             InitPools();
 
             DeleyedAwake().Forget();
@@ -377,6 +378,11 @@ namespace PooledObjectNS
             GetPreviewTrack();
         }
 
+        public void StopPreviewSettings()
+        {
+            ExitGame();
+        }
+
         /// <summary>
         /// 按照默认情况同时生成四个 <see cref="TrackBehaviour"/> 对象。
         /// </summary>
@@ -393,7 +399,7 @@ namespace PooledObjectNS
 
                 VecTmp = new Vector3(
                     -0.225f * Rect.width + 0.15f * Rect.width * TrackUIDIterator,
-                    -0.28f * Rect.height,
+                    -0.38f * Rect.height,
                     0f
                 );
 

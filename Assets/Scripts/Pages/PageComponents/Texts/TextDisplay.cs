@@ -37,8 +37,8 @@ public class TextDisplay : MonoBehaviour, IPageComponent
     [Ext.ReadOnlyInGame]
     public float AnimeOffset;
 
-    [Ext.ReadOnlyInGame, SerializeField]
-    private TextMeshProUGUI SelfTextMesh;
+    [Ext.ReadOnlyInGame]
+    public TextMeshProUGUI SelfTextMesh;
 
     [Ext.ReadOnly, Range(0f, 1f), SerializeField]
     private float TypeProcess; // 暂时只用来显示 TypeProcess 进度条

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Singleton;
 using UnityEngine.InputSystem;
+using Chart = ChartManager;
 using Game = GameManagerNS.GameManager;
 using Story = StoryNS.StoryManager;
 
@@ -46,11 +47,15 @@ namespace TextManagerNS
                 case DynamicNum.GameTimeScale:
                     return Game.Inst.GetTimeScale().ToString("F2");
                 case DynamicNum.GameScore:
-                    return Game.Inst.Score.Score.ToString("F2");
+                    return ScoreRankCalculator
+                        .GetClassifiedScore(Game.Inst.Score.Score, Chart.Inst.GetChartMaxScore())
+                        .ToString("F2");
                 case DynamicNum.GameMaxScore:
-                    return Game.Inst.Score.MaxScore.ToString("F2");
+                    return ScoreRankCalculator
+                        .GetClassifiedScore(Game.Inst.Score.MaxScore, Chart.Inst.GetChartMaxScore())
+                        .ToString("F2");
                 case DynamicNum.GameAccuracy:
-                    return (Game.Inst.Score.Accuracy * 100).ToString("F2"); // "P2" 代表百分数格式，但是暂时不需要百分号
+                    return (Game.Inst.Score.Accuracy * 1).ToString("P2"); // "P2" 代表百分数格式
                 case DynamicNum.StoryChapter:
                     return Story.Inst.ChapterNumber().ToString();
                 case DynamicNum.StoryParam:

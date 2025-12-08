@@ -2,6 +2,7 @@ using System;
 using JudgeNS;
 using Singleton;
 using UnityEngine;
+using Page = UIManagerNS.PageManager;
 using Pool = PooledObjectNS.PooledObjectManager;
 
 namespace GameManagerNS
@@ -54,6 +55,7 @@ namespace GameManagerNS
                 }
             }
         }
+
         public float Score
         {
             get { return _score; }
@@ -108,6 +110,10 @@ namespace GameManagerNS
 
         public static bool IsGamePaused { get; private set; }
 
+        public static event Action OnGamePause;
+
+        public static event Action OnGameResume;
+
         /// <summary>
         /// 处理全局 <see cref="Time.timeScale"/> 变化（包括加减速，暂停等）相关的逻辑和按键检测。
         /// 使用 <see cref="TimeScale"/> 作为索引器，保证不会越界修改 <see cref="Time.timeScale"/> 数值
@@ -153,20 +159,26 @@ namespace GameManagerNS
 
         public static void SwitchToResume()
         {
+            TimeStatFlip = false; // 处于恢复中状态时为 false
             TimeChanging = true;
             TimePausing = false;
             TimeResuming = true;
             TimeScaleCache = TimeScale;
             TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+
+            OnGameResume?.Invoke();
         }
 
         public static void SwitchToPause()
         {
+            TimeStatFlip = true; // 处于暂停中状态为 true
             TimeChanging = true;
             TimePausing = true;
             TimeResuming = false;
             TimeScaleCache = TimeScale;
             TimeScaleStartingPoint = RealTimer.GetTimeElapsed();
+
+            OnGamePause?.Invoke();
         }
 
         private static void OnOneKeyPause()
@@ -177,6 +189,8 @@ namespace GameManagerNS
                 TimeChanging = true;
                 TimePausing = false;
                 TimeResuming = true;
+
+                OnGameResume?.Invoke();
             }
             else
             {
@@ -184,6 +198,8 @@ namespace GameManagerNS
                 TimeChanging = true;
                 TimePausing = true;
                 TimeResuming = false;
+
+                OnGamePause?.Invoke();
             }
 
             TimeScaleCache = TimeScale;
@@ -211,6 +227,12 @@ namespace GameManagerNS
     {
         public readonly GameScore Score = new();
 
+        [SerializeField]
+        private GameHealthViewModel _healthViewModel;
+
+        [SerializeField]
+        private EnergyViewModel _energyViewModel;
+
         protected override void SingletonAwake()
         {
             QualitySettings.vSyncCount = 1;
@@ -224,6 +246,39 @@ namespace GameManagerNS
             DetectMaxFrameRate();
 
             InitGameTime();
+
+            RegisterPausePage();
+        }
+
+        protected override void SingletonDestroy()
+        {
+            UnregisterPausePage();
+
+            base.SingletonDestroy();
+        }
+
+        public void RegisterPausePage()
+        {
+            GameTime.OnGamePause += OpenPauseWindow;
+
+            GameTime.OnGameResume += ClosePauseWindow;
+        }
+
+        public void UnregisterPausePage()
+        {
+            GameTime.OnGamePause -= OpenPauseWindow;
+
+            GameTime.OnGameResume -= ClosePauseWindow;
+        }
+
+        public void OpenPauseWindow()
+        {
+            Page.Inst.OpenHoverPage(nameof(PauseHoverPage));
+        }
+
+        public void ClosePauseWindow()
+        {
+            Page.Inst.CloseHoverPage(nameof(PauseHoverPage));
         }
 
         public void DetectMaxFrameRate()
@@ -291,11 +346,19 @@ namespace GameManagerNS
 
         public bool IsGamePaused() => GameTime.IsGamePaused;
 
+        public bool IsGamePausing() => GameTime.TimePausing;
+
         // public void PauseGame() => GameTime.SwitchToPause();
 
         // public void ResumeGame() => GameTime.SwitchToResume();
 
-        public void PauseResumeGame() => GameTime.OnPauseResume();
+        public void PauseResumeGame()
+        {
+            if (Page.Inst.CurPage.Name == nameof(GamePage))
+            {
+                GameTime.OnPauseResume();
+            }
+        }
 
         /// <summary>
         /// 简易的包装方法，根据传入的判定枚举和对象类型，增加对应的分数
@@ -305,7 +368,7 @@ namespace GameManagerNS
         public void AddScore<T>(JudgeEnum judgeEnum)
             where T : class
         {
-            if (judgeEnum != JudgeEnum.Miss || judgeEnum != JudgeEnum.NotEntered)
+            if (judgeEnum != JudgeEnum.Miss && judgeEnum != JudgeEnum.NotEntered)
             {
                 Score.CurrentCombo += 1;
                 Score.MaxCombo = Mathf.Max(Score.MaxCombo, Score.CurrentCombo);
@@ -324,6 +387,30 @@ namespace GameManagerNS
             {
                 Score.Score += HoldJudge.GetJudgeScore(judgeEnum);
                 Score.MaxScore += HoldJudgeScore.Max;
+            }
+
+            switch (judgeEnum)
+            {
+                case JudgeEnum.CriticalPerfect:
+                    _healthViewModel.PlayerHeal(2f); // 伤害值为负数时表示回血
+                    _healthViewModel.EnemyTakeDamage(2f);
+                    _energyViewModel.AddEnergy(0.75f);
+                    break;
+                case JudgeEnum.Perfect:
+                    _healthViewModel.PlayerHeal(1f);
+                    _healthViewModel.EnemyTakeDamage(1f);
+                    _energyViewModel.AddEnergy(0.5f);
+                    break;
+                case JudgeEnum.Great:
+                    _energyViewModel.AddEnergy(0.25f);
+                    break;
+                case JudgeEnum.Good:
+                    _healthViewModel.PlayerTakeDamage(1f);
+                    break;
+                case JudgeEnum.Miss:
+                case JudgeEnum.NotEntered:
+                    _healthViewModel.PlayerTakeDamage(3f);
+                    break;
             }
         }
 

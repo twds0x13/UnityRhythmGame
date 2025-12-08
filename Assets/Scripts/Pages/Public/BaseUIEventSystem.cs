@@ -198,7 +198,8 @@ namespace UIEventSystemNS
 
             SelectTween = eventData
                 .selectedObject.transform.DOScale(NewScale, SelectScaleDuration)
-                .SetEase(Ease.OutQuad);
+                .SetEase(Ease.OutQuad)
+                .SetUpdate(true);
         }
 
         public void OnDeselect(BaseEventData eventData)
@@ -210,7 +211,8 @@ namespace UIEventSystemNS
 
             DeselectTween = eventData
                 .selectedObject.transform.DOScale(SelectableScales[Object], SelectScaleDuration)
-                .SetEase(Ease.OutQuad);
+                .SetEase(Ease.OutQuad)
+                .SetUpdate(true);
         }
 
         public void OnPointerEnter(BaseEventData eventData)

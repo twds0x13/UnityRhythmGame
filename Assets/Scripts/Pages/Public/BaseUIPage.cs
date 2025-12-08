@@ -43,6 +43,9 @@ namespace PageNS
         [Ext.ReadOnlyInGame, SerializeField]
         protected List<UINavigator> DisplayNavigator = new();
 
+        [Ext.ReadOnlyInGame, SerializeField]
+        protected bool enableTextFade = false;
+
         private readonly List<Color> ImageColors = new();
 
         [Ext.ReadOnlyInGame, SerializeField]
@@ -221,7 +224,19 @@ namespace PageNS
 
                     DisplayImages[i].color = new Color(0f, 0f, 0f, 0f);
 
-                    DisplayImages[i].DOColor(ImageColors[i], PageOpenAnimeDuration);
+                    DisplayImages[i]
+                        .DOColor(ImageColors[i], PageOpenAnimeDuration)
+                        .SetEase(Ease.OutQuad);
+                }
+            }
+
+            if (DisplayTexts.Count > 0 && enableTextFade)
+            {
+                for (int i = 0; i < DisplayTexts.Count; i++)
+                {
+                    DisplayTexts[i]
+                        .SelfTextMesh.DOFade(1f, PageOpenAnimeDuration)
+                        .SetEase(Ease.OutQuad);
                 }
             }
 
@@ -251,6 +266,16 @@ namespace PageNS
                 for (int i = 0; i < DisplayImages.Count; i++)
                 {
                     DisplayImages[i].DOColor(new Color(0f, 0f, 0f, 0f), PageCloseAnimeDuration);
+                }
+            }
+
+            if (DisplayTexts.Count > 0 && enableTextFade)
+            {
+                for (int i = 0; i < DisplayTexts.Count; i++)
+                {
+                    DisplayTexts[i]
+                        .SelfTextMesh.DOFade(0f, PageCloseAnimeDuration)
+                        .SetEase(Ease.OutQuad);
                 }
             }
 

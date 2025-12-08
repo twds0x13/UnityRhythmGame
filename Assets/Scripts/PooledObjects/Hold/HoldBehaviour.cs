@@ -150,7 +150,7 @@ namespace HoldNS
             TrackBehaviour track,
             float judgeTime,
             float holdDuration
-        ) // 在 Objectpool 中调用这个函数作为通用起手，保证每次调用都从这里开始
+        )
         {
             JudgeTime = judgeTime;
             JudgeDuration = holdDuration;

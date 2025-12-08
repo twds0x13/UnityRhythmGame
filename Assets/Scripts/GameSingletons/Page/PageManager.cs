@@ -124,13 +124,23 @@ namespace UIManagerNS
 
         public void CloseHoverPage(string Name)
         {
-            if (AllHoverPages.ContainsKey(Name) && HoverPage == AllHoverPages[Name])
+            if (AllHoverPages.ContainsKey(Name) && HoverPage.Name == AllHoverPages[Name].Name)
             {
                 HoverPage.OnClosePage();
                 HoverPage = null;
 
                 CurPage.SelectFirstAfterOneFrame();
             }
+        }
+
+        public void SwitchToPage<T>()
+            where T : BaseUIPage
+        {
+            CurPage.OnClosePage();
+
+            CurPage = AllPages[typeof(T).Name];
+
+            UniTask.Void(DelayedOpen);
         }
 
         public void SwitchToPage(string Name)

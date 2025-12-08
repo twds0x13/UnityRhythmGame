@@ -2,7 +2,9 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using PageNS;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Localization.Settings;
 using UnityEngine.UI;
 using Chart = ChartManager;
@@ -10,6 +12,10 @@ using Pool = PooledObjectNS.PooledObjectManager;
 
 public class GameSettingsPage : BaseUIPage
 {
+    public PlayerInput UserInput;
+
+    public TextMeshProUGUI RebindText;
+
     [SerializeField]
     private Button switchLanguageButton;
 
@@ -33,6 +39,8 @@ public class GameSettingsPage : BaseUIPage
 
     public override void OnOpenPage()
     {
+        RebindText.alpha = 0f;
+
         base.OnOpenPage();
 
         Pool.Inst.StartPreviewSettings();
@@ -54,6 +62,10 @@ public class GameSettingsPage : BaseUIPage
         _languageSwitchCts?.Cancel();
         _isSwitchingLanguage = false;
 
+        Chart.Inst.StopPreviewSettings();
+
+        Pool.Inst.StopPreviewSettings();
+
         base.OnClosePage();
     }
 
@@ -65,6 +77,11 @@ public class GameSettingsPage : BaseUIPage
         _languageSwitchCts?.Dispose();
 
         base.OnDestroyPage();
+    }
+
+    public void OnExitToMenu()
+    {
+        Manager.SwitchToPage<MainPage>();
     }
 
     public void SwitchLanguage()
@@ -212,5 +229,27 @@ public class GameSettingsPage : BaseUIPage
         {
             Debug.LogWarning($"Failed to set button interactable: {e.Message}");
         }
+    }
+
+    public void RebindInput(InputActionReference Ref)
+    {
+        RebindText.alpha = 1f;
+
+        UserInput.SwitchCurrentActionMap("UserRebinding");
+        Ref.action.PerformInteractiveRebinding()
+            .WithControlsExcluding("Mouse")
+            .WithCancelingThrough("<keyboard>/escape")
+            .OnMatchWaitForAnother(0.05f)
+            .OnComplete(Operation => SwitchToNormal(Operation))
+            .OnCancel(Operation => SwitchToNormal(Operation))
+            .Start();
+    }
+
+    private void SwitchToNormal(InputActionRebindingExtensions.RebindingOperation Operation)
+    {
+        Operation.Dispose();
+        UserInput.SwitchCurrentActionMap("UserNormal");
+
+        RebindText.alpha = 0f;
     }
 }
